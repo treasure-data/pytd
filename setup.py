@@ -44,7 +44,8 @@ def setup_package():
         packages=find_packages(exclude=['*tests*']),
         install_requires=[
             'presto_python_client',  # TODO: https://github.com/prestodb/presto-python-client/pull/69
-            'pandas'
+            'pandas',
+            'six'
         ],
         dependency_links=[
             'git+https://github.com/takuti/presto-python-client.git@extras-require-kerberos#egg=presto_python_client-1.0.0'
