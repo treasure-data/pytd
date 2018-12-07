@@ -6,6 +6,14 @@ def connect(*args, **kwargs):
     return Connection(*args, **kwargs)
 
 
+def query(sql, connection):
+    cur = connection.cursor()
+    cur.execute(sql)
+    rows = cur.fetchall()
+    column_names = [desc[0] for desc in cur.description]
+    return [column_names] + rows
+
+
 class Connection(object):
 
     def __init__(self, apikey=None, database='sample_datasets'):
