@@ -14,6 +14,21 @@ def query(sql, connection):
     return [column_names] + rows
 
 
+def query_iterrows(sql, connection):
+    cur = connection.cursor()
+    cur.execute(sql)
+    index = 0
+    column_names = None
+    while True:
+        row = cur.fetchone()
+        if row is None:
+            break
+        if index == 0:
+            column_names = [desc[0] for desc in cur.description]
+        yield index, dict(zip(column_names, row))
+        index += 1
+
+
 class Connection(object):
 
     def __init__(self, apikey=None, database='sample_datasets'):
