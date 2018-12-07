@@ -6,5 +6,11 @@ pytd
 ## Installation
 
 ```sh
+pip install .
+```
+
+If you don't want to introduce Kerberos system dependency, try:
+
+```sh
 pip install . --process-dependency-links
 ```
