@@ -2,8 +2,14 @@
 
 pytd is a Python interface to Treasure Data data management platform.
 """
-import pytd
-VERSION = pytd.__version__
+import ast
+import re
+
+
+with open('pytd/__init__.py', 'rb') as f:
+    version_re = re.compile(r'__version__\s+=\s+(.*)')
+    VERSION = str(ast.literal_eval(version_re.search(
+        f.read().decode('utf-8')).group(1)))
 
 DISTNAME = 'treasure-data'
 DESCRIPTION = 'Treasure Data Driver for Python'
