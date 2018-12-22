@@ -6,13 +6,13 @@ pytd
 ## Installation
 
 ```sh
-pip install .
+pip install -e git+git@github.com:takuti/pytd@master#egg=treasure-data
 ```
 
 If you don't want to introduce Kerberos system dependency, try:
 
 ```sh
-pip install . --process-dependency-links
+pip install -e git+git@github.com:takuti/pytd@master#egg=treasure-data --process-dependency-links
 ```
 
 ## Usage
