@@ -24,6 +24,7 @@ def read_td_query(query, engine, **kwargs):
 
 
 # alias
+connect = pytd.connect
 read_td = read_td_query
 
 
@@ -46,6 +47,29 @@ def read_td_table(table_name, engine,
         query += "LIMIT {0}\n".format(limit)
 
     return read_td_query(query, engine)
+
+
+def to_td(frame,
+          name,
+          con,
+          if_exists='fail',
+          time_col=None,  # unused
+          time_index=None,
+          index=True,
+          index_label=None,
+          chunksize=10000,
+          date_format=None):
+
+    if if_exists == 'fail':
+        mode = 'error'
+    elif if_exists == 'replace':
+        mode = 'overwrite'
+    elif if_exists == 'append':
+        mode = 'append'
+    else:
+        raise ValueError('invalid value for if_exists: %s' % if_exists)
+
+    pytd.write(frame, name, con, mode)
 
 
 def _convert_time(time):
