@@ -37,15 +37,32 @@ for index, row in pytd.query_iterrows('select symbol, count(1) as cnt from nasda
     print(index, row['symbol'], row['cnt'])
 ```
 
+Your data represented as `pandas.DataFrame` can be directly written to TD in the form of table:
+
+```py
+import pandas as pd
+
+df = pd.DataFrame(data={'col1': [1, 2], 'col2': [3, 100]})
+pytd.write(df, 'takuti.foo', conn, if_exists='overwrite')
+```
+
 If you are familiar with [pandas-td](https://github.com/treasure-data/pandas-td), `pytd` provides some compatible functions:
 
 ```py
 import pytd.pandas_td as td
 
+# Initialize query engine
 engine = td.create_engine('presto:sample_datasets')
 
-df_www = td.read_td('select * from www_access', engine)
-df_nasdaq = td.read_td_table('nasdaq', engine, limit=10000)
+# Read Treasure Data query into a DataFrame
+df = td.read_td('select * from www_access', engine)
+
+# Read Treasure Data table into a DataFrame
+df = td.read_td_table('nasdaq', engine, limit=10000)
+
+# Write a DataFrame to a Treasure Data table
+con = td.connect()
+td.to_td(df, 'takuti.test_table', con, if_exists='replace', index=False)
 ```
 
 However, it should be noted that only a small portion of the original pandas-td capability is supported in this package. We highly recommend to replace those code with new `pytd` functions as soon as possible since the limited compatibility is not actively maintained.
