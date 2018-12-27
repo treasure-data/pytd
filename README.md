@@ -62,7 +62,7 @@ df = td.read_td_table('nasdaq', engine, limit=10000)
 
 # Write a DataFrame to a Treasure Data table
 con = td.connect()
-td.to_td(df, 'takuti.test_table', con, if_exists='replace', index=False)
+td.to_td(df, 'takuti.test_table', con, if_exists='replace')
 ```
 
 However, it should be noted that only a small portion of the original pandas-td capability is supported in this package. We highly recommend to replace those code with new `pytd` functions as soon as possible since the limited compatibility is not actively maintained.
