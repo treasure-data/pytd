@@ -53,6 +53,9 @@ def setup_package():
             'pandas',
             'six'
         ],
+        extras_require={
+            'spark': ['pyspark', 'pyarrow'],
+        },
         dependency_links=[
             'git+https://github.com/prestodb/presto-python-client.git@master#egg=presto_python_client-1.0.0'
         ])
