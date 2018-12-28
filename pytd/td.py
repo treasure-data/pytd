@@ -81,16 +81,8 @@ class Connection(object):
         try:
             from pyspark.sql import SparkSession
 
-            directory = os.path.dirname(os.path.abspath(__file__))
-
-            path_conf = os.path.join(directory, 'td-spark.conf')
-            with open(path_conf, 'w') as f:
-                f.write('spark.td.apikey=%s\n' % self.apikey)
-                f.write('spark.serializer=org.apache.spark.serializer.KryoSerializer\n')
-                f.write('spark.sql.execution.arrow.enabled=true\n')
-
             jarname = 'td-spark-assembly_2.11-1.0.0.jar'
-            path_td_spark = os.path.join(directory, jarname)
+            path_td_spark = os.path.join(os.path.dirname(os.path.abspath(__file__)), jarname)
 
             if not os.path.exists(path_td_spark):
                 download_url = TD_SPARK_BASE_URL % jarname
@@ -110,7 +102,13 @@ class Connection(object):
 
                 response.close()
 
-            os.environ['PYSPARK_SUBMIT_ARGS'] = '--jars %s --properties-file %s pyspark-shell' % (path_td_spark, path_conf)
+            os.environ['PYSPARK_SUBMIT_ARGS'] = """
+            --jars %s
+            --conf spark.td.apikey=%s
+            --conf spark.serializer=org.apache.spark.serializer.KryoSerializer
+            --conf spark.sql.execution.arrow.enabled=true
+            pyspark-shell
+            """ % (path_td_spark, self.apikey)
 
             self.td_spark = SparkSession.builder.master("local[*]").getOrCreate()
         except ImportError:
