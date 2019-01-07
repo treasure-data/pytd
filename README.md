@@ -9,15 +9,13 @@ pytd
 pip install -e git+git@github.com:takuti/pytd@master#egg=treasure-data
 ```
 
-If you don't want to introduce Kerberos system dependency, try:
-
-```sh
-pip install -e git+git@github.com:takuti/pytd@master#egg=treasure-data --process-dependency-links
-```
+If you don't want to introduce Kerberos system dependency, add `--process-dependency-links` option to the command.
 
 ## Usage
 
 Set `TD_API_KEY` as an environment variable beforehand.
+
+### Read
 
 ```py
 import pytd
@@ -27,24 +25,52 @@ conn = pytd.connect(database='sample_datasets')
 # >>> pytd.connect(apikey='1/XXX', database='sample_datasets')
 
 pytd.query('select symbol, count(1) as cnt from nasdaq group by 1 order by 2 desc', conn)
-# [['symbol', 'cnt'], ['CRRC', 9268], ['MPET', 9268], ['HELE', 9268], ..., ['ADPVV', 2]]
+# (['symbol', 'cnt'], [['CRRC', 9268], ['MPET', 9268], ['HELE', 9268], ..., ['ADPVV', 2]])
 ```
 
-Query result can also be retrieved from a generator, just like [pandas.DataFrame.iterrows](https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.iterrows.html):
+By directly using low-level cursor object, query result can also be retrieved from a generator, just like [pandas.DataFrame.iterrows](https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.iterrows.html):
 
 ```py
-for index, row in pytd.query_iterrows('select symbol, count(1) as cnt from nasdaq group by 1 order by 2 desc', conn):
-    print(index, row['symbol'], row['cnt'])
+def iterrows(sql, connection):
+    cur = connection.cursor()
+    cur.execute(sql)
+    index = 0
+    columns = None
+    while True:
+        row = cur.fetchone()
+        if row is None:
+            break
+        if columns is None:
+            columns = [desc[0] for desc in cur.description]
+        yield index, dict(zip(columns, row))
+        index += 1
+
+for index, row in iterrows('select symbol, count(1) as cnt from nasdaq group by 1 order by 2 desc', conn):
+    print(index, row)
+# 0 {'cnt': 9268, 'symbol': 'ASBC'}
+# 1 {'cnt': 9268, 'symbol': 'MGEE'}
+# 2 {'cnt': 9268, 'symbol': 'DIOD'}
+# 3 {'cnt': 9268, 'symbol': 'NTRS'}
+# 4 {'cnt': 9268, 'symbol': 'AGYS'}
+# ...
 ```
 
-Your data represented as `pandas.DataFrame` can be directly written to TD in the form of table:
+### Write
+
+Once you install the package with PySpark dependencies, any data represented as `pandas.DataFrame` can directly be written to TD via [td-spark](https://support.treasuredata.com/hc/en-us/articles/360001487167-Apache-Spark-Driver-td-spark-FAQs):
+
+```sh
+pip install -e git+git@github.com:takuti/pytd@master#egg=treasure-data[spark]
+```
 
 ```py
 import pandas as pd
 
-df = pd.DataFrame(data={'col1': [1, 2], 'col2': [3, 100]})
+df = pd.DataFrame(data={'col1': [1, 2], 'col2': [3, 4]})
 pytd.write(df, 'takuti.foo', conn, if_exists='overwrite')
 ```
+
+### pandas-td compatibility
 
 If you are familiar with [pandas-td](https://github.com/treasure-data/pandas-td), `pytd` provides some compatible functions:
 
