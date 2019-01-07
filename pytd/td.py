@@ -2,23 +2,8 @@ def query(sql, connection):
     cur = connection.cursor()
     cur.execute(sql)
     rows = cur.fetchall()
-    column_names = [desc[0] for desc in cur.description]
-    return [column_names] + rows
-
-
-def query_iterrows(sql, connection):
-    cur = connection.cursor()
-    cur.execute(sql)
-    index = 0
-    column_names = None
-    while True:
-        row = cur.fetchone()
-        if row is None:
-            break
-        if index == 0:
-            column_names = [desc[0] for desc in cur.description]
-        yield index, dict(zip(column_names, row))
-        index += 1
+    columns = [desc[0] for desc in cur.description]
+    return columns, rows
 
 
 def write(df, table, connection, if_exists='error'):
