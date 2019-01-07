@@ -83,3 +83,9 @@ class Connection(object):
             raise RuntimeError('PySpark is not installed')
         except Exception as e:
             raise RuntimeError('failed to connect to td-spark: ' + e)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        self.close()
