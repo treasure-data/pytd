@@ -38,7 +38,37 @@ class Connection(object):
     def cursor(self):
         return self.td_presto.cursor()
 
-    def setup_td_spark(self):
+    def write_dataframe(self, df, table, if_exists):
+        if self.td_spark is None:
+            try:
+                self._setup_td_spark()
+            except Exception as e:
+                raise e
+
+        destination = table
+        if '.' not in table:
+            destination = self.database + '.' + table
+
+        sdf = self.td_spark.createDataFrame(df)
+        sdf.write.mode(if_exists).format('com.treasuredata.spark').option('table', destination).save()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        self.close()
+
+    def _connect_td_presto(self, apikey, database):
+        return prestodb.dbapi.connect(
+            host='api-presto.treasuredata.com',
+            port=443,
+            http_scheme='https',
+            user=apikey,
+            catalog='td-presto',
+            schema=database
+        )
+
+    def _setup_td_spark(self):
         try:
             from pyspark.sql import SparkSession
 
@@ -76,19 +106,3 @@ class Connection(object):
             raise RuntimeError('PySpark is not installed')
         except Exception as e:
             raise RuntimeError('failed to connect to td-spark: ' + e)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exception_type, exception_value, traceback):
-        self.close()
-
-    def _connect_td_presto(self, apikey, database):
-        return prestodb.dbapi.connect(
-            host='api-presto.treasuredata.com',
-            port=443,
-            http_scheme='https',
-            user=apikey,
-            catalog='td-presto',
-            schema=database
-        )
