@@ -17,14 +17,7 @@ class Connection(object):
                 raise ValueError("either argument 'apikey' or environment variable 'TD_API_KEY' should be set")
             apikey = os.environ['TD_API_KEY']
 
-        self.td_presto = prestodb.dbapi.connect(
-            host='api-presto.treasuredata.com',
-            port=443,
-            http_scheme='https',
-            user=apikey,
-            catalog='td-presto',
-            schema=database
-        )
+        self.td_presto = self._connect_td_presto(apikey, database)
 
         self.apikey = apikey
         self.database = database
@@ -89,3 +82,13 @@ class Connection(object):
 
     def __exit__(self, exception_type, exception_value, traceback):
         self.close()
+
+    def _connect_td_presto(self, apikey, database):
+        return prestodb.dbapi.connect(
+            host='api-presto.treasuredata.com',
+            port=443,
+            http_scheme='https',
+            user=apikey,
+            catalog='td-presto',
+            schema=database
+        )
