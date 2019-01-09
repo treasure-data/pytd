@@ -19,8 +19,7 @@ def create_engine(url, **kwargs):
 
 
 def read_td_query(query, engine, **kwargs):
-    columns, rows = pytd.query(query, engine)
-    return pd.DataFrame(rows, columns=columns)
+    return pd.DataFrame(**pytd.query(query, engine))
 
 
 # alias

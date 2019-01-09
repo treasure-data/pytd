@@ -25,7 +25,7 @@ conn = pytd.connect(database='sample_datasets')
 # >>> pytd.connect(apikey='1/XXX', database='sample_datasets')
 
 pytd.query('select symbol, count(1) as cnt from nasdaq group by 1 order by 2 desc', conn)
-# (['symbol', 'cnt'], [['CRRC', 9268], ['MPET', 9268], ['HELE', 9268], ..., ['ADPVV', 2]])
+# {'data': [['CRRC', 9268], ['MPET', 9268], ['HELE', 9268], ..., ['ADPVV', 2]], 'columns': ['symbol', 'cnt']}
 ```
 
 By directly using low-level cursor object, query result can also be retrieved from a generator, just like [pandas.DataFrame.iterrows](https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.iterrows.html):

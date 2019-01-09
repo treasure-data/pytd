@@ -21,10 +21,10 @@ class TdTestCase(unittest.TestCase):
         self.conn.cursor.return_value = cursor
 
     def test_query(self):
-        columns, rows = pytd.query('select * from tbl', self.conn)
+        d = pytd.query('select * from tbl', self.conn)
 
-        self.assertListEqual(columns, ['col1', 'col2'])
-        self.assertListEqual(rows, [[1, 'a'], [2, 'b']])
+        self.assertListEqual(d['columns'], ['col1', 'col2'])
+        self.assertListEqual(d['data'], [[1, 'a'], [2, 'b']])
 
     def test_write(self):
         df = pd.DataFrame([[1, 2], [3, 4]])

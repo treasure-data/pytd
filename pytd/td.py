@@ -3,7 +3,7 @@ def query(sql, connection):
     cur.execute(sql)
     rows = cur.fetchall()
     columns = [desc[0] for desc in cur.description]
-    return columns, rows
+    return {'data': rows, 'columns': columns}
 
 
 def write(df, table, connection, if_exists='error'):
