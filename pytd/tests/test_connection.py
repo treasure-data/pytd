@@ -29,7 +29,7 @@ class ConnectionTestCase(unittest.TestCase):
 
     def test_cursor(self):
         self.conn.cursor()
-        self.mock_client.td_presto.cursor.assert_called_with()
+        self.mock_client.get_cursor.assert_called_with()
 
 
 def test_connection_context():

@@ -41,6 +41,9 @@ class Client(object):
         sdf = self.td_spark.createDataFrame(df)
         sdf.write.mode(if_exists).format('com.treasuredata.spark').option('table', destination).save()
 
+    def get_cursor(self):
+        return self.td_presto.cursor()
+
     def __enter__(self):
         return self
 

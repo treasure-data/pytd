@@ -17,7 +17,7 @@ class Connection(object):
         raise NotSupportedError
 
     def cursor(self):
-        return self.client.td_presto.cursor()
+        return self.client.get_cursor()
 
     def __enter__(self):
         return self
