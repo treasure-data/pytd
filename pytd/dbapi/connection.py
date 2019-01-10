@@ -1,5 +1,5 @@
 import pytd
-from pytd.error import NotSupportedError
+from pytd.dbapi.error import NotSupportedError
 
 
 class Connection(object):

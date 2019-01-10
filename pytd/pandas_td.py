@@ -15,15 +15,15 @@ import pytd
 def create_engine(url, **kwargs):
     url = urlparse(url)
     database = url.path[1:] if url.path.startswith('/') else url.path
-    return pytd.connect(database=database)
+    return pytd.Client(database=database)
 
 
 def read_td_query(query, engine, **kwargs):
-    return pd.DataFrame(**pytd.query(query, engine))
+    return pd.DataFrame(**engine.query(query))
 
 
 # alias
-connect = pytd.connect
+connect = pytd.Client
 read_td = read_td_query
 
 
@@ -68,7 +68,7 @@ def to_td(frame,
     else:
         raise ValueError('invalid value for if_exists: %s' % if_exists)
 
-    pytd.write(frame, name, con, mode)
+    con.load_table_from_dataframe(frame, name, mode)
 
 
 def _convert_time(time):

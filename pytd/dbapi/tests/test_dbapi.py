@@ -1,5 +1,5 @@
 from pytd import dbapi
-from pytd.connection import Connection
+from pytd.dbapi.connection import Connection
 
 # https://www.python.org/dev/peps/pep-0249/
 

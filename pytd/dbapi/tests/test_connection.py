@@ -1,5 +1,5 @@
-from pytd.connection import Connection
-from pytd.error import NotSupportedError
+from pytd.dbapi.connection import Connection
+from pytd.dbapi.error import NotSupportedError
 
 import unittest
 try:
