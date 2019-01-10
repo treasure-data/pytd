@@ -19,6 +19,13 @@ class ClientTestCase(unittest.TestCase):
     @patch.object(Client, '_connect_td_presto', return_value=MagicMock())
     def setUp(self, _connect_td_presto):
         self.client = Client(apikey='APIKEY', database='sample_datasets')
+
+        cursor = MagicMock(return_value=MagicMock())
+        cursor.description = [('col1', 'int'), ('col2', 'string')]
+        cursor.fetchall.return_value = [[1, 'a'], [2, 'b']]
+
+        self.client.get_cursor = MagicMock(return_value=cursor)
+
         self._connect_td_presto = _connect_td_presto
 
     def test_close(self):
@@ -27,12 +34,21 @@ class ClientTestCase(unittest.TestCase):
         self.client.close()
         self.assertTrue(self.client.td_presto.close.called)
 
+    def test_query(self):
+        d = self.client.query('select * from tbl')
+        self.assertListEqual(d['columns'], ['col1', 'col2'])
+        self.assertListEqual(d['data'], [[1, 'a'], [2, 'b']])
+
     def test_write_dataframe(self):
         df = pd.DataFrame([[1, 2], [3, 4]])
         with patch.object(Client, '_setup_td_spark', new=mock_setup_td_spark):
             self.assertTrue(self.client.td_spark is None)
             self.client.write_dataframe(df, 'foo', 'error')
             self.client.td_spark.createDataFrame.assert_called_with(df)
+
+    def test_write_dataframe_invalid_if_exists(self):
+        with self.assertRaises(ValueError):
+            self.client.write_dataframe(pd.DataFrame([[1, 2], [3, 4]]), 'foo', if_exists='bar')
 
 
 def test_client_context():

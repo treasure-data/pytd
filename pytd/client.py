@@ -27,7 +27,17 @@ class Client(object):
         if self.td_spark is not None:
             self.td_spark.stop()
 
-    def write_dataframe(self, df, table, if_exists):
+    def query(self, sql):
+        cur = self.get_cursor()
+        cur.execute(sql)
+        rows = cur.fetchall()
+        columns = [desc[0] for desc in cur.description]
+        return {'data': rows, 'columns': columns}
+
+    def write_dataframe(self, df, table, if_exists='error'):
+        if if_exists not in ('error', 'overwrite', 'append', 'ignore'):
+            raise ValueError('invalid valud for if_exists: %s' % if_exists)
+
         if self.td_spark is None:
             try:
                 self._setup_td_spark()
