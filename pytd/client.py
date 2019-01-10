@@ -34,7 +34,7 @@ class Client(object):
         columns = [desc[0] for desc in cur.description]
         return {'data': rows, 'columns': columns}
 
-    def write_dataframe(self, df, table, if_exists='error'):
+    def load_table_from_dataframe(self, df, table, if_exists='error'):
         if if_exists not in ('error', 'overwrite', 'append', 'ignore'):
             raise ValueError('invalid valud for if_exists: %s' % if_exists)
 
