@@ -27,12 +27,7 @@ connect = pytd.Client
 read_td = read_td_query
 
 
-def read_td_table(table_name, engine,
-                  index_col=None,  # unused
-                  parse_dates=None,
-                  columns=None,
-                  time_range=None,
-                  limit=10000):
+def read_td_table(table_name, engine, columns=None, time_range=False, limit=10000, **kwargs):
     # SELECT
     query = "SELECT {0}\n".format('*' if columns is None else ', '.join(columns))
     # FROM
@@ -48,17 +43,7 @@ def read_td_table(table_name, engine,
     return read_td_query(query, engine)
 
 
-def to_td(frame,
-          name,
-          con,
-          if_exists='fail',
-          time_col=None,  # unused
-          time_index=None,
-          index=True,
-          index_label=None,
-          chunksize=10000,
-          date_format=None):
-
+def to_td(frame, name, con, if_exists='fail', **kwargs):
     if if_exists == 'fail':
         mode = 'error'
     elif if_exists == 'replace':
