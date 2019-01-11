@@ -9,13 +9,13 @@ except ImportError:
     # Python 2.x
     from urlparse import urlparse
 
-import pytd
+from .client import Client
 
 
 def create_engine(url, **kwargs):
     url = urlparse(url)
     database = url.path[1:] if url.path.startswith('/') else url.path
-    return pytd.Client(database=database)
+    return Client(database=database)
 
 
 def read_td_query(query, engine, **kwargs):
@@ -23,7 +23,7 @@ def read_td_query(query, engine, **kwargs):
 
 
 # alias
-connect = pytd.Client
+connect = Client
 read_td = read_td_query
 
 

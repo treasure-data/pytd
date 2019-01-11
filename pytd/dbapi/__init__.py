@@ -1,5 +1,5 @@
-from pytd.dbapi.connection import Connection
-from pytd.dbapi.error import (  # noqa
+from .connection import Connection
+from .error import (
     Error, Warning, InterfaceError, DatabaseError, InternalError,
     OperationalError, ProgrammingError, IntegrityError, DataError,
     NotSupportedError)

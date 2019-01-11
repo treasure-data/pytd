@@ -1,11 +1,11 @@
-import pytd
-from pytd.dbapi.error import NotSupportedError
+from ..client import Client
+from .error import NotSupportedError
 
 
 class Connection(object):
 
     def __init__(self, apikey=None, database='sample_datasets'):
-        self.client = pytd.client.Client(apikey, database)
+        self.client = Client(apikey, database)
 
     def close(self):
         self.client.close()

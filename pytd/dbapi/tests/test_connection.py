@@ -1,5 +1,5 @@
-from pytd.dbapi.connection import Connection
-from pytd.dbapi.error import NotSupportedError
+from pytd.dbapi import Connection, NotSupportedError
+from pytd.dbapi import connection  # noqa
 
 import unittest
 try:
@@ -12,7 +12,9 @@ except ImportError:
 
 class ConnectionTestCase(unittest.TestCase):
 
-    @patch('pytd.client.Client')
+    # Mock `Client` relatively imported in
+    # `pytd.dbapi.connection`
+    @patch(__name__ + '.connection.Client')
     def setUp(self, mock_client_class):
         self.mock_client = mock_client_class.return_value
         self.conn = Connection(apikey='APIKEY', database='sample_datasets')
