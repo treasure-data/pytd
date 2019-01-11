@@ -1,11 +1,10 @@
 from pytd import dbapi
-from pytd.dbapi.connection import Connection
 
 # https://www.python.org/dev/peps/pep-0249/
 
 
 def test_constructors():
-    assert isinstance(dbapi.connect(), Connection)
+    assert isinstance(dbapi.connect(), dbapi.Connection)
 
 
 def test_globals():
