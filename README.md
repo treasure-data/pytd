@@ -51,9 +51,9 @@ client.load_table_from_dataframe(df, 'takuti.foo', if_exists='overwrite')
 Connect to the API first:
 
 ```py
-import pytd
+from pytd.dbapi import connect
 
-conn = pytd.dbapi.connect(database='sample_datasets')
+conn = connect(database='sample_datasets')
 ```
 
 `Cursor` defined by the specification allows us to flexibly fetch query results from a custom function:
