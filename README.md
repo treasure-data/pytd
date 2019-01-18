@@ -13,6 +13,8 @@ If you don't want to introduce Kerberos system dependency, add `--process-depend
 
 ## Usage
 
+- [Sample usage on Google Colaboratory](https://colab.research.google.com/drive/1ps_ChU-H2FvkeNlj1e1fcOebCt4ryN11)
+
 Set `TD_API_KEY` as an environment variable beforehand and create a client instance:
 
 ```py
