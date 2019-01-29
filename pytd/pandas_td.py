@@ -28,7 +28,7 @@ connect = Client
 read_td = read_td_query
 
 
-def read_td_table(table_name, engine, columns=None, time_range=False, limit=10000, **kwargs):
+def read_td_table(table_name, engine, columns=None, time_range=None, limit=10000, **kwargs):
     # SELECT
     query = "-- read_td_table\n"
     query += "SELECT {0}\n".format('*' if columns is None else ', '.join(columns))
