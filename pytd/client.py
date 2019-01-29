@@ -1,6 +1,8 @@
 import os
 import prestodb
 
+import pytd
+
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
@@ -29,7 +31,8 @@ class Client(object):
 
     def query(self, sql):
         cur = self.get_cursor()
-        cur.execute(sql)
+        header = "-- pytd/%s\n-- Client#query" % pytd.__version__
+        cur.execute(header + "\n" + sql)
         rows = cur.fetchall()
         columns = [desc[0] for desc in cur.description]
         return {'data': rows, 'columns': columns}

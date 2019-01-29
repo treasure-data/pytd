@@ -19,7 +19,8 @@ def create_engine(url, **kwargs):
 
 
 def read_td_query(query, engine, **kwargs):
-    return pd.DataFrame(**engine.query(query))
+    header = '-- read_td_query'
+    return pd.DataFrame(**engine.query(header + "\n" + query))
 
 
 # alias
@@ -29,7 +30,8 @@ read_td = read_td_query
 
 def read_td_table(table_name, engine, columns=None, time_range=False, limit=10000, **kwargs):
     # SELECT
-    query = "SELECT {0}\n".format('*' if columns is None else ', '.join(columns))
+    query = "-- read_td_table\n"
+    query += "SELECT {0}\n".format('*' if columns is None else ', '.join(columns))
     # FROM
     query += "FROM {0}\n".format(table_name)
     # WHERE
