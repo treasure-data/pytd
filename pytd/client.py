@@ -74,7 +74,7 @@ class Client(object):
         try:
             from pyspark.sql import SparkSession
 
-            jarname = 'td-spark-assembly_2.11-1.0.0.jar'
+            jarname = 'td-spark-assembly_2.11-1.1.0.jar'
             path_td_spark = os.path.join(os.path.dirname(os.path.abspath(__file__)), jarname)
 
             if not os.path.exists(path_td_spark):
