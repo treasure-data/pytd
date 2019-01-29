@@ -19,8 +19,8 @@ def create_engine(url, **kwargs):
 
 
 def read_td_query(query, engine, **kwargs):
-    header = '-- read_td_query'
-    return pd.DataFrame(**engine.query(header + "\n" + query))
+    query = "-- read_td_query\n" + query
+    return pd.DataFrame(**engine.query(query))
 
 
 # alias

@@ -31,8 +31,8 @@ class Client(object):
 
     def query(self, sql):
         cur = self.get_cursor()
-        header = "-- pytd/%s\n-- Client#query" % pytd.__version__
-        cur.execute(header + "\n" + sql)
+        sql = "-- pytd/{0}\n-- Client#query\n".format(pytd.__version__) + sql
+        cur.execute(sql)
         rows = cur.fetchall()
         columns = [desc[0] for desc in cur.description]
         return {'data': rows, 'columns': columns}
