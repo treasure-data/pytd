@@ -9,8 +9,6 @@ pytd
 pip install -e git+git@github.com:takuti/pytd@master#egg=treasure-data
 ```
 
-If you don't want to introduce Kerberos system dependency, add `--process-dependency-links` option to the command.
-
 ## Usage
 
 - [Sample usage on Google Colaboratory](https://colab.research.google.com/drive/1ps_ChU-H2FvkeNlj1e1fcOebCt4ryN11)
