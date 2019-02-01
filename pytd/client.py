@@ -3,8 +3,11 @@ import prestodb
 
 import pytd
 
-from urllib.error import HTTPError
-from urllib.request import urlopen
+try:
+    from urllib.error import HTTPError
+    from urllib.request import urlopen
+except ImportError:
+    from urllib2 import urlopen, HTTPError
 
 TD_SPARK_BASE_URL = 'https://s3.amazonaws.com/td-spark/%s'
 
