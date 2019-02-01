@@ -1,6 +1,8 @@
 pytd
 ===
 
+[![Build Status](https://travis-ci.org/takuti/pytd.svg?branch=master)](https://travis-ci.org/takuti/pytd)
+
 [Treasure Data](https://www.treasuredata.com/) Driver for Python
 
 ## Installation
