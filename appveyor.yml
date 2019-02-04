@@ -9,6 +9,9 @@ environment:
     # See: http://stackoverflow.com/a/13751649/163740
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_env.cmd"
 
+    # dummy for unit testing
+    TD_API_KEY: "1/XXX"
+
   matrix:
     #- PYTHON: "C:\\Python27"
     #  PYTHON_VERSION: "2.7.8"
