@@ -44,7 +44,7 @@ class ClientTestCase(unittest.TestCase):
         with patch.object(Client, '_setup_td_spark', new=mock_setup_td_spark):
             self.assertTrue(self.client.td_spark is None)
             self.client.load_table_from_dataframe(df, 'foo', 'error')
-            self.client.td_spark.createDataFrame.assert_called_with(df)
+            self.assertTrue(self.client.td_spark.createDataFrame.called)
 
     def test_load_table_from_dataframe_invalid_if_exists(self):
         with self.assertRaises(ValueError):

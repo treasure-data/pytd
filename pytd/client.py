@@ -1,4 +1,5 @@
 import os
+import re
 import prestodb
 
 import pytd
@@ -54,6 +55,8 @@ class Client(object):
         if '.' not in table:
             destination = self.database + '.' + table
 
+        # normalize column names so it contains only alphanumeric and `_`
+        df = df.rename(lambda c: re.sub(r'[^a-zA-Z0-9]', ' ', str(c)).lower().replace(' ', '_'), axis='columns')
         sdf = self.td_spark.createDataFrame(df)
         sdf.write.mode(if_exists).format('com.treasuredata.spark').option('table', destination).save()
 
