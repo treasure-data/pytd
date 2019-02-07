@@ -1,6 +1,7 @@
 import os
 import re
 import prestodb
+import logging
 
 import pytd
 
@@ -9,6 +10,8 @@ try:
     from urllib.request import urlopen
 except ImportError:
     from urllib2 import urlopen, HTTPError
+
+logger = logging.getLogger(__name__)
 
 TD_SPARK_BASE_URL = 'https://s3.amazonaws.com/td-spark/%s'
 
@@ -93,14 +96,14 @@ class Client(object):
                 except HTTPError:
                     raise RuntimeError('failed to access to the download URL: ' + download_url)
 
-                print('Downloading td-spark...')
+                logger.info('Downloading td-spark...')
                 try:
                     with open(path_td_spark, 'w+b') as f:
                         f.write(response.read())
                 except Exception:
                     os.remove(path_td_spark)
                     raise
-                print('Completed to download')
+                logger.info('Completed to download')
 
                 response.close()
 
