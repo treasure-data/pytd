@@ -8,7 +8,7 @@ pytd
 ## Installation
 
 ```sh
-pip install -e git+git@github.com:takuti/pytd@master#egg=treasure-data
+pip install -e git+git@github.com:takuti/pytd
 ```
 
 ## Usage
@@ -36,7 +36,7 @@ client.query('select symbol, count(1) as cnt from nasdaq group by 1 order by 2 d
 Once you install the package with PySpark dependencies, any data represented as `pandas.DataFrame` can directly be written to TD via [td-spark](https://support.treasuredata.com/hc/en-us/articles/360001487167-Apache-Spark-Driver-td-spark-FAQs):
 
 ```sh
-pip install -e git+git@github.com:takuti/pytd@master#egg=treasure-data[spark]
+pip install -e git+git@github.com:takuti/pytd@master#egg=pytd[spark]
 ```
 
 ```py

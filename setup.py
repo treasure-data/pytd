@@ -11,7 +11,7 @@ with open('pytd/__init__.py', 'rb') as f:
     VERSION = str(ast.literal_eval(version_re.search(
         f.read().decode('utf-8')).group(1)))
 
-DISTNAME = 'treasure-data'
+DISTNAME = 'pytd'
 DESCRIPTION = 'Treasure Data Driver for Python'
 LONG_DESCRIPTION = __doc__ or ''
 AUTHOR = 'Takuya Kitazawa'
