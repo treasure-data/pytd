@@ -1,19 +1,11 @@
 import os
-import re
 import prestodb
 import logging
 
 import pytd
-
-try:
-    from urllib.error import HTTPError
-    from urllib.request import urlopen
-except ImportError:
-    from urllib2 import urlopen, HTTPError
+from pytd.writer import SparkWriter
 
 logger = logging.getLogger(__name__)
-
-TD_SPARK_BASE_URL = 'https://s3.amazonaws.com/td-spark/%s'
 
 
 class Client(object):
@@ -29,12 +21,12 @@ class Client(object):
         self.apikey = apikey
         self.database = database
 
-        self.td_spark = None
+        self.writer = None
 
     def close(self):
         self.td_presto.close()
-        if self.td_spark is not None:
-            self.td_spark.stop()
+        if self.writer is not None:
+            self.writer.close()
 
     def query(self, sql):
         cur = self.get_cursor()
@@ -45,23 +37,14 @@ class Client(object):
         return {'data': rows, 'columns': columns}
 
     def load_table_from_dataframe(self, df, table, if_exists='error'):
-        if if_exists not in ('error', 'overwrite', 'append', 'ignore'):
-            raise ValueError('invalid valud for if_exists: %s' % if_exists)
-
-        if self.td_spark is None:
-            try:
-                self._setup_td_spark()
-            except Exception as e:
-                raise e
+        if self.writer is None:
+            self.writer = SparkWriter(self.apikey)
 
         destination = table
         if '.' not in table:
             destination = self.database + '.' + table
 
-        # normalize column names so it contains only alphanumeric and `_`
-        df = df.rename(lambda c: re.sub(r'[^a-zA-Z0-9]', ' ', str(c)).lower().replace(' ', '_'), axis='columns')
-        sdf = self.td_spark.createDataFrame(df)
-        sdf.write.mode(if_exists).format('com.treasuredata.spark').option('table', destination).save()
+        self.writer.write_dataframe(df, destination, if_exists)
 
     def get_cursor(self):
         return self.td_presto.cursor()
@@ -81,42 +64,3 @@ class Client(object):
             catalog='td-presto',
             schema=database
         )
-
-    def _setup_td_spark(self):
-        try:
-            from pyspark.sql import SparkSession
-
-            jarname = 'td-spark-assembly_2.11-1.1.0.jar'
-            path_td_spark = os.path.join(os.path.dirname(os.path.abspath(__file__)), jarname)
-
-            if not os.path.exists(path_td_spark):
-                download_url = TD_SPARK_BASE_URL % jarname
-                try:
-                    response = urlopen(download_url)
-                except HTTPError:
-                    raise RuntimeError('failed to access to the download URL: ' + download_url)
-
-                logger.info('Downloading td-spark...')
-                try:
-                    with open(path_td_spark, 'w+b') as f:
-                        f.write(response.read())
-                except Exception:
-                    os.remove(path_td_spark)
-                    raise
-                logger.info('Completed to download')
-
-                response.close()
-
-            os.environ['PYSPARK_SUBMIT_ARGS'] = """
-            --jars %s
-            --conf spark.td.apikey=%s
-            --conf spark.serializer=org.apache.spark.serializer.KryoSerializer
-            --conf spark.sql.execution.arrow.enabled=true
-            pyspark-shell
-            """ % (path_td_spark, self.apikey)
-
-            self.td_spark = SparkSession.builder.master('local[*]').getOrCreate()
-        except ImportError:
-            raise RuntimeError('PySpark is not installed')
-        except Exception as e:
-            raise RuntimeError('failed to connect to td-spark: ' + e)

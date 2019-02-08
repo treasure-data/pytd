@@ -10,10 +10,6 @@ except ImportError:
     from mock import patch
 
 
-def mock_setup_td_spark(self):
-    self.td_spark = MagicMock()
-
-
 class ClientTestCase(unittest.TestCase):
 
     @patch.object(Client, '_connect_td_presto', return_value=MagicMock())
@@ -30,9 +26,11 @@ class ClientTestCase(unittest.TestCase):
 
     def test_close(self):
         self._connect_td_presto.assert_called_with('APIKEY', 'sample_datasets')
-        self.assertTrue(self.client.td_spark is None)
+        self.assertTrue(self.client.writer is None)
+        self.client.writer = MagicMock()
         self.client.close()
         self.assertTrue(self.client.td_presto.close.called)
+        self.assertTrue(self.client.writer.close.called)
 
     def test_query(self):
         d = self.client.query('select * from tbl')
@@ -41,14 +39,10 @@ class ClientTestCase(unittest.TestCase):
 
     def test_load_table_from_dataframe(self):
         df = pd.DataFrame([[1, 2], [3, 4]])
-        with patch.object(Client, '_setup_td_spark', new=mock_setup_td_spark):
-            self.assertTrue(self.client.td_spark is None)
-            self.client.load_table_from_dataframe(df, 'foo', 'error')
-            self.assertTrue(self.client.td_spark.createDataFrame.called)
-
-    def test_load_table_from_dataframe_invalid_if_exists(self):
-        with self.assertRaises(ValueError):
-            self.client.load_table_from_dataframe(pd.DataFrame([[1, 2], [3, 4]]), 'foo', if_exists='bar')
+        self.assertTrue(self.client.writer is None)
+        self.client.writer = MagicMock()
+        self.client.load_table_from_dataframe(df, 'foo', 'error')
+        self.assertTrue(self.client.writer.write_dataframe.called)
 
 
 def test_client_context():
