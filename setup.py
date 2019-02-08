@@ -49,7 +49,7 @@ def setup_package():
                      'Programming Language :: Python :: 3.6'],
         packages=find_packages(exclude=['*tests*']),
         install_requires=[
-            'presto_python_client @ git+https://github.com/prestodb/presto-python-client.git@master#egg=presto_python_client-1.0.0',
+            'presto_python_client @ git+https://github.com/prestodb/presto-python-client.git@0.6.0#egg=presto_python_client',
             'pandas',
             'six'
         ],
