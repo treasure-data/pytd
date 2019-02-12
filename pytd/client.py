@@ -1,10 +1,9 @@
 import os
-import prestodb
 import logging
-import tdclient
 
 import pytd
 from pytd.writer import SparkWriter
+from pytd.query_engine import PrestoQueryEngine, HiveQueryEngine
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +16,7 @@ class Client(object):
                 raise ValueError("either argument 'apikey' or environment variable 'TD_API_KEY' should be set")
             apikey = os.environ['TD_API_KEY']
 
-        self.td_presto = self._connect_td_presto(apikey, database)
-        self.td_hive = self._connect_td_hive(apikey, database)
+        self._connect_query_engines(apikey, database)
 
         self.apikey = apikey
         self.database = database
@@ -27,8 +25,8 @@ class Client(object):
         self.writer = None
 
     def close(self):
-        self.td_presto.close()
-        self.td_hive.close()
+        self.presto.close()
+        self.hive.close()
         if self.writer is not None:
             self.writer.close()
 
@@ -57,9 +55,9 @@ class Client(object):
             engine = self.default_engine
 
         if engine == 'presto':
-            return self.td_presto.cursor()
+            return self.presto.cursor()
         elif engine == 'hive':
-            return self.td_hive.cursor()
+            return self.hive.cursor()
         else:
             raise ValueError('`engine` should be "presto" or "hive"')
 
@@ -69,15 +67,6 @@ class Client(object):
     def __exit__(self, exception_type, exception_value, traceback):
         self.close()
 
-    def _connect_td_presto(self, apikey, database):
-        return prestodb.dbapi.connect(
-            host='api-presto.treasuredata.com',
-            port=443,
-            http_scheme='https',
-            user=apikey,
-            catalog='td-presto',
-            schema=database
-        )
-
-    def _connect_td_hive(self, apikey, database):
-        return tdclient.connect(apikey=apikey, db=database, type='hive')
+    def _connect_query_engines(self, apikey, database):
+        self.presto = PrestoQueryEngine(apikey, database)
+        self.hive = HiveQueryEngine(apikey, database)
