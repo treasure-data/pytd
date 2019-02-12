@@ -25,12 +25,18 @@ client = pytd.Client(database='sample_datasets')
 # >>> pytd.Client(apikey='1/XXX', database='sample_datasets')
 ```
 
-Issue query and retrieve the result:
+Issue Presto query and retrieve the result:
 
 ```py
+client.query('select symbol, count(1) as cnt from nasdaq group by 1 order by 1')
+# {'columns': ['symbol', 'cnt'], 'data': [['AAIT', 590], ['AAL', 82], ['AAME', 9252], ..., ['ZUMZ', 2364]]}
+```
 
-client.query('select symbol, count(1) as cnt from nasdaq group by 1 order by 2 desc')
-# {'data': [['CRRC', 9268], ['MPET', 9268], ['HELE', 9268], ..., ['ADPVV', 2]], 'columns': ['symbol', 'cnt']}
+In case of Hive:
+
+```py
+client.query('select hivemall_version()', engine='hive')
+# {'columns': ['_c0'], 'data': [['0.6.0-SNAPSHOT-201901-r01']]} (as of Feb, 2019)
 ```
 
 Once you install the package with PySpark dependencies, any data represented as `pandas.DataFrame` can directly be written to TD via [td-spark](https://support.treasuredata.com/hc/en-us/articles/360001487167-Apache-Spark-Driver-td-spark-FAQs):
@@ -56,6 +62,8 @@ Connect to the API first:
 from pytd.dbapi import connect
 
 conn = connect(database='sample_datasets')
+# or, connect with Hive:
+# >>> conn = connect(database='sample_datasets', engine='hive')
 ```
 
 `Cursor` defined by the specification allows us to flexibly fetch query results from a custom function:
@@ -68,7 +76,7 @@ def query(sql, connection):
     columns = [desc[0] for desc in cur.description]
     return {'data': rows, 'columns': columns}
 
-query('select symbol, count(1) as cnt from nasdaq group by 1 order by 2 desc', conn)
+query('select symbol, count(1) as cnt from nasdaq group by 1 order by 1', conn)
 ```
 
 Below is an example of generator-based iterative retrieval, just like [pandas.DataFrame.iterrows](https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.iterrows.html):
@@ -88,13 +96,13 @@ def iterrows(sql, connection):
         yield index, dict(zip(columns, row))
         index += 1
 
-for index, row in iterrows('select symbol, count(1) as cnt from nasdaq group by 1 order by 2 desc', conn):
+for index, row in iterrows('select symbol, count(1) as cnt from nasdaq group by 1 order by 1', conn):
     print(index, row)
-# 0 {'cnt': 9268, 'symbol': 'ASBC'}
-# 1 {'cnt': 9268, 'symbol': 'MGEE'}
-# 2 {'cnt': 9268, 'symbol': 'DIOD'}
-# 3 {'cnt': 9268, 'symbol': 'NTRS'}
-# 4 {'cnt': 9268, 'symbol': 'AGYS'}
+# 0 {'cnt': 590, 'symbol': 'AAIT'}
+# 1 {'cnt': 82, 'symbol': 'AAL'}
+# 2 {'cnt': 9252, 'symbol': 'AAME'}
+# 3 {'cnt': 253, 'symbol': 'AAOI'}
+# 4 {'cnt': 5980, 'symbol': 'AAON'}
 # ...
 ```
 
@@ -106,7 +114,7 @@ If you are familiar with [pandas-td](https://github.com/treasure-data/pandas-td)
 import pytd.pandas_td as td
 
 # Initialize query engine
-engine = td.create_engine('presto:sample_datasets')
+engine = td.create_engine('presto:sample_datasets')  # or, 'hive:sample_datasets'
 
 # Read Treasure Data query into a DataFrame
 df = td.read_td('select * from www_access', engine)

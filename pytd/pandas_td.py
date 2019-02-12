@@ -14,8 +14,9 @@ from .client import Client
 
 def create_engine(url, **kwargs):
     url = urlparse(url)
+    engine = url.scheme if url.scheme else 'presto'
     database = url.path[1:] if url.path.startswith('/') else url.path
-    return Client(database=database)
+    return Client(database=database, default_engine=engine)
 
 
 def read_td_query(query, engine, **kwargs):

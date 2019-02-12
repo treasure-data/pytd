@@ -4,8 +4,8 @@ from .error import NotSupportedError
 
 class Connection(object):
 
-    def __init__(self, apikey=None, database='sample_datasets'):
-        self.client = Client(apikey, database)
+    def __init__(self, apikey=None, database='sample_datasets', engine='presto'):
+        self.client = Client(apikey, database, default_engine=engine)
 
     def close(self):
         self.client.close()

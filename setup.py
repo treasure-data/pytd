@@ -51,7 +51,8 @@ def setup_package():
         install_requires=[
             'presto_python_client @ git+https://github.com/prestodb/presto-python-client.git@0.6.0#egg=presto_python_client',
             'pandas',
-            'six'
+            'six',
+            'td-client'
         ],
         extras_require={
             'spark': ['pyspark', 'pyarrow'],
