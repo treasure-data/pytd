@@ -13,7 +13,7 @@ class PrestoQueryEngineTestCase(unittest.TestCase):
 
     @patch.object(PrestoQueryEngine, '_connect', return_value=MagicMock())
     def setUp(self, connect):
-        self.presto = PrestoQueryEngine('1/XXX', 'sample_datasets')
+        self.presto = PrestoQueryEngine('1/XXX', 'https://api.treasuredata.com/', 'sample_datasets')
         self.assertTrue(connect.called)
 
     def test_cursor(self):
@@ -29,7 +29,7 @@ class HiveQueryEngineTestCase(unittest.TestCase):
 
     @patch.object(HiveQueryEngine, '_connect', return_value=MagicMock())
     def setUp(self, connect):
-        self.hive = HiveQueryEngine('1/XXX', 'sample_datasets')
+        self.hive = HiveQueryEngine('1/XXX', 'https://api.treasuredata.com/', 'sample_datasets')
         self.assertTrue(connect.called)
 
     def test_cursor(self):

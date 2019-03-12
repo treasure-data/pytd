@@ -15,14 +15,14 @@ pip install -e git+git@github.com:takuti/pytd
 
 - [Sample usage on Google Colaboratory](https://colab.research.google.com/drive/1ps_ChU-H2FvkeNlj1e1fcOebCt4ryN11)
 
-Set `TD_API_KEY` as an environment variable beforehand and create a client instance:
+Set `TD_API_KEY` and `TD_API_SERVER` as the environment variables beforehand and create a client instance:
 
 ```py
 import pytd
 
 client = pytd.Client(database='sample_datasets')
-# or, hard-code your API key:
-# >>> pytd.Client(apikey='1/XXX', database='sample_datasets')
+# or, hard-code your API key and API endpoint:
+# >>> pytd.Client(apikey='1/XXX', endpoint='https://api.treasuredata.com/', database='sample_datasets')
 ```
 
 Issue Presto query and retrieve the result:

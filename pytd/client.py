@@ -10,15 +10,21 @@ logger = logging.getLogger(__name__)
 
 class Client(object):
 
-    def __init__(self, apikey=None, database='sample_datasets', default_engine='presto'):
+    def __init__(self, apikey=None, endpoint=None, database='sample_datasets', default_engine='presto'):
         if apikey is None:
             if 'TD_API_KEY' not in os.environ:
                 raise ValueError("either argument 'apikey' or environment variable 'TD_API_KEY' should be set")
             apikey = os.environ['TD_API_KEY']
 
-        self._connect_query_engines(apikey, database)
+        if endpoint is None:
+            if 'TD_API_SERVER' not in os.environ:
+                raise ValueError("either argument 'endpoint' or environment variable 'TD_API_SERVER' should be set")
+            endpoint = os.environ['TD_API_SERVER']
+
+        self._connect_query_engines(apikey, endpoint, database)
 
         self.apikey = apikey
+        self.endpoint = endpoint
         self.database = database
         self.default_engine = default_engine
 
@@ -42,7 +48,12 @@ class Client(object):
 
     def load_table_from_dataframe(self, df, table, if_exists='error'):
         if self.writer is None:
-            self.writer = SparkWriter(self.apikey)
+            site = 'us'
+            if '.co.jp' in self.endpoint:
+                site = 'jp'
+            if 'eu01' in self.endpoint:
+                site = 'eu01'
+            self.writer = SparkWriter(self.apikey, site)
 
         destination = table
         if '.' not in table:
@@ -67,6 +78,6 @@ class Client(object):
     def __exit__(self, exception_type, exception_value, traceback):
         self.close()
 
-    def _connect_query_engines(self, apikey, database):
-        self.presto = PrestoQueryEngine(apikey, database)
-        self.hive = HiveQueryEngine(apikey, database)
+    def _connect_query_engines(self, apikey, endpoint, database):
+        self.presto = PrestoQueryEngine(apikey, endpoint.replace('api', 'api-presto'), database)
+        self.hive = HiveQueryEngine(apikey, endpoint, database)

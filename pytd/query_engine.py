@@ -1,4 +1,5 @@
 import abc
+import re
 import prestodb
 import tdclient
 
@@ -16,14 +17,14 @@ class QueryEngine(with_metaclass(abc.ABCMeta)):
         pass
 
     @abc.abstractmethod
-    def _connect(self, apikey, database):
+    def _connect(self, apikey, endpoint, database):
         pass
 
 
 class PrestoQueryEngine(QueryEngine):
 
-    def __init__(self, apikey, database):
-        self.engine = self._connect(apikey, database)
+    def __init__(self, apikey, endpoint, database):
+        self.engine = self._connect(apikey, endpoint, database)
 
     def cursor(self):
         return self.engine.cursor()
@@ -31,9 +32,10 @@ class PrestoQueryEngine(QueryEngine):
     def close(self):
         self.engine.close()
 
-    def _connect(self, apikey, database):
+    def _connect(self, apikey, endpoint, database):
+        http = re.compile(r'https?://')
         return prestodb.dbapi.connect(
-            host='api-presto.treasuredata.com',
+            host=http.sub('', endpoint).strip('/'),
             port=443,
             http_scheme='https',
             user=apikey,
@@ -44,8 +46,8 @@ class PrestoQueryEngine(QueryEngine):
 
 class HiveQueryEngine(QueryEngine):
 
-    def __init__(self, apikey, database):
-        self.engine = self._connect(apikey, database)
+    def __init__(self, apikey, endpoint, database):
+        self.engine = self._connect(apikey, endpoint, database)
 
     def cursor(self):
         return self.engine.cursor()
@@ -53,5 +55,5 @@ class HiveQueryEngine(QueryEngine):
     def close(self):
         self.engine.close()
 
-    def _connect(self, apikey, database):
-        return tdclient.connect(apikey=apikey, db=database, type='hive')
+    def _connect(self, apikey, endpoint, database):
+        return tdclient.connect(apikey=apikey, endpoint=endpoint, db=database, type='hive')

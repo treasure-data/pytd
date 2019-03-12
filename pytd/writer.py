@@ -29,8 +29,8 @@ class Writer(with_metaclass(abc.ABCMeta)):
 
 class SparkWriter(Writer):
 
-    def __init__(self, apikey):
-        self._setup_td_spark(apikey)
+    def __init__(self, apikey, site):
+        self._setup_td_spark(apikey, site)
 
     def write_dataframe(self, df, destination, if_exists):
         from py4j.protocol import Py4JJavaError
@@ -52,7 +52,7 @@ class SparkWriter(Writer):
     def close(self):
         self.td_spark.stop()
 
-    def _setup_td_spark(self, apikey):
+    def _setup_td_spark(self, apikey, site):
         try:
             from pyspark.sql import SparkSession
 
@@ -80,10 +80,11 @@ class SparkWriter(Writer):
             os.environ['PYSPARK_SUBMIT_ARGS'] = """
             --jars %s
             --conf spark.td.apikey=%s
+            --conf spark.td.site=%s
             --conf spark.serializer=org.apache.spark.serializer.KryoSerializer
             --conf spark.sql.execution.arrow.enabled=true
             pyspark-shell
-            """ % (path_td_spark, apikey)
+            """ % (path_td_spark, apikey, site)
 
             self.td_spark = SparkSession.builder.master('local[*]').getOrCreate()
         except ImportError:

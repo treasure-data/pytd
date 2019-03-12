@@ -14,7 +14,7 @@ class ClientTestCase(unittest.TestCase):
 
     @patch.object(Client, '_connect_query_engines', return_value=MagicMock())
     def setUp(self, connect_query_engines):
-        self.client = Client(apikey='APIKEY', database='sample_datasets')
+        self.client = Client(apikey='APIKEY', endpoint='ENDPOINT', database='sample_datasets')
 
         self.assertTrue(connect_query_engines.called)
         self.client.presto = MagicMock()
@@ -49,7 +49,7 @@ class ClientTestCase(unittest.TestCase):
 
 def test_client_context():
     with patch.object(Client, '_connect_query_engines', return_value=MagicMock()):
-        with Client(apikey='APIKEY', database='sample_datasets') as client:
+        with Client(apikey='APIKEY', endpoint='ENDPOINT', database='sample_datasets') as client:
             client.close = MagicMock()
             client.close.assert_not_called()
         client.close.assert_called_with()
