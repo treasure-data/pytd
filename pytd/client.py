@@ -40,7 +40,7 @@ class Client(object):
         if engine is None:
             engine = self.default_engine
         cur = self.get_cursor(engine)
-        sql = "-- pytd/{0}\n-- Client#query(engine={1})\n".format(pytd.__version__, engine) + sql
+        sql = "-- client: pytd/{0}\n-- Client#query(engine={1})\n".format(pytd.__version__, engine) + sql
         cur.execute(sql)
         rows = cur.fetchall()
         columns = [desc[0] for desc in cur.description]
