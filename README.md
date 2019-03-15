@@ -3,7 +3,9 @@ pytd
 
 [![Build Status](https://travis-ci.org/takuti/pytd.svg?branch=master)](https://travis-ci.org/takuti/pytd) [![Build status](https://ci.appveyor.com/api/projects/status/h1os6uvl598o7cau?svg=true)](https://ci.appveyor.com/project/takuti/pytd)
 
-[Treasure Data](https://www.treasuredata.com/) Driver for Python
+> _Quickly ***read**/**write*** your data directly **from**/**to** the **[Presto query engine](https://support.treasuredata.com/hc/en-us/articles/360001457427-Presto-Query-Engine-Introduction)** and **[Plazma primary storage](https://www.slideshare.net/treasure-data/td-techplazma)**_
+
+Unlike the other official Treasure Data API libraries for Python, [td-client-python](https://github.com/treasure-data/td-client-python) and [pandas-td](https://github.com/treasure-data/pandas-td/), **pytd** gives a direct access to their back-end query and storage engines. The seamless connection allows your Python code to read and write a large volume of data in a shorter time. It eventually makes your day-to-day data analytics work more efficient and productive.
 
 ## Installation
 
@@ -15,13 +17,13 @@ pip install -e git+git@github.com:takuti/pytd
 
 - [Sample usage on Google Colaboratory](https://colab.research.google.com/drive/1ps_ChU-H2FvkeNlj1e1fcOebCt4ryN11)
 
-Set `TD_API_KEY` and `TD_API_SERVER` as the environment variables beforehand and create a client instance:
+Set your [API key](https://support.treasuredata.com/hc/en-us/articles/360000763288-Get-API-Keys) and [endpoint](https://support.treasuredata.com/hc/en-us/articles/360001474288-Sites-and-Endpoints) to the environment variables, `TD_API_KEY` and `TD_API_SERVER`, respectively, and create a client instance:
 
 ```py
 import pytd
 
 client = pytd.Client(database='sample_datasets')
-# or, hard-code your API key and API endpoint:
+# or, hard-code your API key and endpoint:
 # >>> pytd.Client(apikey='1/XXX', endpoint='https://api.treasuredata.com/', database='sample_datasets')
 ```
 
