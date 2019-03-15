@@ -7,6 +7,18 @@ pytd
 
 Unlike the other official Treasure Data API libraries for Python, [td-client-python](https://github.com/treasure-data/td-client-python) and [pandas-td](https://github.com/treasure-data/pandas-td/), **pytd** gives a direct access to their back-end query and storage engines. The seamless connection allows your Python code to read and write a large volume of data in a shorter time. It eventually makes your day-to-day data analytics work more efficient and productive.
 
+## Project milestones
+
+This project is owned by [Takuya Kitazawa](https://www.linkedin.com/in/takuti), a senior engineer at [Arm Treasure Data](https://www.treasuredata.com), and updated based on the following milestones under his responsibility.
+
+- [ ] Finalize the implementation of basic read/write functionalities, which are comparable with [pandas-td](https://github.com/treasure-data/pandas-td).
+- [ ] Release to PyPI.
+- [ ] Transfer the repository ownership to [treasure-data](https://github.com/treasure-data).
+- [ ] Deprecate pandas-td.
+- [ ] Launch documentation page.
+
+_&ast; The list is subject to change._
+
 ## Installation
 
 ```sh
