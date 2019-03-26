@@ -46,7 +46,7 @@ class SparkWriter(Writer):
             sdf.write.mode(if_exists).format('com.treasuredata.spark').option('table', destination).save()
         except Py4JJavaError as e:
             if 'API_ACCESS_FAILURE' in str(e.java_exception):
-                raise PermissionError('failed to access to Treasure Data Plazma API. Contact <sales@treasure-data.com> to enable access rights.')
+                raise PermissionError('failed to access to Treasure Data Plazma API. Contact customer support to enable access rights.')
             raise RuntimeError('failed to load table via td-spark: ' + str(e.java_exception))
 
     def close(self):
