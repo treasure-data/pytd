@@ -14,6 +14,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 TD_SPARK_BASE_URL = 'https://s3.amazonaws.com/td-spark/%s'
+TD_SPARK_JAR_NAME = 'td-spark-assembly_2.11-1.1.0.jar'
 
 
 class Writer(with_metaclass(abc.ABCMeta)):
@@ -58,11 +59,10 @@ class SparkWriter(Writer):
         except ImportError:
             raise RuntimeError('PySpark is not installed')
 
-        jarname = 'td-spark-assembly_2.11-1.1.0.jar'
-        path_td_spark = os.path.join(os.path.dirname(os.path.abspath(__file__)), jarname)
+        path_td_spark = os.path.join(os.path.dirname(os.path.abspath(__file__)), TD_SPARK_JAR_NAME)
 
         if not os.path.exists(path_td_spark):
-            download_url = TD_SPARK_BASE_URL % jarname
+            download_url = TD_SPARK_BASE_URL % TD_SPARK_JAR_NAME
             try:
                 response = urlopen(download_url)
             except HTTPError:
