@@ -55,39 +55,40 @@ class SparkWriter(Writer):
     def _setup_td_spark(self, apikey, site):
         try:
             from pyspark.sql import SparkSession
-
-            jarname = 'td-spark-assembly_2.11-1.1.0.jar'
-            path_td_spark = os.path.join(os.path.dirname(os.path.abspath(__file__)), jarname)
-
-            if not os.path.exists(path_td_spark):
-                download_url = TD_SPARK_BASE_URL % jarname
-                try:
-                    response = urlopen(download_url)
-                except HTTPError:
-                    raise RuntimeError('failed to access to the download URL: ' + download_url)
-
-                logger.info('Downloading td-spark...')
-                try:
-                    with open(path_td_spark, 'w+b') as f:
-                        f.write(response.read())
-                except Exception:
-                    os.remove(path_td_spark)
-                    raise
-                logger.info('Completed to download')
-
-                response.close()
-
-            os.environ['PYSPARK_SUBMIT_ARGS'] = """
-            --jars %s
-            --conf spark.td.apikey=%s
-            --conf spark.td.site=%s
-            --conf spark.serializer=org.apache.spark.serializer.KryoSerializer
-            --conf spark.sql.execution.arrow.enabled=true
-            pyspark-shell
-            """ % (path_td_spark, apikey, site)
-
-            self.td_spark = SparkSession.builder.master('local[*]').getOrCreate()
         except ImportError:
             raise RuntimeError('PySpark is not installed')
+
+        jarname = 'td-spark-assembly_2.11-1.1.0.jar'
+        path_td_spark = os.path.join(os.path.dirname(os.path.abspath(__file__)), jarname)
+
+        if not os.path.exists(path_td_spark):
+            download_url = TD_SPARK_BASE_URL % jarname
+            try:
+                response = urlopen(download_url)
+            except HTTPError:
+                raise RuntimeError('failed to access to the download URL: ' + download_url)
+
+            logger.info('Downloading td-spark...')
+            try:
+                with open(path_td_spark, 'w+b') as f:
+                    f.write(response.read())
+            except Exception:
+                os.remove(path_td_spark)
+                raise
+            logger.info('Completed to download')
+
+            response.close()
+
+        os.environ['PYSPARK_SUBMIT_ARGS'] = """
+        --jars %s
+        --conf spark.td.apikey=%s
+        --conf spark.td.site=%s
+        --conf spark.serializer=org.apache.spark.serializer.KryoSerializer
+        --conf spark.sql.execution.arrow.enabled=true
+        pyspark-shell
+        """ % (path_td_spark, apikey, site)
+
+        try:
+            self.td_spark = SparkSession.builder.master('local[*]').getOrCreate()
         except Exception as e:
             raise RuntimeError('failed to connect to td-spark: ' + e)
