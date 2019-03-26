@@ -48,12 +48,7 @@ class Client(object):
 
     def load_table_from_dataframe(self, df, table, if_exists='error'):
         if self.writer is None:
-            site = 'us'
-            if '.co.jp' in self.endpoint:
-                site = 'jp'
-            if 'eu01' in self.endpoint:
-                site = 'eu01'
-            self.writer = SparkWriter(self.apikey, site)
+            self.writer = SparkWriter(self.apikey, self.endpoint)
 
         destination = table
         if '.' not in table:

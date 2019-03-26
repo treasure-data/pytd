@@ -14,7 +14,7 @@ class SparkWriterTestCase(unittest.TestCase):
 
     @patch.object(SparkWriter, '_setup_td_spark', return_value=MagicMock())
     def setUp(self, _setup_td_spark):
-        self.writer = SparkWriter('1/XXX', 'us')
+        self.writer = SparkWriter('1/XXX', 'ENDPOINT')
         self.assertTrue(_setup_td_spark.called)
         self.writer.td_spark = MagicMock()
 

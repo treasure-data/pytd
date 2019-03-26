@@ -30,7 +30,13 @@ class Writer(with_metaclass(abc.ABCMeta)):
 
 class SparkWriter(Writer):
 
-    def __init__(self, apikey, site):
+    def __init__(self, apikey, endpoint):
+        site = 'us'
+        if '.co.jp' in endpoint:
+            site = 'jp'
+        if 'eu01' in endpoint:
+            site = 'eu01'
+
         self._setup_td_spark(apikey, site)
 
     def write_dataframe(self, df, destination, if_exists):
