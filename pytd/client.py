@@ -20,12 +20,11 @@ class Client(object):
                 raise ValueError("either argument 'endpoint' or environment variable 'TD_API_SERVER' should be set")
             endpoint = os.environ['TD_API_SERVER']
 
-        self._connect_query_engine(apikey, endpoint, database, engine, header)
-
         self.apikey = apikey
         self.endpoint = endpoint
         self.database = database
-        self.header = header
+
+        self._connect_query_engine(engine, header)
 
         self.writer = None
 
@@ -54,10 +53,10 @@ class Client(object):
     def __exit__(self, exception_type, exception_value, traceback):
         self.close()
 
-    def _connect_query_engine(self, apikey, endpoint, database, engine, header):
+    def _connect_query_engine(self, engine, header):
         if engine == 'presto':
-            self.engine = PrestoQueryEngine(apikey, endpoint, database, header)
+            self.engine = PrestoQueryEngine(self.apikey, self.endpoint, self.database, header)
         elif engine == 'hive':
-            self.engine = HiveQueryEngine(apikey, endpoint, database, header)
+            self.engine = HiveQueryEngine(self.apikey, self.endpoint, self.database, header)
         else:
             raise ValueError('`engine` should be "presto" or "hive"')
