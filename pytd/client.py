@@ -1,4 +1,5 @@
 import os
+import six
 import logging
 
 from pytd.version import __version__
@@ -10,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class Client(object):
 
-    def __init__(self, apikey=None, endpoint=None, database='sample_datasets', default_engine='presto'):
+    def __init__(self, apikey=None, endpoint=None, database='sample_datasets', default_engine='presto', header=True):
         if apikey is None:
             if 'TD_API_KEY' not in os.environ:
                 raise ValueError("either argument 'apikey' or environment variable 'TD_API_KEY' should be set")
@@ -27,6 +28,7 @@ class Client(object):
         self.endpoint = endpoint
         self.database = database
         self.default_engine = default_engine
+        self.header = header
 
         self.writer = None
 
@@ -40,7 +42,7 @@ class Client(object):
         if engine is None:
             engine = self.default_engine
         cur = self.get_cursor(engine)
-        sql = "-- client: pytd/{0}\n-- Client#query(engine={1})\n".format(pytd.__version__, engine) + sql
+        sql = self._create_header("Client#query(engine={0})".format(engine)) + sql
         cur.execute(sql)
         rows = cur.fetchall()
         columns = [desc[0] for desc in cur.description]
@@ -76,3 +78,18 @@ class Client(object):
     def _connect_query_engines(self, apikey, endpoint, database):
         self.presto = PrestoQueryEngine(apikey, endpoint.replace('api', 'api-presto'), database)
         self.hive = HiveQueryEngine(apikey, endpoint, database)
+
+    def _create_header(self, extra_rows=None):
+        if self.header is False:
+            header = ''
+        elif isinstance(self.header, six.string_types):
+            header = "-- {0}\n".format(self.header)
+        else:
+            header = "-- client: pytd/{0}\n".format(__version__)
+
+        if isinstance(extra_rows, six.string_types):
+            header += "-- {0}\n".format(extra_rows)
+        elif isinstance(extra_rows, (list, tuple)):
+            header += ''.join(["-- {0}\n".format(row) for row in extra_rows])
+
+        return header
