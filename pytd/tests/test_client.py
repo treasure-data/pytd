@@ -12,26 +12,21 @@ except ImportError:
 
 class ClientTestCase(unittest.TestCase):
 
-    @patch.object(Client, '_connect_query_engines', return_value=MagicMock())
-    def setUp(self, connect_query_engines):
+    @patch.object(Client, '_get_engine', return_value=MagicMock())
+    def setUp(self, connect_query_engine):
         self.client = Client(apikey='APIKEY', endpoint='ENDPOINT', database='sample_datasets')
 
-        self.assertTrue(connect_query_engines.called)
-        self.client.presto = MagicMock()
-        self.client.hive = MagicMock()
+        self.assertTrue(connect_query_engine.called)
+        self.client.engine = MagicMock()
 
-        cursor = MagicMock(return_value=MagicMock())
-        cursor.description = [('col1', 'int'), ('col2', 'string')]
-        cursor.fetchall.return_value = [[1, 'a'], [2, 'b']]
-
-        self.client.get_cursor = MagicMock(return_value=cursor)
+        res = {'columns': ['col1', 'col2'], 'data': [[1, 'a'], [2, 'b']]}
+        self.client.engine.execute = MagicMock(return_value=res)
 
     def test_close(self):
         self.assertTrue(self.client.writer is None)
         self.client.writer = MagicMock()
         self.client.close()
-        self.assertTrue(self.client.presto.close.called)
-        self.assertTrue(self.client.hive.close.called)
+        self.assertTrue(self.client.engine.close.called)
         self.assertTrue(self.client.writer.close.called)
 
     def test_query(self):
@@ -48,7 +43,7 @@ class ClientTestCase(unittest.TestCase):
 
 
 def test_client_context():
-    with patch.object(Client, '_connect_query_engines', return_value=MagicMock()):
+    with patch.object(Client, '_get_engine', return_value=MagicMock()):
         with Client(apikey='APIKEY', endpoint='ENDPOINT', database='sample_datasets') as client:
             client.close = MagicMock()
             client.close.assert_not_called()
