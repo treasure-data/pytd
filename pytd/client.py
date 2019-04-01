@@ -24,7 +24,7 @@ class Client(object):
         self.endpoint = endpoint
         self.database = database
 
-        self._connect_query_engine(engine, header)
+        self.engine = self._get_engine(engine, header)
 
         self.writer = None
 
@@ -53,10 +53,10 @@ class Client(object):
     def __exit__(self, exception_type, exception_value, traceback):
         self.close()
 
-    def _connect_query_engine(self, engine, header):
+    def _get_engine(self, engine, header):
         if engine == 'presto':
-            self.engine = PrestoQueryEngine(self.apikey, self.endpoint, self.database, header)
+            return PrestoQueryEngine(self.apikey, self.endpoint, self.database, header)
         elif engine == 'hive':
-            self.engine = HiveQueryEngine(self.apikey, self.endpoint, self.database, header)
+            return HiveQueryEngine(self.apikey, self.endpoint, self.database, header)
         else:
             raise ValueError('`engine` should be "presto" or "hive"')
