@@ -1,8 +1,9 @@
 import abc
 import re
-import pytd
 import prestodb
 import tdclient
+
+from pytd.version import __version__
 
 from six import with_metaclass
 
@@ -35,7 +36,7 @@ class PrestoQueryEngine(QueryEngine):
 
     def _connect(self, apikey, endpoint, database):
         http = re.compile(r'https?://')
-        user_agent = 'pytd/%s (Presto; prestodb/%s)' % (pytd.__version__, prestodb.__version__)
+        user_agent = 'pytd/%s (Presto; prestodb/%s)' % (__version__, prestodb.__version__)
         return prestodb.dbapi.connect(
             host=http.sub('', endpoint).strip('/'),
             port=443,
@@ -59,7 +60,7 @@ class HiveQueryEngine(QueryEngine):
         self.engine.close()
 
     def _connect(self, apikey, endpoint, database):
-        user_agent = 'pytd/%s (Hive; tdclient/%s)' % (pytd.__version__, tdclient.__version__)
+        user_agent = 'pytd/%s (Hive; tdclient/%s)' % (__version__, tdclient.__version__)
         return tdclient.connect(
             apikey=apikey,
             endpoint=endpoint,

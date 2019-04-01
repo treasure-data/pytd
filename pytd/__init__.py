@@ -1,3 +1,4 @@
+from .version import __version__
 from .client import Client
 
 import logging
@@ -5,8 +6,6 @@ import logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
 logger.setLevel(logging.INFO)
-
-__version__ = '0.0.1'
 
 __all__ = [
     '__version__',

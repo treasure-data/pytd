@@ -1,7 +1,7 @@
 import os
 import logging
 
-import pytd
+from pytd.version import __version__
 from pytd.writer import SparkWriter
 from pytd.query_engine import PrestoQueryEngine, HiveQueryEngine
 
