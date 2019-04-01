@@ -66,7 +66,7 @@ class PrestoQueryEngine(QueryEngine):
         http = re.compile(r'https?://')
         user_agent = 'pytd/%s (Presto; prestodb/%s)' % (__version__, prestodb.__version__)
         return prestodb.dbapi.connect(
-            host=http.sub('', self.endpoint).strip('/'),
+            host=http.sub('', self.endpoint).strip('/').replace('api', 'api-presto'),
             port=443,
             http_scheme='https',
             user=self.apikey,
