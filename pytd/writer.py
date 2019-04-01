@@ -20,7 +20,7 @@ TD_SPARK_JAR_NAME = 'td-spark-assembly_2.11-1.1.0.jar'
 class Writer(with_metaclass(abc.ABCMeta)):
 
     @abc.abstractmethod
-    def write_dataframe(self, df, destination, if_exists):
+    def write_dataframe(self, df, database, table, if_exists):
         pass
 
     @abc.abstractmethod
@@ -39,11 +39,15 @@ class SparkWriter(Writer):
 
         self._setup_td_spark(apikey, site)
 
-    def write_dataframe(self, df, destination, if_exists):
+    def write_dataframe(self, df, database, table, if_exists):
         from py4j.protocol import Py4JJavaError
 
         if if_exists not in ('error', 'overwrite', 'append', 'ignore'):
             raise ValueError('invalid valud for if_exists: %s' % if_exists)
+
+        destination = table
+        if '.' not in table:
+            destination = database + '.' + table
 
         # normalize column names so it contains only alphanumeric and `_`
         df = df.rename(lambda c: re.sub(r'[^a-zA-Z0-9]', ' ', str(c)).lower().replace(' ', '_'), axis='columns')

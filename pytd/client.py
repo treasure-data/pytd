@@ -41,11 +41,7 @@ class Client(object):
         if self.writer is None:
             self.writer = SparkWriter(self.apikey, self.endpoint)
 
-        destination = table
-        if '.' not in table:
-            destination = self.database + '.' + table
-
-        self.writer.write_dataframe(df, destination, if_exists)
+        self.writer.write_dataframe(df, self.database, table, if_exists)
 
     def __enter__(self):
         return self
