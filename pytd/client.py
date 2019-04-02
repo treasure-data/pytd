@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class Client(object):
 
-    def __init__(self, apikey=None, endpoint=None, database='sample_datasets', engine='presto', header=True):
+    def __init__(self, apikey=None, endpoint=None, database='sample_datasets', engine='presto', header=True, **kwargs):
         if apikey is None:
             if 'TD_API_KEY' not in os.environ:
                 raise ValueError("either argument 'apikey' or environment variable 'TD_API_KEY' should be set")
