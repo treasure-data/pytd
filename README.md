@@ -9,7 +9,7 @@ Unlike the other official Treasure Data API libraries for Python, [td-client-pyt
 
 ## Project milestones
 
-This project is owned by [Takuya Kitazawa](https://www.linkedin.com/in/takuti), a senior engineer at [Arm Treasure Data](https://www.treasuredata.com), and updated based on the following milestones under his responsibility.
+This project is owned by [Takuya Kitazawa](https://www.linkedin.com/in/takuti), an engineer at [Arm Treasure Data](https://www.treasuredata.com), and updated based on the following milestones under his responsibility.
 
 - [ ] Finalize the implementation of basic read/write functionalities, which are comparable with [pandas-td](https://github.com/treasure-data/pandas-td).
 - [ ] Release to PyPI.
@@ -35,8 +35,8 @@ Set your [API key](https://support.treasuredata.com/hc/en-us/articles/3600007632
 import pytd
 
 client = pytd.Client(database='sample_datasets')
-# or, hard-code your API key and endpoint:
-# >>> pytd.Client(apikey='1/XXX', endpoint='https://api.treasuredata.com/', database='sample_datasets')
+# or, hard-code your API key, endpoint, and/or query engine:
+# >>> pytd.Client(apikey='1/XXX', endpoint='https://api.treasuredata.com/', database='sample_datasets', engine='presto')
 ```
 
 Issue Presto query and retrieve the result:
@@ -49,7 +49,8 @@ client.query('select symbol, count(1) as cnt from nasdaq group by 1 order by 1')
 In case of Hive:
 
 ```py
-client.query('select hivemall_version()', engine='hive')
+client = pytd.Client(database='sample_datasets', engine='hive')
+client.query('select hivemall_version()')
 # {'columns': ['_c0'], 'data': [['0.6.0-SNAPSHOT-201901-r01']]} (as of Feb, 2019)
 ```
 
@@ -138,7 +139,10 @@ df = td.read_td_table('nasdaq', engine, limit=10000)
 
 # Write a DataFrame to a Treasure Data table
 con = td.connect()
-td.to_td(df, 'takuti.test_table', con, if_exists='replace')
+td.to_td(td.to_td(df.drop(columns=['time']), 'takuti.test_table', con, if_exists='replace'),
+         'takuti.test_table',
+         con,
+         if_exists='replace')
 ```
 
 However, it should be noted that only a small portion of the original pandas-td capability is supported in this package. We highly recommend to replace those code with new `pytd` functions as soon as possible since the limited compatibility is not actively maintained.
