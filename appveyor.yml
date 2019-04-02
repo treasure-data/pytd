@@ -11,6 +11,7 @@ environment:
 
     # dummy for unit testing
     TD_API_KEY: "1/XXX"
+    TD_API_SERVER: "https://api.treasure-data.com/"
 
   matrix:
     #- PYTHON: "C:\\Python27"

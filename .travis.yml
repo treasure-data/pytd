@@ -4,8 +4,8 @@ python:
   - 2.7
   - 3.6
 
-env:
-  - TD_API_KEY=1/XXX  # dummy for unit testing
+env:  # dummy for unit testing
+  - TD_API_KEY=1/XXX TD_API_SERVER=https://api.treasure-data.com/
 
 before_install:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
