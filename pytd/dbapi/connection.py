@@ -14,9 +14,7 @@ class Connection(object):
         kwargs['apikey'] = apikey
 
         if endpoint is None:
-            if 'TD_API_SERVER' not in os.environ:
-                raise ValueError("either argument 'endpoint' or environment variable 'TD_API_SERVER' should be set")
-            endpoint = os.environ['TD_API_SERVER']
+            endpoint = 'https://api.treasuredata.com' if ('TD_API_SERVER' not in os.environ) else os.environ['TD_API_SERVER']
         kwargs['endpoint'] = endpoint
 
         self.client = Client(**kwargs)
