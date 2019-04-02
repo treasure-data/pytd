@@ -41,7 +41,7 @@ class Connection(object):
         raise NotSupportedError
 
     def cursor(self):
-        return self.client.get_cursor()
+        return self.client.engine.cursor()
 
     def __enter__(self):
         return self

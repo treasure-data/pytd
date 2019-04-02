@@ -1,5 +1,5 @@
 from pytd.dbapi import Connection, NotSupportedError
-from pytd.dbapi import connection  # noqa
+from pytd.dbapi import connection  # NOQA
 
 import unittest
 try:
@@ -31,7 +31,7 @@ class ConnectionTestCase(unittest.TestCase):
 
     def test_cursor(self):
         self.conn.cursor()
-        self.mock_client.get_cursor.assert_called_with()
+        self.mock_client.engine.cursor.assert_called_with()
 
 
 def test_connection_context():
