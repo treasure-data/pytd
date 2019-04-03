@@ -50,7 +50,7 @@ def setup_package():
         packages=find_packages(exclude=['*tests*']),
         install_requires=[
             'presto_python_client @ git+https://github.com/prestodb/presto-python-client.git@0.6.0#egg=presto_python_client',
-            'pandas>=0.23.0',
+            'pandas>=0.22.0',
             'six>=1.11.0',
             'td-client>=0.12.0'
         ],
