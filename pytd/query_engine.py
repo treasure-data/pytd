@@ -33,7 +33,7 @@ class QueryEngine(six.with_metaclass(abc.ABCMeta)):
         if isinstance(extra_lines, six.string_types):
             header += "-- {0}\n".format(extra_lines)
         elif isinstance(extra_lines, (list, tuple)):
-            header += ''.join(["-- {0}\n".format(row) for row in extra_lines])
+            header += ''.join(["-- {0}\n".format(line) for line in extra_lines])
 
         return header
 
