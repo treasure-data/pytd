@@ -4,13 +4,6 @@ import time
 import datetime
 import pandas as pd
 
-try:
-    # Python 3.x
-    from urllib.parse import urlparse
-except ImportError:
-    # Python 2.x
-    from urlparse import urlparse
-
 from pytd.writer import SparkWriter
 from pytd.query_engine import PrestoQueryEngine, HiveQueryEngine
 from pytd.dbapi.connection import Connection
