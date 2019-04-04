@@ -1,5 +1,3 @@
-import os
-
 from ..client import Client
 from .error import NotSupportedError
 
@@ -7,16 +5,6 @@ from .error import NotSupportedError
 class Connection(object):
 
     def __init__(self, apikey=None, endpoint=None, **kwargs):
-        if apikey is None:
-            if 'TD_API_KEY' not in os.environ:
-                raise ValueError("either argument 'apikey' or environment variable 'TD_API_KEY' should be set")
-            apikey = os.environ['TD_API_KEY']
-        kwargs['apikey'] = apikey
-
-        if endpoint is None:
-            endpoint = 'https://api.treasuredata.com' if ('TD_API_SERVER' not in os.environ) else os.environ['TD_API_SERVER']
-        kwargs['endpoint'] = endpoint
-
         self.client = Client(**kwargs)
 
     @property
