@@ -4,7 +4,7 @@ import six
 import prestodb
 import tdclient
 
-from pytd.version import __version__
+from .version import __version__
 
 
 class QueryEngine(six.with_metaclass(abc.ABCMeta)):

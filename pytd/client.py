@@ -1,8 +1,8 @@
 import os
 import logging
 
-from pytd.writer import SparkWriter
-from pytd.query_engine import PrestoQueryEngine, HiveQueryEngine
+from .writer import SparkWriter
+from .query_engine import PrestoQueryEngine, HiveQueryEngine
 
 logger = logging.getLogger(__name__)
 
