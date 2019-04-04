@@ -28,7 +28,7 @@ class QueryEngine(six.with_metaclass(abc.ABCMeta)):
         elif isinstance(self.header, six.string_types):
             header = "-- {0}\n".format(self.header)
         else:
-            header = "-- client: pytd/{0}\n".format(__version__)
+            header = "-- client: {0}\n".format(self.get_user_agent())
 
         if isinstance(extra_lines, six.string_types):
             header += "-- {0}\n".format(extra_lines)
@@ -36,6 +36,10 @@ class QueryEngine(six.with_metaclass(abc.ABCMeta)):
             header += ''.join(["-- {0}\n".format(line) for line in extra_lines])
 
         return header
+
+    @abc.abstractmethod
+    def get_user_agent(self):
+        pass
 
     @abc.abstractmethod
     def cursor(self):
@@ -64,7 +68,6 @@ class PrestoQueryEngine(QueryEngine):
 
     def _connect(self):
         http = re.compile(r'https?://')
-        user_agent = 'pytd/%s (Presto; prestodb/%s)' % (__version__, prestodb.__version__)
         return prestodb.dbapi.connect(
             host=http.sub('', self.endpoint).strip('/').replace('api', 'api-presto'),
             port=443,
@@ -72,8 +75,11 @@ class PrestoQueryEngine(QueryEngine):
             user=self.apikey,
             catalog='td-presto',
             schema=self.database,
-            http_headers={'user-agent': user_agent}
+            http_headers={'user-agent': self.get_user_agent()}
         )
+
+    def get_user_agent(self):
+        return 'pytd/%s (Presto; prestodb/%s)' % (__version__, prestodb.__version__)
 
 
 class HiveQueryEngine(QueryEngine):
@@ -89,11 +95,13 @@ class HiveQueryEngine(QueryEngine):
         self.engine.close()
 
     def _connect(self):
-        user_agent = 'pytd/%s (Hive; tdclient/%s)' % (__version__, tdclient.__version__)
         return tdclient.connect(
             apikey=self.apikey,
             endpoint=self.endpoint,
             db=self.database,
-            user_agent=user_agent,
+            user_agent=self.get_user_agent(),
             type='hive'
         )
+
+    def get_user_agent(self):
+        return 'pytd/%s (Hive; tdclient/%s)' % (__version__, tdclient.__version__)
