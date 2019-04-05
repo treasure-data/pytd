@@ -5,6 +5,8 @@ from .error import NotSupportedError
 class Connection(object):
 
     def __init__(self, apikey=None, endpoint=None, **kwargs):
+        kwargs['apikey'] = apikey
+        kwargs['endpoint'] = endpoint
         self.client = Client(**kwargs)
 
     @property
