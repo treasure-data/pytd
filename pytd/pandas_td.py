@@ -116,12 +116,7 @@ def read_td_query(query, engine, index_col=None, parse_dates=None, distributed_j
     else:
         header = engine.create_header('read_td_query')
 
-    frame = pd.DataFrame(**engine.execute(header + query))
-    if parse_dates is not None:
-        frame = _parse_dates(frame, parse_dates)
-    if index_col is not None:
-        frame.set_index(index_col, inplace=True)
-    return frame
+    return _to_dataframe(engine.execute(header + query), index_col, parse_dates)
 
 
 def read_td_job(job_id, engine, index_col=None, parse_dates=None):
@@ -152,13 +147,7 @@ def read_td_job(job_id, engine, index_col=None, parse_dates=None):
     """
     # get job
     job = engine.client.job(job_id)
-
-    frame = pd.DataFrame(**engine.get_job_result(job, wait=True))
-    if parse_dates is not None:
-        frame = _parse_dates(frame, parse_dates)
-    if index_col is not None:
-        frame.set_index(index_col, inplace=True)
-    return frame
+    return _to_dataframe(engine.get_job_result(job, wait=True), index_col, parse_dates)
 
 
 def read_td_table(table_name, engine, index_col=None, parse_dates=None, columns=None, time_range=None, limit=10000):
@@ -207,12 +196,7 @@ def read_td_table(table_name, engine, index_col=None, parse_dates=None, columns=
     if limit is not None:
         query += "LIMIT {0}\n".format(limit)
     # execute
-    frame = pd.DataFrame(**engine.execute(query))
-    if parse_dates is not None:
-        frame = _parse_dates(frame, parse_dates)
-    if index_col is not None:
-        frame.set_index(index_col, inplace=True)
-    return frame
+    return _to_dataframe(engine.execute(query), index_col, parse_dates)
 
 
 def _convert_time(time):
@@ -227,6 +211,27 @@ def _convert_time(time):
     else:
         raise ValueError('invalid time value: {0}'.format(time))
     return "'{0}'".format(t.replace(microsecond=0))
+
+
+def _to_dataframe(dic, index_col, parse_dates):
+    frame = pd.DataFrame(**dic)
+    if parse_dates is not None:
+        frame = _parse_dates(frame, parse_dates)
+    if index_col is not None:
+        frame.set_index(index_col, inplace=True)
+    return frame
+
+
+def _parse_dates(frame, parse_dates):
+    for name in parse_dates:
+        if type(parse_dates) is list:
+            frame[name] = pd.to_datetime(frame[name])
+        else:
+            if frame[name].dtype.kind == 'O':
+                frame[name] = pd.to_datetime(frame[name], format=parse_dates[name])
+            else:
+                frame[name] = pd.to_datetime(frame[name], unit=parse_dates[name])
+    return frame
 
 
 # alias
@@ -355,16 +360,4 @@ def _convert_date_format(frame, date_format=None):
                 return col.apply(lambda x: x.strftime(date_format))
             return col
         frame = frame.apply(_convert)
-    return frame
-
-
-def _parse_dates(frame, parse_dates):
-    for name in parse_dates:
-        if type(parse_dates) is list:
-            frame[name] = pd.to_datetime(frame[name])
-        else:
-            if frame[name].dtype.kind == 'O':
-                frame[name] = pd.to_datetime(frame[name], format=parse_dates[name])
-            else:
-                frame[name] = pd.to_datetime(frame[name], unit=parse_dates[name])
     return frame
