@@ -33,8 +33,9 @@ class QueryEngine(six.with_metaclass(abc.ABCMeta)):
 
     def create_header(self, extra_lines=None):
         if self.header is False:
-            header = ''
-        elif isinstance(self.header, six.string_types):
+            return ''
+
+        if isinstance(self.header, six.string_types):
             header = "-- {0}\n".format(self.header)
         else:
             header = "-- client: {0}\n".format(self.user_agent)

@@ -24,6 +24,9 @@ class PrestoQueryEngineTestCase(unittest.TestCase):
         self.assertEquals(ua, 'pytd/%s (Presto; prestodb/%s)' % (__version__, prestodb.__version__))
 
     def test_create_header(self):
+        presto_no_header = PrestoQueryEngine('1/XXX', 'https://api.treasuredata.com/', 'sample_datasets', False)
+        self.assertEquals(presto_no_header.create_header('foo'), '')
+
         ua = self.presto.user_agent
 
         header = self.presto.create_header()
@@ -52,6 +55,9 @@ class HiveQueryEngineTestCase(unittest.TestCase):
         self.assertTrue(connect.called)
 
     def test_user_agent(self):
+        hive_no_header = HiveQueryEngine('1/XXX', 'https://api.treasuredata.com/', 'sample_datasets', False)
+        self.assertEquals(hive_no_header.create_header('foo'), '')
+
         ua = self.hive.user_agent
         self.assertEquals(ua, 'pytd/%s (Hive; tdclient/%s)' % (__version__, tdclient.__version__))
 
