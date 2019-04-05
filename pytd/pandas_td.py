@@ -31,15 +31,19 @@ def create_engine(url, con=None, header=True, show_progress=5.0, clear_progress=
         Engine descriptor in the form "type://apikey@host/database?params..."
         Use shorthand notation "type:database?params..." for the default connection.
         pytd: "params" will be ignored since pytd.QueryEngine does not have any extra parameters.
+
     con : Connection, optional
         Handler returned by connect. If not given, default connection is used.
+
     header : string or boolean, default: True
         Prepend comment strings, in the form "-- comment", as a header of queries.
         Set False to disable header.
+
     show_progress : double or boolean, default: 5.0
         Number of seconds to wait before printing progress.
         Set False to disable progress entirely.
         pytd: This argument will be ignored.
+
     clear_progress : boolean, default: True
         If True, clear progress when query completed.
         pytd: This argument will be ignored.
@@ -87,18 +91,23 @@ def read_td_query(query, engine, index_col=None, parse_dates=None, distributed_j
     ----------
     query : string
         Query string to be executed.
+
     engine : QueryEngine
         Handler returned by create_engine.
+
     index_col : string, optional
         Column name to use as index for the returned DataFrame object.
+
     parse_dates : list or dict, optional
         - List of column names to parse as dates
         - Dict of {column_name: format string} where format string is strftime
           compatible in case of parsing string times or is one of (D, s, ns, ms, us)
           in case of parsing integer timestamps
+
     distributed_join : boolean, default: False
         (Presto only) If True, distributed join is enabled. If False, broadcast join is used.
         See https://prestodb.io/docs/current/release/release-0.77.html
+
     params : dict, optional
         Parameters to pass to execute method.
         Available parameters:
@@ -131,10 +140,13 @@ def read_td_job(job_id, engine, index_col=None, parse_dates=None):
     ----------
     job_id : integer
         Job ID.
+
     engine : QueryEngine
         Handler returned by create_engine.
+
     index_col : string, optional
         Column name to use as index for the returned DataFrame object.
+
     parse_dates : list or dict, optional
         - List of column names to parse as dates
         - Dict of {column_name: format string} where format string is strftime
@@ -161,20 +173,26 @@ def read_td_table(table_name, engine, index_col=None, parse_dates=None, columns=
     ----------
     table_name : string
         Name of Treasure Data table in database.
+
     engine : QueryEngine
         Handler returned by create_engine.
+
     index_col : string, optional
         Column name to use as index for the returned DataFrame object.
+
     parse_dates : list or dict, optional
         - List of column names to parse as dates
         - Dict of {column_name: format string} where format string is strftime
           compatible in case of parsing string times or is one of (D, s, ns, ms, us)
           in case of parsing integer timestamps
+
     columns : list, optional
         List of column names to select from table.
+
     time_range : tuple (start, end), optional
         Limit time range to select. "start" and "end" are one of None, integers,
         strings or datetime objects. "end" is exclusive, not included in the result.
+
     limit : int, default: 10,000
         Maximum number of rows to select.
 
@@ -254,30 +272,39 @@ def to_td(frame, name, con, if_exists='fail', time_col=None, time_index=None, in
     ----------
     frame : DataFrame
         DataFrame to be written.
+
     name : string
         Name of table to be written, in the form 'database.table'.
+
     con : Connection
         Connection to a Treasure Data account.
+
     if_exists : {'fail', 'replace', 'append'}, default: 'fail'
         - fail: If table exists, do nothing.
         - replace: If table exists, drop it, recreate it, and insert data.
         - append: If table exists, insert data. Create if does not exist.
+
     time_col : string, optional
         Column name to use as "time" column for the table. Column type must be
         integer (unixtime), datetime, or string. If None is given (default),
         then the current time is used as time values.
+
     time_index : int, optional
         Level of index to use as "time" column for the table. Set 0 for a single index.
         This parameter implies index=False.
+
     index : boolean, default: True
         Write DataFrame index as a column.
+
     index_label : string or sequence, default: None
         Column label for index column(s). If None is given (default) and index is True,
         then the index names are used. A sequence should be given if the DataFrame uses
         MultiIndex.
+
     chunksize : int, default: 10,000
         Number of rows to be inserted in each chunk from the dataframe.
         pytd: This argument will be ignored.
+
     date_format : string, default: None
         Format string for datetime objects
     """
