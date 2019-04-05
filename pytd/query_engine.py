@@ -11,6 +11,22 @@ logger = logging.getLogger(__name__)
 
 
 class QueryEngine(six.with_metaclass(abc.ABCMeta)):
+    """An interface to Treasure Data query engine.
+
+    Parameters
+    ----------
+    apikey : string
+        Treasure Data API key.
+
+    endpoint : string
+        Treasure Data API server.
+
+    database : string
+        Name of connected database.
+
+    header : string or boolean
+        Prepend comment strings, in the form "-- comment", as a header of queries.
+    """
 
     def __init__(self, apikey, endpoint, database, header):
         self.apikey = apikey
@@ -50,6 +66,19 @@ class QueryEngine(six.with_metaclass(abc.ABCMeta)):
         return {'data': rows, 'columns': columns}
 
     def create_header(self, extra_lines=[]):
+        """Build header comments.
+
+        Parameters
+        ----------
+        extra_lines : string or array-like, default: []
+            Comments appended to the default one, which corresponds to a user
+            agent string. If `self.header=None`, empty string is returned
+            regardless of this argument.
+
+        Returns
+        -------
+        string
+        """
         if self.header is False:
             return ''
 
@@ -66,6 +95,25 @@ class QueryEngine(six.with_metaclass(abc.ABCMeta)):
         return header
 
     def get_job_result(self, job, wait=True):
+        """Return result of a given Treasure Data job.
+
+        Parameters
+        ----------
+        job : tdclient.job_model.Job
+            Job object of tdclient.
+
+        wait : boolean, default: True
+            Tell if we wait until the job finishes.
+
+        Returns
+        -------
+        dict : keys ('data', 'columns')
+            'data'
+                List of rows. Every single row is represented as a list of
+                column values.
+            'columns'
+                List of column names.
+        """
         if wait:
             job.wait()
 
@@ -96,6 +144,22 @@ class QueryEngine(six.with_metaclass(abc.ABCMeta)):
 
 
 class PrestoQueryEngine(QueryEngine):
+    """An interface to Treasure Data Presto query engine.
+
+    Parameters
+    ----------
+    apikey : string
+        Treasure Data API key.
+
+    endpoint : string
+        Treasure Data API server.
+
+    database : string
+        Name of connected database.
+
+    header : string or boolean
+        Prepend comment strings, in the form "-- comment", as a header of queries.
+    """
 
     def __init__(self, apikey, endpoint, database, header):
         super(PrestoQueryEngine, self).__init__(apikey, endpoint, database, header)
@@ -103,12 +167,22 @@ class PrestoQueryEngine(QueryEngine):
 
     @property
     def user_agent(self):
+        """User agent passed to a Presto connection.
+        """
         return "pytd/{0} (Presto; prestodb/{1})".format(__version__, prestodb.__version__)
 
     def cursor(self):
+        """Get cursor defined by DB-API.
+
+        Returns
+        -------
+        prestodb.dbapi.Cursor
+        """
         return self.engine.cursor()
 
     def close(self):
+        """Close a connection to Presto.
+        """
         self.engine.close()
 
     def _connect(self):
@@ -125,6 +199,22 @@ class PrestoQueryEngine(QueryEngine):
 
 
 class HiveQueryEngine(QueryEngine):
+    """An interface to Treasure Data Hive query engine.
+
+    Parameters
+    ----------
+    apikey : string
+        Treasure Data API key.
+
+    endpoint : string
+        Treasure Data API server.
+
+    database : string
+        Name of connected database.
+
+    header : string or boolean
+        Prepend comment strings, in the form "-- comment", as a header of queries.
+    """
 
     def __init__(self, apikey, endpoint, database, header):
         super(HiveQueryEngine, self).__init__(apikey, endpoint, database, header)
@@ -132,12 +222,22 @@ class HiveQueryEngine(QueryEngine):
 
     @property
     def user_agent(self):
+        """User agent passed to a Hive connection.
+        """
         return "pytd/{0} (Hive; tdclient/{1})".format(__version__, tdclient.__version__)
 
     def cursor(self):
+        """Get cursor defined by DB-API.
+
+        Returns
+        -------
+        tdclient.cursor.Cursor
+        """
         return self.engine.cursor()
 
     def close(self):
+        """Close a connection to Hive.
+        """
         self.engine.close()
 
     def _connect(self):
