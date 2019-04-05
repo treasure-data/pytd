@@ -125,7 +125,40 @@ def read_td_query(query, engine, index_col=None, parse_dates=None, distributed_j
 
 
 def read_td_job(job_id, engine, index_col=None, parse_dates=None):
-    raise NotImplementedError('use td-client-python to retrieve a specific job_id: https://github.com/treasure-data/td-client-python')
+    """Read Treasure Data job result into a DataFrame.
+
+    Returns a DataFrame corresponding to the result set of the job.
+    This method waits for job completion if the specified job is still running.
+    Optionally provide an index_col parameter to use one of the columns as
+    the index, otherwise default integer index will be used.
+
+    Parameters
+    ----------
+    job_id : integer
+        Job ID.
+    engine : QueryEngine
+        Handler returned by create_engine.
+    index_col : string, optional
+        Column name to use as index for the returned DataFrame object.
+    parse_dates : list or dict, optional
+        - List of column names to parse as dates
+        - Dict of {column_name: format string} where format string is strftime
+          compatible in case of parsing string times or is one of (D, s, ns, ms, us)
+          in case of parsing integer timestamps
+
+    Returns
+    -------
+    DataFrame
+    """
+    # get job
+    job = engine.client.job(job_id)
+
+    frame = pd.DataFrame(**engine.get_job_result(job, wait=True))
+    if parse_dates is not None:
+        frame = _parse_dates(frame, parse_dates)
+    if index_col is not None:
+        frame.set_index(index_col, inplace=True)
+    return frame
 
 
 def read_td_table(table_name, engine, index_col=None, parse_dates=None, columns=None, time_range=None, limit=10000):

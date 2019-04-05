@@ -6,6 +6,9 @@ import tdclient
 
 from .version import __version__
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 class QueryEngine(six.with_metaclass(abc.ABCMeta)):
 
@@ -14,6 +17,8 @@ class QueryEngine(six.with_metaclass(abc.ABCMeta)):
         self.endpoint = endpoint
         self.database = database
         self.header = header
+
+        self.client = tdclient.Client(apikey=apikey, endpoint=endpoint, user_agent=self.get_user_agent())
 
     def execute(self, sql):
         cur = self.cursor()
@@ -36,6 +41,23 @@ class QueryEngine(six.with_metaclass(abc.ABCMeta)):
             header += ''.join(["-- {0}\n".format(line) for line in extra_lines])
 
         return header
+
+    def get_job_result(self, job, wait=True):
+        if wait:
+            job.wait()
+
+        if not job.success():
+            if job.debug and job.debug['stderr']:
+                logger.error(job.debug['stderr'])
+            raise RuntimeError("job {0} {1}".format(job.job_id, job.status()))
+
+        if not job.finished():
+            job.wait()
+
+        columns = [c[0] for c in job.result_schema]
+        rows = job.result()
+
+        return {'data': rows, 'columns': columns}
 
     @abc.abstractmethod
     def get_user_agent(self):
