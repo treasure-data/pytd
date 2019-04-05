@@ -19,8 +19,12 @@ class PrestoQueryEngineTestCase(unittest.TestCase):
         self.presto = PrestoQueryEngine('1/XXX', 'https://api.treasuredata.com/', 'sample_datasets', True)
         self.assertTrue(connect.called)
 
+    def test_user_agent(self):
+        ua = self.presto.user_agent
+        self.assertEquals(ua, 'pytd/%s (Presto; prestodb/%s)' % (__version__, prestodb.__version__))
+
     def test_create_header(self):
-        ua = self.presto.get_user_agent()
+        ua = self.presto.user_agent
 
         header = self.presto.create_header()
         self.assertEquals(header, "-- client: {0}\n".format(ua))
@@ -30,10 +34,6 @@ class PrestoQueryEngineTestCase(unittest.TestCase):
 
         header = self.presto.create_header(['foo', 'bar'])
         self.assertEquals(header, "-- client: {0}\n-- foo\n-- bar\n".format(ua))
-
-    def test_get_user_agent(self):
-        ua = self.presto.get_user_agent()
-        self.assertEquals(ua, 'pytd/%s (Presto; prestodb/%s)' % (__version__, prestodb.__version__))
 
     def test_cursor(self):
         self.presto.cursor()
@@ -51,8 +51,12 @@ class HiveQueryEngineTestCase(unittest.TestCase):
         self.hive = HiveQueryEngine('1/XXX', 'https://api.treasuredata.com/', 'sample_datasets', True)
         self.assertTrue(connect.called)
 
+    def test_user_agent(self):
+        ua = self.hive.user_agent
+        self.assertEquals(ua, 'pytd/%s (Hive; tdclient/%s)' % (__version__, tdclient.__version__))
+
     def test_create_header(self):
-        ua = self.hive.get_user_agent()
+        ua = self.hive.user_agent
 
         header = self.hive.create_header()
         self.assertEquals(header, "-- client: {0}\n".format(ua))
@@ -62,10 +66,6 @@ class HiveQueryEngineTestCase(unittest.TestCase):
 
         header = self.hive.create_header(['foo', 'bar'])
         self.assertEquals(header, "-- client: {0}\n-- foo\n-- bar\n".format(ua))
-
-    def test_get_user_agent(self):
-        ua = self.hive.get_user_agent()
-        self.assertEquals(ua, 'pytd/%s (Hive; tdclient/%s)' % (__version__, tdclient.__version__))
 
     def test_cursor(self):
         self.hive.cursor()

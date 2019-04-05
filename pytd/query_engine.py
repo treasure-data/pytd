@@ -18,7 +18,11 @@ class QueryEngine(six.with_metaclass(abc.ABCMeta)):
         self.database = database
         self.header = header
 
-        self.client = tdclient.Client(apikey=apikey, endpoint=endpoint, user_agent=self.get_user_agent())
+        self.client = tdclient.Client(apikey=apikey, endpoint=endpoint, user_agent=self.user_agent)
+
+    @property
+    def user_agent(self):
+        return "pytd/{0}".format(__version__)
 
     def execute(self, sql):
         cur = self.cursor()
@@ -33,7 +37,7 @@ class QueryEngine(six.with_metaclass(abc.ABCMeta)):
         elif isinstance(self.header, six.string_types):
             header = "-- {0}\n".format(self.header)
         else:
-            header = "-- client: {0}\n".format(self.get_user_agent())
+            header = "-- client: {0}\n".format(self.user_agent)
 
         if isinstance(extra_lines, six.string_types):
             header += "-- {0}\n".format(extra_lines)
@@ -60,10 +64,6 @@ class QueryEngine(six.with_metaclass(abc.ABCMeta)):
         return {'data': rows, 'columns': columns}
 
     @abc.abstractmethod
-    def get_user_agent(self):
-        pass
-
-    @abc.abstractmethod
     def cursor(self):
         pass
 
@@ -82,6 +82,10 @@ class PrestoQueryEngine(QueryEngine):
         super(PrestoQueryEngine, self).__init__(apikey, endpoint, database, header)
         self.engine = self._connect()
 
+    @property
+    def user_agent(self):
+        return "pytd/{0} (Presto; prestodb/{1})".format(__version__, prestodb.__version__)
+
     def cursor(self):
         return self.engine.cursor()
 
@@ -97,11 +101,8 @@ class PrestoQueryEngine(QueryEngine):
             user=self.apikey,
             catalog='td-presto',
             schema=self.database,
-            http_headers={'user-agent': self.get_user_agent()}
+            http_headers={'user-agent': self.user_agent}
         )
-
-    def get_user_agent(self):
-        return 'pytd/%s (Presto; prestodb/%s)' % (__version__, prestodb.__version__)
 
 
 class HiveQueryEngine(QueryEngine):
@@ -109,6 +110,10 @@ class HiveQueryEngine(QueryEngine):
     def __init__(self, apikey, endpoint, database, header):
         super(HiveQueryEngine, self).__init__(apikey, endpoint, database, header)
         self.engine = self._connect()
+
+    @property
+    def user_agent(self):
+        return "pytd/{0} (Hive; tdclient/{1})".format(__version__, tdclient.__version__)
 
     def cursor(self):
         return self.engine.cursor()
@@ -121,9 +126,6 @@ class HiveQueryEngine(QueryEngine):
             apikey=self.apikey,
             endpoint=self.endpoint,
             db=self.database,
-            user_agent=self.get_user_agent(),
+            user_agent=self.user_agent,
             type='hive'
         )
-
-    def get_user_agent(self):
-        return 'pytd/%s (Hive; tdclient/%s)' % (__version__, tdclient.__version__)
