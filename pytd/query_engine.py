@@ -22,16 +22,34 @@ class QueryEngine(six.with_metaclass(abc.ABCMeta)):
 
     @property
     def user_agent(self):
+        """User agent passed to a query engine connection.
+        """
         return "pytd/{0}".format(__version__)
 
     def execute(self, sql):
+        """Execute a given SQL statement and return results.
+
+        Parameters
+        ----------
+        sql : string
+            Query.
+
+        Returns
+        -------
+        dict : keys ('data', 'columns')
+            'data'
+                List of rows. Every single row is represented as a list of
+                column values.
+            'columns'
+                List of column names.
+        """
         cur = self.cursor()
         cur.execute(sql)
         rows = cur.fetchall()
         columns = [desc[0] for desc in cur.description]
         return {'data': rows, 'columns': columns}
 
-    def create_header(self, extra_lines=None):
+    def create_header(self, extra_lines=[]):
         if self.header is False:
             return ''
 
