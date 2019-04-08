@@ -29,6 +29,16 @@ class Writer(with_metaclass(abc.ABCMeta)):
 
 
 class SparkWriter(Writer):
+    """A writer module that loads Python data to Treasure Data.
+
+    Parameters
+    ----------
+    apikey : string
+        Treasure Data API key.
+
+    endpoint : string
+        Treasure Data API server.
+    """
 
     def __init__(self, apikey, endpoint):
         site = 'us'
@@ -40,6 +50,27 @@ class SparkWriter(Writer):
         self._setup_td_spark(apikey, site)
 
     def write_dataframe(self, df, database, table, if_exists):
+        """Write a given DataFrame to a Treasure Data table.
+
+        This method internally converts a given pandas.DataFrame into Spark
+        DataFrame, and directly writes to Treasure Data's main storage
+        so-called Plazma through a PySpark session.
+
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            Data loaded to a target table.
+
+        database : string
+            Name of target database. Ignored if a given table name contains `.`
+            as `database.table`.
+
+        table : string
+            Name of target table.
+
+        if_exists : {'error', 'overwrite', 'append', 'ignore'}, default: 'error'
+            What happens when a target table already exists.
+        """
         from py4j.protocol import Py4JJavaError
 
         if if_exists not in ('error', 'overwrite', 'append', 'ignore'):
@@ -61,6 +92,8 @@ class SparkWriter(Writer):
             raise RuntimeError('failed to load table via td-spark: ' + str(e.java_exception))
 
     def close(self):
+        """Close a PySpark session connected to Treasure Data.
+        """
         self.td_spark.stop()
 
     def _setup_td_spark(self, apikey, site):
