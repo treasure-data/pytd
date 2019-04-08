@@ -7,3 +7,4 @@ pyarrow
 nose
 mock
 wheel
+pytz

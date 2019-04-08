@@ -52,7 +52,8 @@ def setup_package():
             'presto_python_client @ git+https://github.com/prestodb/presto-python-client.git@0.6.0#egg=presto_python_client',
             'pandas>=0.22.0',
             'six>=1.11.0',
-            'td-client>=0.12.0'
+            'td-client>=0.12.0',
+            'pytz>=2018.5',
         ],
         extras_require={
             'spark': ['pyspark>=2.4.0', 'pyarrow>=0.11.0'],
