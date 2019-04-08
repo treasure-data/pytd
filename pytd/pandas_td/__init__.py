@@ -4,9 +4,9 @@ import time
 import datetime
 import pandas as pd
 
-from .writer import SparkWriter
-from .query_engine import PrestoQueryEngine, HiveQueryEngine
-from .dbapi.connection import Connection
+from ..writer import SparkWriter
+from ..query_engine import PrestoQueryEngine, HiveQueryEngine
+from ..dbapi.connection import Connection
 
 
 def connect(apikey=None, endpoint=None, **kwargs):
