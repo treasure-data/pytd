@@ -38,16 +38,23 @@ class SparkWriter(Writer):
 
     endpoint : string
         Treasure Data API server.
+
+    td_spark_path : string, optional
+        Path to td-spark-assembly_x.xx-x.x.x.jar. If not given, seek a path
+        `__file__ + TD_SPARK_JAR_NAME` by default.
+
+    download_if_missing : boolean, default: True
+        Download td-spark if it does not exist at the time of initialization.
     """
 
-    def __init__(self, apikey, endpoint):
+    def __init__(self, apikey, endpoint, td_spark_path=None, download_if_missing=True):
         site = 'us'
         if '.co.jp' in endpoint:
             site = 'jp'
         if 'eu01' in endpoint:
             site = 'eu01'
 
-        self._setup_td_spark(apikey, site)
+        self.td_spark = self._fetch_td_spark(apikey, site, td_spark_path, download_if_missing)
 
     def write_dataframe(self, df, database, table, if_exists):
         """Write a given DataFrame to a Treasure Data table.
@@ -96,31 +103,21 @@ class SparkWriter(Writer):
         """
         self.td_spark.stop()
 
-    def _setup_td_spark(self, apikey, site):
+    def _fetch_td_spark(self, apikey, site, td_spark_path, download_if_missing):
         try:
             from pyspark.sql import SparkSession
         except ImportError:
             raise RuntimeError('PySpark is not installed')
 
-        path_td_spark = os.path.join(os.path.dirname(os.path.abspath(__file__)), TD_SPARK_JAR_NAME)
+        if td_spark_path is None:
+            td_spark_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), TD_SPARK_JAR_NAME)
 
-        if not os.path.exists(path_td_spark):
-            download_url = TD_SPARK_BASE_URL % TD_SPARK_JAR_NAME
-            try:
-                response = urlopen(download_url)
-            except HTTPError:
-                raise RuntimeError('failed to access to the download URL: ' + download_url)
+        available = os.path.exists(td_spark_path)
 
-            logger.info('Downloading td-spark...')
-            try:
-                with open(path_td_spark, 'w+b') as f:
-                    f.write(response.read())
-            except Exception:
-                os.remove(path_td_spark)
-                raise
-            logger.info('Completed to download')
-
-            response.close()
+        if not available and download_if_missing:
+            self._download_td_spark(td_spark_path)
+        elif not available:
+            raise IOError('td-spark is not found and `download_if_missing` is False')
 
         os.environ['PYSPARK_SUBMIT_ARGS'] = """
         --jars %s
@@ -129,9 +126,27 @@ class SparkWriter(Writer):
         --conf spark.serializer=org.apache.spark.serializer.KryoSerializer
         --conf spark.sql.execution.arrow.enabled=true
         pyspark-shell
-        """ % (path_td_spark, apikey, site)
+        """ % (td_spark_path, apikey, site)
 
         try:
-            self.td_spark = SparkSession.builder.master('local[*]').getOrCreate()
+            return SparkSession.builder.master('local[*]').getOrCreate()
         except Exception as e:
             raise RuntimeError('failed to connect to td-spark: ' + e)
+
+    def _download_td_spark(self, destination):
+        download_url = TD_SPARK_BASE_URL % TD_SPARK_JAR_NAME
+        try:
+            response = urlopen(download_url)
+        except HTTPError:
+            raise RuntimeError('failed to access to the download URL: ' + download_url)
+
+        logger.info('Downloading td-spark...')
+        try:
+            with open(destination, 'w+b') as f:
+                f.write(response.read())
+        except Exception:
+            os.remove(destination)
+            raise
+        logger.info('Completed to download')
+
+        response.close()

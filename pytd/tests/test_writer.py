@@ -12,10 +12,10 @@ except ImportError:
 
 class SparkWriterTestCase(unittest.TestCase):
 
-    @patch.object(SparkWriter, '_setup_td_spark', return_value=MagicMock())
-    def setUp(self, _setup_td_spark):
+    @patch.object(SparkWriter, '_fetch_td_spark', return_value=MagicMock())
+    def setUp(self, _fetch_td_spark):
         self.writer = SparkWriter('1/XXX', 'ENDPOINT')
-        self.assertTrue(_setup_td_spark.called)
+        self.assertTrue(_fetch_td_spark.called)
         self.writer.td_spark = MagicMock()
 
     def test_write_dataframe(self):
