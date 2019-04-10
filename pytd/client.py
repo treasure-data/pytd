@@ -1,10 +1,7 @@
 import os
-import logging
 
 from .writer import SparkWriter
 from .query_engine import PrestoQueryEngine, HiveQueryEngine
-
-logger = logging.getLogger(__name__)
 
 
 class Client(object):
