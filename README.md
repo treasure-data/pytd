@@ -9,15 +9,7 @@ Unlike the other official Treasure Data API libraries for Python, [td-client-pyt
 
 ## Project milestones
 
-This project is owned by [Takuya Kitazawa](https://www.linkedin.com/in/takuti), an engineer at [Arm Treasure Data](https://www.treasuredata.com), and updated based on the following milestones under his responsibility.
-
-- [ ] Finalize the implementation of basic read/write functionalities, which are comparable with [pandas-td](https://github.com/treasure-data/pandas-td).
-- [ ] Release to PyPI.
-- [ ] Transfer the repository ownership to [treasure-data](https://github.com/treasure-data).
-- [ ] Deprecate pandas-td.
-- [ ] Launch documentation page.
-
-_&ast; The list is subject to change._
+This project is currently owned by [Takuya Kitazawa](https://www.linkedin.com/in/takuti), an engineer at [Arm Treasure Data](https://www.treasuredata.com), and actively developed based on the **[milestones](https://github.com/takuti/pytd/milestones)**.
 
 ## Installation
 
