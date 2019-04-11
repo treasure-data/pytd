@@ -8,6 +8,9 @@ from ..client import Client
 from ..writer import SparkWriter
 from ..query_engine import PrestoQueryEngine, HiveQueryEngine
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 def connect(apikey=None, endpoint=None, **kwargs):
     return Client(apikey=apikey, endpoint=endpoint, **kwargs)
@@ -157,9 +160,25 @@ def read_td_job(job_id, engine, index_col=None, parse_dates=None):
     -------
     DataFrame
     """
+    con = connect(engine=engine)
+
     # get job
-    job = engine.client.job(job_id)
-    return _to_dataframe(engine.get_job_result(job, wait=True), index_col, parse_dates)
+    job = con.api_client.job(job_id)
+
+    job.wait()
+
+    if not job.success():
+        if job.debug and job.debug['stderr']:
+            logger.error(job.debug['stderr'])
+        raise RuntimeError("job {0} {1}".format(job.job_id, job.status()))
+
+    if not job.finished():
+        job.wait()
+
+    columns = [c[0] for c in job.result_schema]
+    rows = job.result()
+
+    return _to_dataframe({'data': rows, 'columns': columns}, index_col, parse_dates)
 
 
 def read_td_table(table_name, engine, index_col=None, parse_dates=None, columns=None, time_range=None, limit=10000):

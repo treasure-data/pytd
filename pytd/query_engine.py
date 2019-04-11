@@ -92,42 +92,6 @@ class QueryEngine(six.with_metaclass(abc.ABCMeta)):
 
         return header
 
-    def get_job_result(self, job, wait=True):
-        """Return result of a given Treasure Data job.
-
-        Parameters
-        ----------
-        job : tdclient.job_model.Job
-            Job object of tdclient.
-
-        wait : boolean, default: True
-            Tell if we wait until the job finishes.
-
-        Returns
-        -------
-        dict : keys ('data', 'columns')
-            'data'
-                List of rows. Every single row is represented as a list of
-                column values.
-            'columns'
-                List of column names.
-        """
-        if wait:
-            job.wait()
-
-        if not job.success():
-            if job.debug and job.debug['stderr']:
-                logger.error(job.debug['stderr'])
-            raise RuntimeError("job {0} {1}".format(job.job_id, job.status()))
-
-        if not job.finished():
-            job.wait()
-
-        columns = [c[0] for c in job.result_schema]
-        rows = job.result()
-
-        return {'data': rows, 'columns': columns}
-
     @abc.abstractmethod
     def cursor(self):
         pass
