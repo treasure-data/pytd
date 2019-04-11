@@ -2,7 +2,7 @@ import os
 import tdclient
 
 from .writer import SparkWriter
-from .query_engine import PrestoQueryEngine, HiveQueryEngine
+from .query_engine import QueryEngine, PrestoQueryEngine, HiveQueryEngine
 
 
 class Client(object):
@@ -26,7 +26,8 @@ class Client(object):
     database : string, default: 'sample_datasets'
         Name of connected database.
 
-    engine : string, {'presto', 'hive'}, default: 'presto'
+    engine : string, {'presto', 'hive'}, or pytd.query_engine.QueryEngine, \
+                default: 'presto'
         Query engine.
 
     header : string or boolean, default: True
@@ -37,21 +38,28 @@ class Client(object):
     def __init__(self, apikey=None, endpoint=None, database='sample_datasets', engine='presto', header=True, **kwargs):
         # `kwargs` is only for pandas-td compatibility
 
-        if apikey is None:
-            if 'TD_API_KEY' not in os.environ:
-                raise ValueError("either argument 'apikey' or environment variable 'TD_API_KEY' should be set")
-            apikey = os.environ['TD_API_KEY']
+        if isinstance(engine, QueryEngine):
+            apikey = engine.apikey
+            endpoint = engine.endpoint
+            database = engine.database
+        else:
+            if apikey is None:
+                if 'TD_API_KEY' not in os.environ:
+                    raise ValueError("either argument 'apikey' or environment variable 'TD_API_KEY' should be set")
+                apikey = os.environ['TD_API_KEY']
 
-        if endpoint is None:
-            endpoint = 'https://api.treasuredata.com' if ('TD_API_SERVER' not in os.environ) else os.environ['TD_API_SERVER']
+            if endpoint is None:
+                endpoint = 'https://api.treasuredata.com' if ('TD_API_SERVER' not in os.environ) else os.environ['TD_API_SERVER']
+
+            engine = self._fetch_engine(engine, apikey, endpoint, database, header)
 
         self.apikey = apikey
         self.endpoint = endpoint
         self.database = database
 
-        self.engine = self._get_engine(engine, header)
+        self.engine = engine
 
-        self.api_client = tdclient.Client(apikey=apikey, endpoint=endpoint, user_agent=self.engine.user_agent)
+        self.api_client = tdclient.Client(apikey=apikey, endpoint=endpoint, user_agent=engine.user_agent)
 
         self.writer = None
 
@@ -111,10 +119,10 @@ class Client(object):
     def __exit__(self, exception_type, exception_value, traceback):
         self.close()
 
-    def _get_engine(self, engine, header):
+    def _fetch_engine(self, engine, apikey, endpoint, database, header):
         if engine == 'presto':
-            return PrestoQueryEngine(self.apikey, self.endpoint, self.database, header)
+            return PrestoQueryEngine(apikey, endpoint, database, header)
         elif engine == 'hive':
-            return HiveQueryEngine(self.apikey, self.endpoint, self.database, header)
+            return HiveQueryEngine(apikey, endpoint, database, header)
         else:
-            raise ValueError('`engine` should be "presto" or "hive"')
+            raise ValueError('`engine` should be "presto" or "hive", or actual QueryEngine instance')
