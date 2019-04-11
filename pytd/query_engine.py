@@ -34,8 +34,6 @@ class QueryEngine(six.with_metaclass(abc.ABCMeta)):
         self.database = database
         self.header = header
 
-        self.client = tdclient.Client(apikey=apikey, endpoint=endpoint, user_agent=self.user_agent)
-
     @property
     def user_agent(self):
         """User agent passed to a query engine connection.

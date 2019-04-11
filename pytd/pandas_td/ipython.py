@@ -65,7 +65,7 @@ class DatabasesMagics(TDMagics):
         con = self.context.connect()
         columns = ['name', 'count', 'permission', 'created_at', 'updated_at']
         values = [[getattr(db, c) for c in columns]
-                  for db in con.engine.client.databases()
+                  for db in con.api_client.databases()
                   if re.search(pattern, db.name)]
         return pd.DataFrame(values, columns=columns)
 
@@ -78,8 +78,8 @@ class TablesMagics(TDMagics):
         con = self.context.connect()
         columns = ['db_name', 'name', 'count', 'estimated_storage_size', 'last_log_timestamp', 'created_at']
         values = [[getattr(t, c) for c in columns]
-                  for db in con.engine.client.databases()
-                  for t in con.engine.client.tables(db.name)
+                  for db in con.api_client.databases()
+                  for t in con.api_client.tables(db.name)
                   if re.search(pattern, t.identifier)]
         return pd.DataFrame(values, columns=columns)
 
@@ -92,7 +92,7 @@ class JobsMagics(TDMagics):
         con = self.context.connect()
         columns = ['status', 'job_id', 'type', 'start_at', 'query']
         values = [[j.status(), j.job_id, j.type, j._start_at, j.query]
-                  for j in con.engine.client.jobs()]
+                  for j in con.api_client.jobs()]
         return pd.DataFrame(values, columns=columns)
 
 
@@ -103,7 +103,7 @@ class UseMagics(TDMagics):
     def td_use(self, line):
         con = self.context.connect()
         try:
-            tables = con.engine.client.tables(line)
+            tables = con.api_client.tables(line)
         except tdclient.api.NotFoundError:
             sys.stderr.write("ERROR: Database '{0}' not found.".format(line))
             return
@@ -336,7 +336,7 @@ class QueryMagics(TDMagics):
             con = self.context.connect()
 
         # engine
-        job = con.client.engine.client.job(args.job_id)
+        job = con.api_client.job(args.job_id)
         engine = self.build_engine(job.type, job.database, args)
 
         # read_td_query

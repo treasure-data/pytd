@@ -1,4 +1,5 @@
 import os
+import tdclient
 
 from .writer import SparkWriter
 from .query_engine import PrestoQueryEngine, HiveQueryEngine
@@ -49,6 +50,8 @@ class Client(object):
         self.database = database
 
         self.engine = self._get_engine(engine, header)
+
+        self.api_client = tdclient.Client(apikey=apikey, endpoint=endpoint, user_agent=self.engine.user_agent)
 
         self.writer = None
 
