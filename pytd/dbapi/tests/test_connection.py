@@ -1,23 +1,17 @@
 from pytd.dbapi import Connection, NotSupportedError
-from pytd.dbapi import connection  # NOQA
 
 import unittest
 try:
     from unittest.mock import MagicMock
-    from unittest.mock import patch
 except ImportError:
     from mock import MagicMock
-    from mock import patch
 
 
 class ConnectionTestCase(unittest.TestCase):
 
-    # Mock `Client` relatively imported in
-    # `pytd.dbapi.connection`
-    @patch(__name__ + '.connection.Client')
-    def setUp(self, mock_client_class):
-        self.mock_client = mock_client_class.return_value
-        self.conn = Connection(apikey='APIKEY', database='sample_datasets')
+    def setUp(self):
+        self.mock_client = MagicMock()
+        self.conn = Connection(self.mock_client)
 
     def test_close(self):
         self.conn.close()
@@ -35,7 +29,7 @@ class ConnectionTestCase(unittest.TestCase):
 
 
 def test_connection_context():
-    with Connection(apikey='APIKEY', database='sample_datasets') as conn:
+    with Connection(MagicMock()) as conn:
         conn.close = MagicMock()
         conn.close.assert_not_called()
     conn.close.assert_called_with()

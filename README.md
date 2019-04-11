@@ -68,7 +68,7 @@ Connect to the API first:
 ```py
 from pytd.dbapi import connect
 
-conn = connect(database='sample_datasets')
+conn = connect(pytd.Client(database='sample_datasets'))
 # or, connect with Hive:
 # >>> conn = connect(database='sample_datasets', engine='hive')
 ```

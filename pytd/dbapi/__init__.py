@@ -1,3 +1,4 @@
+from ..client import Client
 from .connection import Connection
 from .error import (
     Error, Warning, InterfaceError, DatabaseError, InternalError,
@@ -9,8 +10,18 @@ threadsafety = 3
 paramstyle = 'pyformat'
 
 
-def connect(*args, **kwargs):
-    return Connection(*args, **kwargs)
+def connect(client=None):
+    """Establish a DB-API connection to Treasure Data.
+
+    Parameters
+    ----------
+    client : pytd.Client, optional
+        A client used to connect to Treasure Data. If not given, a client is
+        created using default options.
+    """
+    if client is None:
+        client = Client()
+    return Connection(client)
 
 
 __all__ = [
