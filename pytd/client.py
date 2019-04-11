@@ -90,7 +90,7 @@ class Client(object):
         header = self.engine.create_header('Client#query')
         return self.engine.execute(header + sql)
 
-    def load_table_from_dataframe(self, df, table, if_exists='error'):
+    def load_table_from_dataframe(self, dataframe, table, if_exists='error'):
         """Write a given DataFrame to a Treasure Data table.
 
         This function initializes a Writer interface at the first time. As a
@@ -99,7 +99,7 @@ class Client(object):
 
         Parameters
         ----------
-        df : pandas.DataFrame
+        dataframe : pandas.DataFrame
             Data loaded to a target table.
 
         table : string
@@ -111,7 +111,7 @@ class Client(object):
         if self.writer is None:
             self.writer = SparkWriter(self.apikey, self.endpoint)
 
-        self.writer.write_dataframe(df, self.database, table, if_exists)
+        self.writer.write_dataframe(dataframe, self.database, table, if_exists)
 
     def __enter__(self):
         return self
