@@ -7,11 +7,10 @@ import pandas as pd
 from ..client import Client
 from ..writer import SparkWriter
 from ..query_engine import PrestoQueryEngine, HiveQueryEngine
-from ..dbapi.connection import Connection
 
 
 def connect(apikey=None, endpoint=None, **kwargs):
-    return Connection(Client(apikey=apikey, endpoint=endpoint, **kwargs))
+    return Client(apikey=apikey, endpoint=endpoint, **kwargs)
 
 
 RE_ENGINE_DESC = re.compile("(?P<type>presto|hive)://(?P<apikey>[0-9]+/[a-z0-9]+)@(?P<host>[^/]+)/(?P<database>[a-z0-9_]+)(\?.*)?")
@@ -33,8 +32,8 @@ def create_engine(url, con=None, header=True, show_progress=5.0, clear_progress=
         Use shorthand notation "type:database?params..." for the default connection.
         pytd: "params" will be ignored since pytd.QueryEngine does not have any extra parameters.
 
-    con : pytd.dbapi.Connection, optional
-        Handler returned by connect. If not given, default connection is used.
+    con : pytd.Client, optional
+        Handler returned by pytd.pandas_td.connect. If not given, default client is used.
 
     header : string or boolean, default: True
         Prepend comment strings, in the form "-- comment", as a header of queries.
@@ -277,8 +276,8 @@ def to_td(frame, name, con, if_exists='fail', time_col=None, time_index=None, in
     name : string
         Name of table to be written, in the form 'database.table'.
 
-    con : pytd.dbapi.Connection
-        Connection to a Treasure Data account.
+    con : pytd.Client
+        A client for a Treasure Data account returned by pytd.pandas_td.connect.
 
     if_exists : {'fail', 'replace', 'append'}, default: 'fail'
         - fail: If table exists, do nothing.

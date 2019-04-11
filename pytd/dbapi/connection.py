@@ -20,18 +20,6 @@ class Connection(object):
     def __init__(self, client):
         self.client = client
 
-    @property
-    def apikey(self):
-        return self.client.apikey
-
-    @property
-    def endpoint(self):
-        return self.client.endpoint
-
-    @property
-    def database(self):
-        return self.client.database
-
     def close(self):
         self.client.close()
 
