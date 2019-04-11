@@ -28,7 +28,9 @@ class Client(object):
 
     engine : string, {'presto', 'hive'}, or pytd.query_engine.QueryEngine, \
                 default: 'presto'
-        Query engine.
+        Query engine. If a QueryEngine instance is given, `apikey`, `endpoint`,
+        and `database` are overwritten by the values configured in the
+        instance.
 
     header : string or boolean, default: True
         Prepend comment strings, in the form "-- comment", as a header of queries.
