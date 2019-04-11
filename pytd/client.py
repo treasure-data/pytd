@@ -43,13 +43,11 @@ class Client(object):
             endpoint = engine.endpoint
             database = engine.database
         else:
+            apikey = os.environ.get('TD_API_KEY')
             if apikey is None:
-                if 'TD_API_KEY' not in os.environ:
-                    raise ValueError("either argument 'apikey' or environment variable 'TD_API_KEY' should be set")
-                apikey = os.environ['TD_API_KEY']
+                raise ValueError("either argument 'apikey' or environment variable 'TD_API_KEY' should be set")
 
-            if endpoint is None:
-                endpoint = 'https://api.treasuredata.com' if ('TD_API_SERVER' not in os.environ) else os.environ['TD_API_SERVER']
+            endpoint = os.getenv('TD_API_SERVER', 'https://api.treasuredata.com')
 
             engine = self._fetch_engine(engine, apikey, endpoint, database, header)
 
