@@ -70,12 +70,12 @@ class Client(object):
         if self.writer is not None:
             self.writer.close()
 
-    def query(self, sql):
+    def query(self, query):
         """Run query and get results.
 
         Parameters
         ----------
-        sql : string
+        query : string
             Query issued on a specified query engine.
 
         Returns
@@ -88,7 +88,7 @@ class Client(object):
                 List of column names.
         """
         header = self.engine.create_header('Client#query')
-        return self.engine.execute(header + sql)
+        return self.engine.execute(header + query)
 
     def load_table_from_dataframe(self, dataframe, table, if_exists='error'):
         """Write a given DataFrame to a Treasure Data table.

@@ -40,12 +40,12 @@ class QueryEngine(six.with_metaclass(abc.ABCMeta)):
         """
         return "pytd/{0}".format(__version__)
 
-    def execute(self, sql):
+    def execute(self, query):
         """Execute a given SQL statement and return results.
 
         Parameters
         ----------
-        sql : string
+        query : string
             Query.
 
         Returns
@@ -58,7 +58,7 @@ class QueryEngine(six.with_metaclass(abc.ABCMeta)):
                 List of column names.
         """
         cur = self.cursor()
-        cur.execute(sql)
+        cur.execute(query)
         rows = cur.fetchall()
         columns = [desc[0] for desc in cur.description]
         return {'data': rows, 'columns': columns}
