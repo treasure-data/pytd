@@ -70,7 +70,7 @@ class QueryEngine(six.with_metaclass(abc.ABCMeta)):
         ----------
         extra_lines : string or array-like, default: []
             Comments appended to the default one, which corresponds to a user
-            agent string. If `self.header=None`, empty string is returned
+            agent string. If ``self.header=None``, empty string is returned
             regardless of this argument.
 
         Returns

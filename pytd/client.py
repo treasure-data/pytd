@@ -16,7 +16,7 @@ class Client(object):
     ----------
     apikey : string, optional
         Treasure Data API key. If not given, a value of environment variable
-        `TD_API_KEY` is used by default.
+        ``TD_API_KEY`` is used by default.
 
     endpoint : string, optional
         Treasure Data API server. If not given, https://api.treasuredata.com is
@@ -28,9 +28,9 @@ class Client(object):
 
     engine : string, {'presto', 'hive'}, or pytd.query_engine.QueryEngine, \
                 default: 'presto'
-        Query engine. If a QueryEngine instance is given, `apikey`, `endpoint`,
-        and `database` are overwritten by the values configured in the
-        instance.
+        Query engine. If a QueryEngine instance is given, ``apikey``,
+        ``endpoint``, and ``database`` are overwritten by the values configured
+        in the instance.
 
     header : string or boolean, default: True
         Prepend comment strings, in the form "-- comment", as a header of queries.
