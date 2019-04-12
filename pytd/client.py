@@ -63,6 +63,7 @@ class Client(object):
         """Close a client I/O session to Treasure Data.
         """
         self.engine.close()
+        self.api_client.close()
         if self.writer is not None:
             self.writer.close()
 
