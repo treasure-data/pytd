@@ -48,10 +48,8 @@ class Client(object):
             apikey = os.environ.get('TD_API_KEY')
             if apikey is None:
                 raise ValueError("either argument 'apikey' or environment variable 'TD_API_KEY' should be set")
-
             endpoint = os.getenv('TD_API_SERVER', 'https://api.treasuredata.com')
-
-            engine = self._fetch_engine(engine, apikey, endpoint, database, header)
+            engine = self._fetch_query_engine(engine, apikey, endpoint, database, header)
 
         self.apikey = apikey
         self.endpoint = endpoint
@@ -119,7 +117,7 @@ class Client(object):
     def __exit__(self, exception_type, exception_value, traceback):
         self.close()
 
-    def _fetch_engine(self, engine, apikey, endpoint, database, header):
+    def _fetch_query_engine(self, engine, apikey, endpoint, database, header):
         if engine == 'presto':
             return PrestoQueryEngine(apikey, endpoint, database, header)
         elif engine == 'hive':

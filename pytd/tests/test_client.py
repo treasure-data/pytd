@@ -12,11 +12,11 @@ except ImportError:
 
 class ClientTestCase(unittest.TestCase):
 
-    @patch.object(Client, '_fetch_engine', return_value=MagicMock())
-    def setUp(self, connect_query_engine):
+    @patch.object(Client, '_fetch_query_engine', return_value=MagicMock())
+    def setUp(self, fetch_query_engine):
         self.client = Client(apikey='APIKEY', endpoint='ENDPOINT', database='sample_datasets')
 
-        self.assertTrue(connect_query_engine.called)
+        self.assertTrue(fetch_query_engine.called)
         self.client.engine = MagicMock()
 
         res = {'columns': ['col1', 'col2'], 'data': [[1, 'a'], [2, 'b']]}
@@ -43,7 +43,7 @@ class ClientTestCase(unittest.TestCase):
 
 
 def test_client_context():
-    with patch.object(Client, '_fetch_engine', return_value=MagicMock()):
+    with patch.object(Client, '_fetch_query_engine', return_value=MagicMock()):
         with Client(apikey='APIKEY', endpoint='ENDPOINT', database='sample_datasets') as client:
             client.close = MagicMock()
             client.close.assert_not_called()
