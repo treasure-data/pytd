@@ -163,7 +163,7 @@ def read_td_job(job_id, engine, index_col=None, parse_dates=None):
     con = connect(engine=engine)
 
     # get job
-    job = con.api_client.job(job_id)
+    job = con.get_job(job_id)
 
     job.wait()
 

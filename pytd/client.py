@@ -59,6 +59,52 @@ class Client(object):
 
         self.writer = None
 
+    def list_databases(self):
+        """Get a list of td-client-python Database objects.
+
+        Returns
+        -------
+        list of tdclient.models.Database
+        """
+        return self.api_client.databases()
+
+    def list_tables(self, database):
+        """Get a list of td-client-python Table objects.
+
+        Parameters
+        ----------
+        database : string
+            Database name.
+
+        Returns
+        -------
+        list of tdclient.models.Table
+        """
+        return self.api_client.tables(database)
+
+    def list_jobs(self):
+        """Get a list of td-client-python Job objects.
+
+        Returns
+        -------
+        list of tdclient.models.Job
+        """
+        return self.api_client.jobs()
+
+    def get_job(self, job_id):
+        """Get a td-client-python Job object from ``job_id``.
+
+        Parameters
+        ----------
+        job_id : integer
+            Job ID.
+
+        Returns
+        -------
+        tdclient.models.Job
+        """
+        return self.api_client.job(job_id)
+
     def close(self):
         """Close a client I/O session to Treasure Data.
         """
