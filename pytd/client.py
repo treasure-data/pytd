@@ -38,8 +38,6 @@ class Client(object):
     """
 
     def __init__(self, apikey=None, endpoint=None, database='sample_datasets', engine='presto', header=True, **kwargs):
-        # `kwargs` is only for pandas-td compatibility
-
         if isinstance(engine, QueryEngine):
             apikey = engine.apikey
             endpoint = engine.endpoint
@@ -57,7 +55,7 @@ class Client(object):
 
         self.engine = engine
 
-        self.api_client = tdclient.Client(apikey=apikey, endpoint=endpoint, user_agent=engine.user_agent)
+        self.api_client = tdclient.Client(apikey=apikey, endpoint=endpoint, user_agent=engine.user_agent, **kwargs)
 
         self.writer = None
 
