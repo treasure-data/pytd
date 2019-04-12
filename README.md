@@ -70,7 +70,7 @@ from pytd.dbapi import connect
 
 conn = connect(pytd.Client(database='sample_datasets'))
 # or, connect with Hive:
-# >>> conn = connect(database='sample_datasets', engine='hive')
+# >>> conn = connect(pytd.Client(database='sample_datasets', engine='hive'))
 ```
 
 `Cursor` defined by the specification allows us to flexibly fetch query results from a custom function:
