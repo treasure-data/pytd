@@ -131,7 +131,7 @@ class SparkWriter(Writer):
         try:
             return SparkSession.builder.master('local[*]').getOrCreate()
         except Exception as e:
-            raise RuntimeError('failed to connect to td-spark: ' + e)
+            raise RuntimeError('failed to connect to td-spark: ' + str(e))
 
     def _download_td_spark(self, destination):
         download_url = TD_SPARK_BASE_URL % TD_SPARK_JAR_NAME
