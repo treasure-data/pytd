@@ -43,7 +43,7 @@ class Client(object):
             endpoint = engine.endpoint
             database = engine.database
         else:
-            apikey = os.environ.get('TD_API_KEY')
+            apikey = apikey or os.environ.get('TD_API_KEY')
             if apikey is None:
                 raise ValueError("either argument 'apikey' or environment variable 'TD_API_KEY' should be set")
             endpoint = os.getenv('TD_API_SERVER', 'https://api.treasuredata.com')
