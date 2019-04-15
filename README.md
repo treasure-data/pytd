@@ -14,7 +14,7 @@ This project is currently owned by [Takuya Kitazawa](https://www.linkedin.com/in
 ## Installation
 
 ```sh
-pip install -e git+git@github.com:takuti/pytd
+pip install git+https://github.com/takuti/pytd
 ```
 
 ## Usage
