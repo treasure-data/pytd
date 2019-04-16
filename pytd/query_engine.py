@@ -131,7 +131,7 @@ class PrestoQueryEngine(QueryEngine):
     def user_agent(self):
         """User agent passed to a Presto connection.
         """
-        return "pytd/{0} (Presto; prestodb/{1})".format(__version__, prestodb.__version__)
+        return "pytd/{0} (prestodb/{1})".format(__version__, prestodb.__version__)
 
     def cursor(self):
         """Get cursor defined by DB-API.
@@ -186,7 +186,7 @@ class HiveQueryEngine(QueryEngine):
     def user_agent(self):
         """User agent passed to a Hive connection.
         """
-        return "pytd/{0} (Hive; tdclient/{1})".format(__version__, tdclient.__version__)
+        return "pytd/{0} (tdclient/{1})".format(__version__, tdclient.__version__)
 
     def cursor(self):
         """Get cursor defined by DB-API.
