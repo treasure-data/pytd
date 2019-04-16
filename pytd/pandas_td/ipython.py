@@ -383,10 +383,6 @@ class QueryMagics(TDMagics):
         return self.run_query('hive', line, cell)
 
     @magic.cell_magic
-    def td_pig(self, line, cell):
-        return self.run_query('pig', line, cell)
-
-    @magic.cell_magic
     def td_presto(self, line, cell):
         return self.run_query('presto', line, cell)
 
