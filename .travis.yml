@@ -1,7 +1,7 @@
+dist: Xenial
 language: python
-
 python:
-  - 3.6
+  - 3.7
 
 env:  # dummy for unit testing
   - TD_API_KEY=1/XXX TD_API_SERVER=https://api.treasure-data.com/
