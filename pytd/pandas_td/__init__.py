@@ -298,10 +298,12 @@ def to_td(frame, name, con, if_exists='fail', time_col=None, time_index=None, in
     con : pytd.Client
         A client for a Treasure Data account returned by pytd.pandas_td.connect.
 
-    if_exists : {'fail', 'replace', 'append'}, default: 'fail'
-        - fail: If table exists, do nothing.
-        - replace: If table exists, drop it, recreate it, and insert data.
-        - append: If table exists, insert data. Create if does not exist.
+    if_exists : {'error' ('fail'), 'overwrite' ('replace'), 'append', 'ignore'}, default: 'error'
+        What happens when a target table already exists. For pandas-td
+        compatibility, 'error', 'overwrite', and 'append' can respectively be:
+            - fail: If table exists, do nothing.
+            - replace: If table exists, drop it, recreate it, and insert data.
+            - append: If table exists, insert data. Create if does not exist.
 
     time_col : string, optional
         Column name to use as "time" column for the table. Column type must be
@@ -327,12 +329,14 @@ def to_td(frame, name, con, if_exists='fail', time_col=None, time_index=None, in
     date_format : string, default: None
         Format string for datetime objects
     """
-    if if_exists == 'fail':
+    if if_exists == 'fail' or if_exists == 'error':
         mode = 'error'
-    elif if_exists == 'replace':
+    elif if_exists == 'replace' or if_exists == 'overwrite':
         mode = 'overwrite'
     elif if_exists == 'append':
         mode = 'append'
+    elif if_exists == 'ignore':
+        mode = 'ignore'
     else:
         raise ValueError('invalid value for if_exists: %s' % if_exists)
 
