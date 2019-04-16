@@ -41,8 +41,6 @@ def setup_package():
                      'License :: OSI Approved :: Apache Software License',
                      'Topic :: Database',
                      'Programming Language :: Python',
-                     'Programming Language :: Python :: 2',
-                     'Programming Language :: Python :: 2.7',
                      'Programming Language :: Python :: 3',
                      'Programming Language :: Python :: 3.4',
                      'Programming Language :: Python :: 3.5',
@@ -51,7 +49,6 @@ def setup_package():
         install_requires=[
             'presto-python-client>=0.6.0',
             'pandas>=0.22.0',
-            'six>=1.11.0',
             'td-client>=0.12.0',
             'pytz>=2018.5',
         ],

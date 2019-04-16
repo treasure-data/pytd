@@ -3,13 +3,8 @@ import re
 import abc
 import logging
 
-from six import with_metaclass
-
-try:
-    from urllib.error import HTTPError
-    from urllib.request import urlopen
-except ImportError:
-    from urllib2 import urlopen, HTTPError
+from urllib.error import HTTPError
+from urllib.request import urlopen
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +12,7 @@ TD_SPARK_BASE_URL = 'https://s3.amazonaws.com/td-spark/%s'
 TD_SPARK_JAR_NAME = 'td-spark-assembly_2.11-1.1.0.jar'
 
 
-class Writer(with_metaclass(abc.ABCMeta)):
+class Writer(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def write_dataframe(self, df, database, table, if_exists):
