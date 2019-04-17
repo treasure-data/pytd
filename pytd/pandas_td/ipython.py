@@ -166,7 +166,7 @@ class TablesMagics(TDMagics):
 class JobsMagics(TDMagics):
 
     @magic.line_magic
-    def td_jobs(self, pattern):
+    def td_jobs(self):
         """List job activities in an account.
 
         .. code-block:: python
