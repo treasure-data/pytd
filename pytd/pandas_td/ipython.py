@@ -504,14 +504,46 @@ class QueryMagics(TDMagics):
         """Get job result.
 
         .. code-block:: python
-            %td_job [--pivot] [--plot] [-n] [-v] [-c CONNECTION] [-d DROPNA] [-o OUT]
-                    [-O OUT_FILE] [-q] [-T TIMEZONE]
+            %td_job [--pivot] [--plot] [--dry-run] [--verbose]
+                    [--connection <connection>] [--dropna] [--out <out>]
+                    [--out-file <out_file>] [--quiet] [--timezone <timezone>]
                     job_id
 
         Parameters
         ----------
         ``<job_id>`` : integer
             Job ID.
+
+        ``--pivot`` : optional
+            Run pivot_table against dimensions.
+
+        ``--plot`` : optional
+            Plot the query result.
+
+        ``--dry_run``, ``-n`` : optional
+            Output translated code without running query.
+
+        ``--verbose``, ``-v`` : optional
+            Verbose output.
+
+        ``--connection <connection>``, ``-c <connection>`` : \
+                pytd.Client, optional
+            Use specified connection.
+
+        ``--dropna``, ``-d`` : optional
+            Drop columns if all values are NA.
+
+        ``--out <out>``, ``-o <out>`` : string, optional
+            Store the result to variable.
+
+        ``--out-file <out_file>``, ``-O <out_file>`` : string, optional
+            Store the result to file.
+
+        ``--quiet``, ``-q`` : optional
+            Disable progress output.
+
+        ``--timezone <timezone>``, ``-T <timezone>`` : string, optional
+            Set timezone to time index.
 
         Returns
         -------
@@ -539,7 +571,9 @@ class QueryMagics(TDMagics):
         """Run a Hive query.
 
         .. code-block:: python
-            %%td_hive
+            %%td_hive [<database>] [--pivot] [--plot] [--dry-run] [--verbose]
+                      [--connection <connection>] [--dropna] [--out <out>]
+                      [--out-file <out_file>] [--quiet] [--timezone <timezone>]
 
             <query>
 
@@ -547,6 +581,40 @@ class QueryMagics(TDMagics):
         ----------
         ``<query>`` : string
             Hive query.
+
+        ``<database>`` : string, optional
+            Database name.
+
+        ``--pivot`` : optional
+            Run pivot_table against dimensions.
+
+        ``--plot`` : optional
+            Plot the query result.
+
+        ``--dry_run``, ``-n`` : optional
+            Output translated code without running query.
+
+        ``--verbose``, ``-v`` : optional
+            Verbose output.
+
+        ``--connection <connection>``, ``-c <connection>`` : \
+                pytd.Client, optional
+            Use specified connection.
+
+        ``--dropna``, ``-d`` : optional
+            Drop columns if all values are NA.
+
+        ``--out <out>``, ``-o <out>`` : string, optional
+            Store the result to variable.
+
+        ``--out-file <out_file>``, ``-O <out_file>`` : string, optional
+            Store the result to file.
+
+        ``--quiet``, ``-q`` : optional
+            Disable progress output.
+
+        ``--timezone <timezone>``, ``-T <timezone>`` : string, optional
+            Set timezone to time index.
 
         Returns
         -------
@@ -571,7 +639,9 @@ class QueryMagics(TDMagics):
         """Run a Presto query.
 
         .. code-block:: python
-            %%td_presto
+            %%td_presto [<database>] [--pivot] [--plot] [--dry-run] [--verbose]
+                        [--connection <connection>] [--dropna] [--out <out>]
+                        [--out-file <out_file>] [--quiet] [--timezone <timezone>]
 
             <query>
 
@@ -579,6 +649,40 @@ class QueryMagics(TDMagics):
         ----------
         ``<query>`` : string
             Presto query.
+
+        ``<database>`` : string, optional
+            Database name.
+
+        ``--pivot`` : optional
+            Run pivot_table against dimensions.
+
+        ``--plot`` : optional
+            Plot the query result.
+
+        ``--dry_run``, ``-n`` : optional
+            Output translated code without running query.
+
+        ``--verbose``, ``-v`` : optional
+            Verbose output.
+
+        ``--connection <connection>``, ``-c <connection>`` : \
+                pytd.Client, optional
+            Use specified connection.
+
+        ``--dropna``, ``-d`` : optional
+            Drop columns if all values are NA.
+
+        ``--out <out>``, ``-o <out>`` : string, optional
+            Store the result to variable.
+
+        ``--out-file <out_file>``, ``-O <out_file>`` : string, optional
+            Store the result to file.
+
+        ``--quiet``, ``-q`` : optional
+            Disable progress output.
+
+        ``--timezone <timezone>``, ``-T <timezone>`` : string, optional
+            Set timezone to time index.
 
         Returns
         -------
