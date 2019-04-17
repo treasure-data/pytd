@@ -68,18 +68,21 @@ class Client(object):
         """
         return self.api_client.databases()
 
-    def list_tables(self, database):
+    def list_tables(self, database=None):
         """Get a list of td-client-python Table objects.
 
         Parameters
         ----------
-        database : string
-            Database name.
+        database : string, optional
+            Database name. If not give, list tables in a table associated with
+            this pytd.Client instance.
 
         Returns
         -------
         list of tdclient.models.Table
         """
+        if database is None:
+            return self.api_client.tables(self.database)
         return self.api_client.tables(database)
 
     def list_jobs(self):
