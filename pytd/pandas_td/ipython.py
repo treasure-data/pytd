@@ -1,3 +1,11 @@
+"""IPython Magics
+
+    IPython magics to access to Treasure Data. Load the magics first of all:
+
+    .. code-block:: none
+        In [1]: %load_ext pytd.pandas_td.ipython
+"""
+
 import argparse
 import os
 import re
@@ -62,6 +70,41 @@ class DatabasesMagics(TDMagics):
 
     @magic.line_magic
     def td_databases(self, pattern):
+        """List databases in the form of pandas.DataFrame.
+
+        .. code-block:: python
+            %td_databases [<database_name_pattern>]
+
+        Parameters
+        ----------
+        ``<database_name_pattern>`` : string, optional
+            List databases matched to a given pattern. If not given, all existing databases will be listed.
+
+        Returns
+        -------
+        pandas.DataFrame
+
+        Example
+        -------
+        .. code-block:: none
+            In [1]: %load_ext pytd.pandas_td.ipython
+
+            In [2]: %td_databases sample
+            Out[2]:
+                                                name        count     permission                created_at                updated_at
+            0    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx       348124  administrator 2019-01-23 05:48:11+00:00 2019-01-23 05:48:11+00:00
+            1                              yyyyyyyyy            0  administrator 2017-12-14 07:52:34+00:00 2017-12-14 07:52:34+00:00
+            2                          zzzzzzzzzzzzz            0  administrator 2016-05-25 23:12:06+00:00 2016-05-25 23:12:06+00:00
+            ...
+
+            In [3]: %td_databases sample
+            Out[3]:
+                                     name     count     permission                created_at                updated_at
+            0                    sampledb         2  administrator 2014-04-11 22:29:38+00:00 2014-04-11 22:29:38+00:00
+            1             sample_xxxxxxxx         2  administrator 2017-06-02 23:37:41+00:00 2017-06-02 23:37:41+00:00
+            2             sample_datasets   8812278     query_only 2014-10-04 01:13:11+00:00 2018-03-16 04:59:06+00:00
+            ...
+        """
         con = self.context.connect()
         columns = ['name', 'count', 'permission', 'created_at', 'updated_at']
         values = [[getattr(db, c) for c in columns]
@@ -75,6 +118,41 @@ class TablesMagics(TDMagics):
 
     @magic.line_magic
     def td_tables(self, pattern):
+        """List tables in databases.
+
+        .. code-block:: python
+            %td_tables [<table_name_pattern>]
+
+        Parameters
+        ----------
+        ``<table_name_pattern>`` : string, optional
+            List tables matched to a given pattern. If not given, all existing tables will be listed.
+
+        Returns
+        -------
+        pandas.DataFrame
+
+        Example
+        -------
+        .. code-block:: none
+            In [1]: %load_ext pytd.pandas_td.ipython
+
+            In [2]: %td_tables
+            Out[2]:
+                        db_name                         name      count  estimated_storage_size        last_log_timestamp                created_at
+            0     xxxxx_demo_aa                customer_test         70                    1047 2018-02-05 06:20:32+00:00 2018-02-05 06:20:24+00:00
+            1     xxxxx_demo_aa                    email_log          0                       0 1970-01-01 00:00:00+00:00 2018-02-05 07:19:57+00:00
+            2             yy_wf           topk_similar_items      10598                  134208 2018-04-16 09:23:57+00:00 2018-04-16 09:59:48+00:00
+            ...
+
+            In [3]: %td_tables sample
+            Out[3]:
+                              db_name                                 name    count  estimated_storage_size        last_log_timestamp                created_at
+            0                 xx_test                      aaaaaaaa_sample        0                       0 1970-01-01 00:00:00+00:00 2015-10-20 17:37:40+00:00
+            1                sampledb                            sampletbl        2                     843 1970-01-01 00:00:00+00:00 2014-04-11 22:30:08+00:00
+            2            zzzz_test_db                    sample_output_tab        4                     889 2018-06-06 08:26:20+00:00 2018-06-06 08:27:12+00:00
+            ...
+        """
         con = self.context.connect()
         columns = ['db_name', 'name', 'count', 'estimated_storage_size', 'last_log_timestamp', 'created_at']
         values = [[getattr(t, c) for c in columns]
@@ -89,6 +167,28 @@ class JobsMagics(TDMagics):
 
     @magic.line_magic
     def td_jobs(self, pattern):
+        """List job activities in an account.
+
+        .. code-block:: python
+            %td_jobs
+
+        Returns
+        -------
+        pandas.DataFrame
+
+        Example
+        -------
+        .. code-block:: none
+            In [1]: %load_ext pytd.pandas_td.ipython
+
+            In [2]: %td_jobs
+            Out[2]:
+                 status     job_id    type                  start_at                                              query
+            0     error  448650806    hive 2019-04-12 05:33:36+00:00  with null_samples as (\n  select\n    id,\n   ...
+            1   success  448646994  presto 2019-04-12 05:23:29+00:00  -- read_td_query\n-- set session distributed_j...
+            2   success  448646986  presto 2019-04-12 05:23:27+00:00  -- read_td_query\n-- set session distributed_j...
+            ...
+        """
         con = self.context.connect()
         columns = ['status', 'job_id', 'type', 'start_at', 'query']
         values = [[j.status(), j.job_id, j.type, j._start_at, j.query]
@@ -101,6 +201,31 @@ class UseMagics(TDMagics):
 
     @magic.line_magic
     def td_use(self, line):
+        """Use a specific database.
+
+        This magic pushes all table names in a specified database into the
+        current namespace.
+
+        .. code-block:: python
+            %td_use [<database_name>]
+
+        Parameters
+        ----------
+        ``<database_name>`` : string
+            Database name.
+
+        Example
+        -------
+        .. code-block:: none
+            In [1]: %load_ext pytd.pandas_td.ipython
+
+            In [2]: %td_use sample_datasets
+            INFO: import nasdaq
+            INFO: import www_access
+
+            In [3]: nasdaq  # describe table columns in the form of DataFrame
+            Out[3]: <pytd.pandas_td.ipython.MagicTable at 0x117651908>
+        """
         con = self.context.connect()
         try:
             tables = con.list_tables(line)
@@ -376,14 +501,106 @@ class QueryMagics(TDMagics):
 
     @magic.line_magic
     def td_job(self, line):
+        """Get job result.
+
+        .. code-block:: python
+            %td_job [--pivot] [--plot] [-n] [-v] [-c CONNECTION] [-d DROPNA] [-o OUT]
+                    [-O OUT_FILE] [-q] [-T TIMEZONE]
+                    job_id
+
+        Parameters
+        ----------
+        ``<job_id>`` : integer
+            Job ID.
+
+        Returns
+        -------
+        pandas.DataFrame
+
+        Example
+        -------
+        .. code-block:: none
+            In [1]: %load_ext pytd.pandas_td.ipython
+
+            In [2]: %td_job 451709460  # select * from sample_datasets.nasdaq limit 5
+            Out[2]:
+                                symbol  open  volume     high      low    close
+            time
+            1992-08-25 16:00:00   ATRO   0.0    3900   0.7076   0.7076   0.7076
+            1992-08-25 16:00:00   ALOG   0.0   11200  11.0000  10.6250  11.0000
+            1992-08-25 16:00:00   ATAX   0.0   11400  11.3750  11.0000  11.0000
+            1992-08-25 16:00:00   ATRI   0.0    5400  14.3405  14.0070  14.2571
+            1992-08-25 16:00:00   ABMD   0.0   38800   5.7500   5.2500   5.6875
+        """
         return self.run_job(line)
 
     @magic.cell_magic
     def td_hive(self, line, cell):
+        """Run a Hive query.
+
+        .. code-block:: python
+            %%td_hive
+
+            <query>
+
+        Parameters
+        ----------
+        ``<query>`` : string
+            Hive query.
+
+        Returns
+        -------
+        pandas.DataFrame
+
+        Example
+        -------
+        .. code-block:: none
+            In [1]: %load_ext pytd.pandas_td.ipython
+
+            In [2]: %%td_hive
+               ...: select hivemall_version()
+               ...:
+            Out[2]:
+                                     _c0
+            0  0.6.0-SNAPSHOT-201901-r01
+        """
         return self.run_query('hive', line, cell)
 
     @magic.cell_magic
     def td_presto(self, line, cell):
+        """Run a Presto query.
+
+        .. code-block:: python
+            %%td_presto
+
+            <query>
+
+        Parameters
+        ----------
+        ``<query>`` : string
+            Presto query.
+
+        Returns
+        -------
+        pandas.DataFrame
+
+        Example
+        -------
+        .. code-block:: none
+            In [1]: %load_ext pytd.pandas_td.ipython
+
+            In [2]: %%td_presto
+               ...: select * from sample_datasets.nasdaq limit 5
+               ...:
+            Out[2]:
+                                symbol  open  volume     high      low    close
+            time
+            1989-01-26 16:00:00   SMTC   0.0    8000   0.4532   0.4532   0.4532
+            1989-01-26 16:00:00   SEIC   0.0  163200   0.7077   0.6921   0.7025
+            1989-01-26 16:00:00   SIGI   0.0    2800   3.9610   3.8750   3.9610
+            1989-01-26 16:00:00   NAVG   0.0    1800  14.6740  14.1738  14.6740
+            1989-01-26 16:00:00   MOCO   0.0   71101   3.6722   3.5609   3.5980
+        """
         return self.run_query('presto', line, cell)
 
 
