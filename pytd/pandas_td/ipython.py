@@ -121,12 +121,14 @@ class TablesMagics(TDMagics):
         """List tables in databases.
 
         .. code-block:: python
-            %td_tables [<table_name_pattern>]
+            %td_tables [<table_identifier_pattern>]
 
         Parameters
         ----------
-        ``<table_name_pattern>`` : string, optional
-            List tables matched to a given pattern. If not given, all existing tables will be listed.
+        ``<table_identifier_pattern>`` : string, optional
+            List tables matched to a given pattern. Table identifier is
+            represented as ``database_name.table_name``. If not given, all
+            existing tables will be listed.
 
         Returns
         -------
