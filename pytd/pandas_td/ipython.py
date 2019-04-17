@@ -258,7 +258,7 @@ class QueryMagics(TDMagics):
                             help='verbose output')
         parser.add_argument('-c', '--connection',
                             help='use specified connection')
-        parser.add_argument('-d', '--dropna',
+        parser.add_argument('-d', '--dropna', action='store_true',
                             help='drop columns if all values are NA')
         parser.add_argument('-o', '--out',
                             help='store the result to variable')
