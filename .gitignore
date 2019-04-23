@@ -1,1 +1,5 @@
 td-spark*
+
+build/
+dist/
+*.egg-info/
