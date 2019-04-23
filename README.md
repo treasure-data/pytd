@@ -1,7 +1,7 @@
 pytd
 ===
 
-[![Build Status](https://travis-ci.org/takuti/pytd.svg?branch=master)](https://travis-ci.org/takuti/pytd) [![Build status](https://ci.appveyor.com/api/projects/status/h1os6uvl598o7cau?svg=true)](https://ci.appveyor.com/project/takuti/pytd)
+[![Build Status](https://travis-ci.org/treasure-data/pytd.svg?branch=master)](https://travis-ci.org/treasure-data/pytd) [![Build status](https://ci.appveyor.com/api/projects/status/h1os6uvl598o7cau?svg=true)](https://ci.appveyor.com/project/takuti/pytd)
 
 > _Quickly ***read**/**write*** your data directly **from**/**to** the **[Presto query engine](https://support.treasuredata.com/hc/en-us/articles/360001457427-Presto-Query-Engine-Introduction)** and **[Plazma primary storage](https://www.slideshare.net/treasure-data/td-techplazma)**_
 
@@ -9,12 +9,12 @@ Unlike the other official Treasure Data API libraries for Python, [td-client-pyt
 
 ## Project milestones
 
-This project is currently owned by [Takuya Kitazawa](https://www.linkedin.com/in/takuti), an engineer at [Arm Treasure Data](https://www.treasuredata.com), and actively developed based on the **[milestones](https://github.com/takuti/pytd/milestones)**.
+This project has been actively developed based on the **[milestones](https://github.com/treasure-data/pytd/milestones)**.
 
 ## Installation
 
 ```sh
-pip install git+https://github.com/takuti/pytd
+pip install git+https://github.com/treasure-data/pytd
 ```
 
 ## Usage
@@ -49,7 +49,7 @@ client.query('select hivemall_version()')
 Once you install the package with PySpark dependencies, any data represented as `pandas.DataFrame` can directly be written to TD via [td-spark](https://support.treasuredata.com/hc/en-us/articles/360001487167-Apache-Spark-Driver-td-spark-FAQs):
 
 ```sh
-pip install -e git+git@github.com:takuti/pytd@master#egg=pytd[spark]
+pip install -e git+git@github.com:treasure-data/pytd@master#egg=pytd[spark]
 ```
 
 ```py

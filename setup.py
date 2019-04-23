@@ -14,12 +14,12 @@ with open('pytd/version.py', 'rb') as f:
 DISTNAME = 'pytd'
 DESCRIPTION = 'Treasure Data Driver for Python'
 LONG_DESCRIPTION = __doc__ or ''
-AUTHOR = 'Takuya Kitazawa'
-AUTHOR_EMAIL = 'kitazawa@treasure-data.com'
+AUTHOR = 'Arm Treasure Data'
+AUTHOR_EMAIL = 'support@treasure-data.com'
 MAINTAINER = AUTHOR
 MAINTAINER_EMAIL = AUTHOR_EMAIL
 LICENSE = 'Apache License 2.0'
-URL = 'https://github.com/takuti/pytd'
+URL = 'https://github.com/treasure-data/pytd'
 
 
 def setup_package():
