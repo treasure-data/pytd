@@ -16,9 +16,13 @@ with open('pytd/version.py', 'rb') as f:
     VERSION = str(ast.literal_eval(version_re.search(
         f.read().decode('utf-8')).group(1)))
 
+from os import path
+with open(path.join(path.abspath(path.dirname(__file__)), 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
+
 DISTNAME = 'pytd'
 DESCRIPTION = 'Treasure Data Driver for Python'
-LONG_DESCRIPTION = __doc__ or ''
+LONG_DESCRIPTION = long_description or __doc__
 AUTHOR = 'Arm Treasure Data'
 AUTHOR_EMAIL = 'support@treasure-data.com'
 MAINTAINER = AUTHOR
@@ -35,6 +39,7 @@ def setup_package():
         version=VERSION,
         description=DESCRIPTION,
         long_description=LONG_DESCRIPTION,
+        long_description_content_type='text/markdown',
         author=AUTHOR,
         author_email=AUTHOR_EMAIL,
         maintainer=MAINTAINER,
