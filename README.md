@@ -113,28 +113,37 @@ for index, row in iterrows('select symbol, count(1) as cnt from nasdaq group by 
 # ...
 ```
 
-### pandas-td compatibility
+## How to replace pandas-td
 
-If you are familiar with [pandas-td](https://github.com/treasure-data/pandas-td), `pytd` provides some compatible functions:
+**pytd** offers [pandas-td](https://github.com/treasure-data/pandas-td)-compatible functions that provide the same functionalities in a more efficient way. If you are still using pandas-td, we recommend you to switch to **pytd** as follows.
 
-```py
-import pytd.pandas_td as td
+First, install the package from PyPI:
 
-# Initialize query engine
-engine = td.create_engine('presto:sample_datasets')  # or, 'hive:sample_datasets'
-
-# Read Treasure Data query into a DataFrame
-df = td.read_td('select * from www_access', engine)
-
-# Read Treasure Data table into a DataFrame
-df = td.read_td_table('nasdaq', engine, limit=10000)
-
-# Write a DataFrame to a Treasure Data table
-con = td.connect()
-td.to_td(td.to_td(df.drop(columns=['time']), 'takuti.test_table', con, if_exists='replace'),
-         'takuti.test_table',
-         con,
-         if_exists='replace')
+```sh
+pip install pytd  
+# or, `pip install pytd[spark]` if you wish to use `to_td`
 ```
 
-However, it should be noted that only a small portion of the original pandas-td capability is supported in this package. We highly recommend to replace those code with new `pytd` functions as soon as possible since the limited compatibility is not actively maintained.
+Next, make the following modifications on the import statements.
+
+*Before:*
+
+```python
+import pandas_td as td
+```
+
+```python
+In [1]: %%load_ext pandas_td.ipython
+```
+
+*After:*
+
+```python
+import pytd.pandas_td as td
+```
+
+```python
+In [1]: %%load_ext pytd.pandas_td.ipython
+```
+
+Consequently, all `pandas_td` code should keep running correctly with `pytd`. Report an issue from [here](https://github.com/treasure-data/pytd/issues/new) if you noticed any incompatible behaviors.
