@@ -58,6 +58,7 @@ def setup_package():
                      ],
         packages=find_packages(exclude=['*tests*']),
         install_requires=[
+            'urllib3<1.25,>=1.21.1',
             'presto-python-client>=0.6.0',
             'pandas>=0.22.0',
             'td-client>=0.12.0',
