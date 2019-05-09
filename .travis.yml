@@ -21,6 +21,7 @@ before_install:
 
 install:
   - pip install .[spark]
+  - pip check
 
 script:
   - nosetests . -v
