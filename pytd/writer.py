@@ -64,7 +64,7 @@ class SparkWriter(Writer):
         table : string
             Name of target table.
 
-        if_exists : {'error', 'overwrite', 'append', 'ignore'}, default: 'error'
+        if_exists : {'error', 'overwrite', 'append', 'ignore'}
             What happens when a target table already exists.
         """
         from py4j.protocol import Py4JJavaError
