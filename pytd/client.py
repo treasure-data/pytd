@@ -3,7 +3,7 @@ import os
 import tdclient
 
 from .query_engine import HiveQueryEngine, PrestoQueryEngine, QueryEngine
-from .writer import SparkWriter
+from .writer import BulkImportWriter, SparkWriter
 
 
 class Client(object):
@@ -33,8 +33,8 @@ class Client(object):
         ``endpoint``, and ``database`` are overwritten by the values configured
         in the instance.
 
-    writer : string, {'spark'}, or pytd.writer.Writer, \
-                default: 'spark'
+    writer : string, {'bulk_import', 'spark'}, or pytd.writer.Writer, \
+                default: 'bulk_import'
         A Writer to choose writing method to Treasure Data. If not given, default Writer
         will be created with executing :func:`~pytd.Client.load_table_from_dataframe`
         at the first time.
@@ -50,7 +50,7 @@ class Client(object):
         endpoint=None,
         database="sample_datasets",
         engine="presto",
-        writer="spark",
+        writer="bulk_import",
         header=True,
         **kwargs
     ):
@@ -169,8 +169,8 @@ class Client(object):
         """Write a given DataFrame to a Treasure Data table.
 
         This function initializes a Writer interface at the first time. As a
-        part of the initialization process, the latest version of td-spark will
-        be downloaded.
+        part of the initialization process for SparkWriter, the latest version
+        of td-spark will be downloaded.
 
         Parameters
         ----------
@@ -181,11 +181,14 @@ class Client(object):
             Name of target table.
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}, default: 'error'
-            What happens when a target table already exists.
+            What happens when a target table already exists. 'append' is not
+            supported in BulkImportWriter.
         """
         if not self.initialized_writer and isinstance(self.writer, str):
             cls = self.writer.lower()
-            if cls == "spark":
+            if cls == "bulk_import":
+                self.writer = BulkImportWriter(self.api_client)
+            elif cls == "spark":
                 self.writer = SparkWriter(self.apikey, self.endpoint)
             else:
                 raise ValueError("unknown way to upload data to TD is specified")

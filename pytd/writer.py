@@ -2,13 +2,16 @@ import abc
 import logging
 import os
 import re
+import tempfile
+import time
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
-logger = logging.getLogger(__name__)
+from tdclient.errors import NotFoundError
 
 TD_SPARK_BASE_URL = "https://s3.amazonaws.com/td-spark/%s"
 TD_SPARK_JAR_NAME = "td-spark-assembly_2.11-1.1.0.jar"
+logger = logging.getLogger(__name__)
 
 
 class Writer(metaclass=abc.ABCMeta):
@@ -19,6 +22,99 @@ class Writer(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def close(self):
         pass
+
+
+class BulkImportWriter(Writer):
+    """A writer module that loads Python data to Treasure Data by using
+    td-client-python's bulk importer.
+
+    Parameters
+    ----------
+    api_client : tdclient.Client
+        Treasure Data Client instance created by td-client-python.
+    """
+
+    def __init__(self, api_client):
+        self.api_client = api_client
+
+    def write_dataframe(self, df, database, table, if_exists):
+        """Write a given DataFrame to a Treasure Data table.
+
+        This method internally converts a given pandas.DataFrame into a
+        temporary CSV file, and upload the file to Treasure Data via bulk
+        import API.
+
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            Data loaded to a target table.
+
+        database : string
+            Name of target database. Ignored if a given table name contains
+            ``.`` as ``database.table``.
+
+        table : string
+            Name of target table.
+
+        if_exists : {'error', 'overwrite', 'ignore'}
+            What happens when a target table already exists.
+        """
+        if "." in table:
+            database, table = table.split(".")
+
+        try:
+            self.api_client.table(database, table)
+        except NotFoundError:  # new table
+            self.api_client.create_log_table(database, table)
+        else:  # exits
+            if if_exists == "error":
+                raise RuntimeError("target table already exists")
+            elif if_exists == "ignore":
+                return
+            elif if_exists == "overwrite":
+                self.api_client.delete_table(database, table)
+                self.api_client.create_log_table(database, table)
+            else:
+                raise ValueError("invalid valud for if_exists: %s" % if_exists)
+
+        ts = int(time.time())
+
+        if "time" not in df.columns:  # need time column for bulk import
+            df["time"] = ts
+
+        session_name = "session-%d" % ts
+
+        bulk_import = self.api_client.create_bulk_import(session_name, database, table)
+        try:
+            fp = tempfile.NamedTemporaryFile(suffix=".csv")
+            df.to_csv(fp.name)  # XXX: split into multiple CSV files?
+
+            bulk_import.upload_file("part", "csv", fp.name)
+            bulk_import.freeze()
+
+            fp.close()
+        except Exception as e:
+            bulk_import.delete()
+            raise RuntimeError("failed to upload file: " + str(e))
+
+        bulk_import.perform(wait=True)
+
+        if 0 < bulk_import.error_records:
+            logger.warning("detected %d error records." % bulk_import.error_records)
+
+        if 0 < bulk_import.valid_records:
+            logger.info("imported %d records." % bulk_import.valid_records)
+        else:
+            raise RuntimeError(
+                "no records have been imported: %s" % repr(bulk_import.name)
+            )
+        bulk_import.commit(wait=True)
+        bulk_import.delete()
+
+    def close(self):
+        """Close a bulk import writer.
+        """
+        self.api_client = None
 
 
 class SparkWriter(Writer):

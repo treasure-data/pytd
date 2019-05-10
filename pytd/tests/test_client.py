@@ -24,7 +24,10 @@ class ClientTestWithoutWriter(ClientTestCase):
     def setUp(self, fetch_query_engine):
         self.writer = "spark"
         self.client = Client(
-            apikey="APIKEY", endpoint="ENDPOINT", database="sample_datasets"
+            apikey="APIKEY",
+            endpoint="ENDPOINT",
+            database="sample_datasets",
+            writer=self.writer,
         )
         self.assertEqual(self.client.apikey, "APIKEY")
         self.assertEqual(self.client.endpoint, "ENDPOINT")
