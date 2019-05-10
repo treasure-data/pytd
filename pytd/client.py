@@ -33,14 +33,15 @@ class Client(object):
         ``endpoint``, and ``database`` are overwritten by the values configured
         in the instance.
 
-    header : string or boolean, default: True
-        Prepend comment strings, in the form "-- comment", as a header of queries.
-        Set False to disable header.
-
-    writer : pytd.writer.Writer or child class of Writer class, optional
+    writer : string, {'spark'}, or pytd.writer.Writer, \
+                default: 'spark'
         A Writer to choose writing method to Treasure Data. If not given, default Writer
         will be created with executing :func:`~pytd.Client.load_table_from_dataframe`
         at the first time.
+
+    header : string or boolean, default: True
+        Prepend comment strings, in the form "-- comment", as a header of queries.
+        Set False to disable header.
     """
 
     def __init__(
@@ -49,8 +50,8 @@ class Client(object):
         endpoint=None,
         database="sample_datasets",
         engine="presto",
+        writer="spark",
         header=True,
-        writer=None,
         **kwargs
     ):
         if isinstance(engine, QueryEngine):
@@ -81,7 +82,7 @@ class Client(object):
             apikey=apikey, endpoint=endpoint, user_agent=engine.user_agent, **kwargs
         )
 
-        self.managed_writer = writer is None
+        self.initialized_writer = False
         self.writer = writer
 
     def list_databases(self):
@@ -138,7 +139,10 @@ class Client(object):
         """
         self.engine.close()
         self.api_client.close()
-        if self.managed_writer and self.writer is not None:
+
+        # If Writer is initialized outside of Client (i.e., Writer instance is
+        # directly passed to Client), Client should not close the instance.
+        if self.initialized_writer:
             self.writer.close()
 
     def query(self, query):
@@ -179,8 +183,13 @@ class Client(object):
         if_exists : {'error', 'overwrite', 'append', 'ignore'}, default: 'error'
             What happens when a target table already exists.
         """
-        if self.writer is None:
-            self.writer = SparkWriter(self.apikey, self.endpoint)
+        if not self.initialized_writer and isinstance(self.writer, str):
+            cls = self.writer.lower()
+            if cls == "spark":
+                self.writer = SparkWriter(self.apikey, self.endpoint)
+            else:
+                raise ValueError("unknown way to upload data to TD is specified")
+            self.initialized_writer = True
 
         self.writer.write_dataframe(dataframe, self.database, table, if_exists)
 
