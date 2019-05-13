@@ -7,6 +7,7 @@ import time
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
+import numpy as np
 from tdclient.errors import NotFoundError
 
 TD_SPARK_BASE_URL = "https://s3.amazonaws.com/td-spark/%s"
@@ -28,6 +29,105 @@ class Writer(metaclass=abc.ABCMeta):
     ):
         if if_exists not in candidates:
             raise ValueError("invalid valud for if_exists: %s" % if_exists)
+
+
+class InsertIntoWriter(Writer):
+    """A writer module that loads Python data to Treasure Data by issueing
+    INSERT INTO query in Presto.
+
+    Parameters
+    ----------
+    api_client : tdclient.Client
+        Treasure Data Client instance created by td-client-python.
+
+    presto : pytd.query_engine.PrestoQueryEngine
+        A pre-defined Presto query engine instance.
+    """
+
+    def __init__(self, api_client, presto):
+        self.api_client = api_client
+        self.presto = presto
+
+    def write_dataframe(self, df, database, table, if_exists):
+        """Write a given DataFrame to a Treasure Data table.
+
+        This method translates a given pandas.DataFrame into a `INSERT INTO ...
+        VALUES ...` Presto query.
+
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            Data loaded to a target table.
+
+        database : string
+            Name of target database. Ignored if a given table name contains
+            ``.`` as ``database.table``.
+
+        table : string
+            Name of target table.
+
+        if_exists : {'error', 'overwrite', 'append', 'ignore'}
+            What happens when a target table already exists.
+        """
+        self._validate_if_exists(if_exists)
+
+        destination = table
+        if "." not in table:
+            destination = database + "." + table
+        else:
+            database, table = table.split(".")
+
+        schema = []
+        for c, t in zip(df.columns, df.dtypes):
+            if t == "int64":
+                presto_type = "bigint"
+            elif t == "float64":
+                presto_type = "double"
+            else:  # TODO: Support more array type
+                presto_type = "varchar"
+                df[c] = df[c].astype(str)
+            schema.append(str(c) + " " + presto_type)
+
+        q_delete = "DROP TABLE IF EXISTS %s" % (destination,)
+
+        q_create = "CREATE TABLE %s (%s)" % (destination, ", ".join(schema))
+
+        try:
+            self.api_client.table(database, table)
+        except NotFoundError:  # new table
+            self.presto.execute(q_delete)
+            self.presto.execute(q_create)
+        else:  # exits
+            if if_exists == "error":
+                raise RuntimeError("target table already exists")
+            elif if_exists == "ignore":
+                return
+            elif if_exists == "append":
+                pass
+            else:  # overwrite
+                self.presto.execute(q_delete)
+                self.presto.execute(q_create)
+
+        values = np.array2string(df.values, separator=", ")[1:-1]
+
+        # convert [] into (), but keep [] for array-like values
+        values = re.sub(r'\]($|[^"])', r")\1", re.sub(r'(^|[^"])\[', r"\1(", values))
+
+        # TODO: support array type
+        # e.g., array value can be preprocessed as:
+        #   values = re.sub(r'\"\[(.+?)\]\"', r'array[\1]', values)
+
+        q_insert = "INSERT INTO "
+        q_insert += destination
+        q_insert += " (" + (", ".join(map(str, df.columns))) + ") "
+        q_insert += "VALUES " + values
+        self.presto.execute(q_insert)
+
+    def close(self):
+        """Close an insert into writer.
+        """
+        self.api_client = None
+        self.presto = None
 
 
 class BulkImportWriter(Writer):

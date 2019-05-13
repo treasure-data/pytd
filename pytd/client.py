@@ -3,7 +3,7 @@ import os
 import tdclient
 
 from .query_engine import HiveQueryEngine, PrestoQueryEngine, QueryEngine
-from .writer import BulkImportWriter, SparkWriter
+from .writer import BulkImportWriter, InsertIntoWriter, SparkWriter
 
 
 class Client(object):
@@ -33,7 +33,7 @@ class Client(object):
         ``endpoint``, and ``database`` are overwritten by the values configured
         in the instance.
 
-    writer : string, {'bulk_import', 'spark'}, or pytd.writer.Writer, \
+    writer : string, {'bulk_import', 'insert_into', 'spark'}, or pytd.writer.Writer, \
                 default: 'bulk_import'
         A Writer to choose writing method to Treasure Data. If not given, default Writer
         will be created with executing :func:`~pytd.Client.load_table_from_dataframe`
@@ -188,6 +188,15 @@ class Client(object):
             cls = self.writer.lower()
             if cls == "bulk_import":
                 self.writer = BulkImportWriter(self.api_client)
+            elif cls == "insert_into":
+                presto = (
+                    self.engine
+                    if isinstance(self.engine, PrestoQueryEngine)
+                    else self._fetch_query_engine(
+                        "presto", self.apikey, self.endpoint, self.database, True
+                    )
+                )
+                self.writer = InsertIntoWriter(self.api_client, presto)
             elif cls == "spark":
                 self.writer = SparkWriter(self.apikey, self.endpoint)
             else:
