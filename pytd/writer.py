@@ -23,6 +23,12 @@ class Writer(metaclass=abc.ABCMeta):
     def close(self):
         pass
 
+    def _validate_if_exists(
+        self, if_exists, candidates=["error", "overwrite", "append", "ignore"]
+    ):
+        if if_exists not in candidates:
+            raise ValueError("invalid valud for if_exists: %s" % if_exists)
+
 
 class BulkImportWriter(Writer):
     """A writer module that loads Python data to Treasure Data by using
@@ -59,6 +65,8 @@ class BulkImportWriter(Writer):
         if_exists : {'error', 'overwrite', 'ignore'}
             What happens when a target table already exists.
         """
+        self._validate_if_exists(if_exists, candidates=["error", "overwrite", "ignore"])
+
         if "." in table:
             database, table = table.split(".")
 
@@ -163,10 +171,12 @@ class SparkWriter(Writer):
         if_exists : {'error', 'overwrite', 'append', 'ignore'}
             What happens when a target table already exists.
         """
-        from py4j.protocol import Py4JJavaError
+        self._validate_if_exists(if_exists)
 
         if if_exists not in ("error", "overwrite", "append", "ignore"):
             raise ValueError("invalid valud for if_exists: %s" % if_exists)
+
+        from py4j.protocol import Py4JJavaError
 
         destination = table
         if "." not in table:
