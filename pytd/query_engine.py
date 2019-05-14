@@ -1,6 +1,5 @@
 import abc
 import re
-import six
 import prestodb
 import tdclient
 
@@ -10,7 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class QueryEngine(six.with_metaclass(abc.ABCMeta)):
+class QueryEngine(metaclass=abc.ABCMeta):
     """An interface to Treasure Data query engine.
 
     Parameters
@@ -80,12 +79,12 @@ class QueryEngine(six.with_metaclass(abc.ABCMeta)):
         if self.header is False:
             return ''
 
-        if isinstance(self.header, six.string_types):
+        if isinstance(self.header, str):
             header = "-- {0}\n".format(self.header)
         else:
             header = "-- client: {0}\n".format(self.user_agent)
 
-        if isinstance(extra_lines, six.string_types):
+        if isinstance(extra_lines, str):
             header += "-- {0}\n".format(extra_lines)
         elif isinstance(extra_lines, (list, tuple)):
             header += ''.join(["-- {0}\n".format(line) for line in extra_lines])
