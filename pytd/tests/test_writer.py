@@ -8,10 +8,9 @@ from pytd.writer import BulkImportWriter, InsertIntoWriter, SparkWriter
 
 class InsertIntoWriterTestCase(unittest.TestCase):
     def setUp(self):
-        mock_api_client = MagicMock()
-        mock_presto = MagicMock()
-
-        self.writer = InsertIntoWriter(mock_api_client, mock_presto)
+        self.writer = InsertIntoWriter("1/XXX", "ENDPOINT")
+        self.writer.api_client = MagicMock()
+        self.writer.presto = MagicMock()
 
     def test_write_dataframe_error(self):
         with self.assertRaises(RuntimeError):
@@ -49,11 +48,14 @@ class InsertIntoWriterTestCase(unittest.TestCase):
 
     def test_close(self):
         self.writer.close()
-        self.assertTrue(self.writer.api_client is None)
+        self.assertTrue(self.writer.api_client.close.called)
+        self.assertTrue(self.writer.presto.close.called)
 
 
 class BulkImportWriterTestCase(unittest.TestCase):
     def setUp(self):
+        self.writer = BulkImportWriter("1/XXX", "ENDPOINT")
+
         mock_bulk_import = MagicMock()
         mock_bulk_import.error_records = 1
         mock_bulk_import.valid_records = 2
@@ -61,7 +63,7 @@ class BulkImportWriterTestCase(unittest.TestCase):
         mock_api_client = MagicMock()
         mock_api_client.create_bulk_import.return_value = mock_bulk_import
 
-        self.writer = BulkImportWriter(mock_api_client)
+        self.writer.api_client = mock_api_client
 
     def test_write_dataframe_error(self):
         with self.assertRaises(RuntimeError):
@@ -91,7 +93,7 @@ class BulkImportWriterTestCase(unittest.TestCase):
 
     def test_close(self):
         self.writer.close()
-        self.assertTrue(self.writer.api_client is None)
+        self.assertTrue(self.writer.api_client.close.called)
 
 
 class SparkWriterTestCase(unittest.TestCase):

@@ -3,7 +3,7 @@ import os
 import tdclient
 
 from .query_engine import HiveQueryEngine, PrestoQueryEngine, QueryEngine
-from .writer import BulkImportWriter, InsertIntoWriter, SparkWriter
+from .writer import Writer
 
 
 class Client(object):
@@ -33,12 +33,6 @@ class Client(object):
         ``endpoint``, and ``database`` are overwritten by the values configured
         in the instance.
 
-    writer : string, {'bulk_import', 'insert_into', 'spark'}, or pytd.writer.Writer, \
-                default: 'bulk_import'
-        A Writer to choose writing method to Treasure Data. If not given, default Writer
-        will be created with executing :func:`~pytd.Client.load_table_from_dataframe`
-        at the first time.
-
     header : string or boolean, default: True
         Prepend comment strings, in the form "-- comment", as a header of queries.
         Set False to disable header.
@@ -50,7 +44,6 @@ class Client(object):
         endpoint=None,
         database="sample_datasets",
         engine="presto",
-        writer="bulk_import",
         header=True,
         **kwargs
     ):
@@ -81,9 +74,6 @@ class Client(object):
         self.api_client = tdclient.Client(
             apikey=apikey, endpoint=endpoint, user_agent=engine.user_agent, **kwargs
         )
-
-        self.initialized_writer = False
-        self.writer = writer
 
     def list_databases(self):
         """Get a list of td-client-python Database objects.
@@ -140,11 +130,6 @@ class Client(object):
         self.engine.close()
         self.api_client.close()
 
-        # If Writer is initialized outside of Client (i.e., Writer instance is
-        # directly passed to Client), Client should not close the instance.
-        if self.initialized_writer:
-            self.writer.close()
-
     def query(self, query):
         """Run query and get results.
 
@@ -165,7 +150,9 @@ class Client(object):
         header = self.engine.create_header("Client#query")
         return self.engine.execute(header + query)
 
-    def load_table_from_dataframe(self, dataframe, table, if_exists="error"):
+    def load_table_from_dataframe(
+        self, dataframe, table, writer="bulk_import", if_exists="error"
+    ):
         """Write a given DataFrame to a Treasure Data table.
 
         This function initializes a Writer interface at the first time. As a
@@ -180,30 +167,25 @@ class Client(object):
         table : string
             Name of target table.
 
+        writer : string, {'bulk_import', 'insert_into', 'spark'}, or \
+                    pytd.writer.Writer, default: 'bulk_import'
+            A Writer to choose writing method to Treasure Data. If not given,
+            default Writer will be created with executing
+            :func:`~pytd.Client.load_table_from_dataframe` at the first time.
+
         if_exists : {'error', 'overwrite', 'append', 'ignore'}, default: 'error'
             What happens when a target table already exists. 'append' is not
             supported in BulkImportWriter.
         """
-        if not self.initialized_writer and isinstance(self.writer, str):
-            cls = self.writer.lower()
-            if cls == "bulk_import":
-                self.writer = BulkImportWriter(self.api_client)
-            elif cls == "insert_into":
-                presto = (
-                    self.engine
-                    if isinstance(self.engine, PrestoQueryEngine)
-                    else self._fetch_query_engine(
-                        "presto", self.apikey, self.endpoint, self.database, True
-                    )
-                )
-                self.writer = InsertIntoWriter(self.api_client, presto)
-            elif cls == "spark":
-                self.writer = SparkWriter(self.apikey, self.endpoint)
-            else:
-                raise ValueError("unknown way to upload data to TD is specified")
-            self.initialized_writer = True
+        from_string = isinstance(writer, str)
 
-        self.writer.write_dataframe(dataframe, self.database, table, if_exists)
+        if from_string:
+            writer = Writer.from_string(writer, self.apikey, self.endpoint)
+
+        writer.write_dataframe(dataframe, self.database, table, if_exists)
+
+        if from_string:
+            writer.close()
 
     def __enter__(self):
         return self

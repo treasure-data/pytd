@@ -8,7 +8,10 @@ from urllib.error import HTTPError
 from urllib.request import urlopen
 
 import numpy as np
-from tdclient.errors import NotFoundError
+import tdclient
+
+from .query_engine import PrestoQueryEngine
+from .version import __version__
 
 TD_SPARK_BASE_URL = "https://s3.amazonaws.com/td-spark/%s"
 TD_SPARK_JAR_NAME = "td-spark-assembly_2.11-1.1.0.jar"
@@ -30,6 +33,18 @@ class Writer(metaclass=abc.ABCMeta):
         if if_exists not in candidates:
             raise ValueError("invalid valud for if_exists: %s" % if_exists)
 
+    @staticmethod
+    def from_string(writer, apikey, endpoint):
+        writer = writer.lower()
+        if writer == "bulk_import":
+            return BulkImportWriter(apikey, endpoint)
+        elif writer == "insert_into":
+            return InsertIntoWriter(apikey, endpoint)
+        elif writer == "spark":
+            return SparkWriter(apikey, endpoint)
+        else:
+            raise ValueError("unknown way to upload data to TD is specified")
+
 
 class InsertIntoWriter(Writer):
     """A writer module that loads Python data to Treasure Data by issueing
@@ -37,16 +52,18 @@ class InsertIntoWriter(Writer):
 
     Parameters
     ----------
-    api_client : tdclient.Client
-        Treasure Data Client instance created by td-client-python.
+    apikey : string
+        Treasure Data API key.
 
-    presto : pytd.query_engine.PrestoQueryEngine
-        A pre-defined Presto query engine instance.
+    endpoint : string
+        Treasure Data API server.
     """
 
-    def __init__(self, api_client, presto):
-        self.api_client = api_client
-        self.presto = presto
+    def __init__(self, apikey, endpoint):
+        self.api_client = tdclient.Client(
+            apikey=apikey, endpoint=endpoint, user_agent="pytd/{0}".format(__version__)
+        )
+        self.presto = PrestoQueryEngine(apikey, endpoint, "sample_datasets", True)
 
     def write_dataframe(self, df, database, table, if_exists):
         """Write a given DataFrame to a Treasure Data table.
@@ -94,7 +111,7 @@ class InsertIntoWriter(Writer):
 
         try:
             self.api_client.table(database, table)
-        except NotFoundError:  # new table
+        except tdclient.errors.NotFoundError:  # new table
             self.presto.execute(q_delete)
             self.presto.execute(q_create)
         else:  # exits
@@ -126,8 +143,8 @@ class InsertIntoWriter(Writer):
     def close(self):
         """Close an insert into writer.
         """
-        self.api_client = None
-        self.presto = None
+        self.api_client.close()
+        self.presto.close()
 
 
 class BulkImportWriter(Writer):
@@ -136,12 +153,17 @@ class BulkImportWriter(Writer):
 
     Parameters
     ----------
-    api_client : tdclient.Client
-        Treasure Data Client instance created by td-client-python.
+    apikey : string
+        Treasure Data API key.
+
+    endpoint : string
+        Treasure Data API server.
     """
 
-    def __init__(self, api_client):
-        self.api_client = api_client
+    def __init__(self, apikey, endpoint):
+        self.api_client = tdclient.Client(
+            apikey=apikey, endpoint=endpoint, user_agent="pytd/{0}".format(__version__)
+        )
 
     def write_dataframe(self, df, database, table, if_exists):
         """Write a given DataFrame to a Treasure Data table.
@@ -172,7 +194,7 @@ class BulkImportWriter(Writer):
 
         try:
             self.api_client.table(database, table)
-        except NotFoundError:  # new table
+        except tdclient.errors.NotFoundError:  # new table
             self.api_client.create_log_table(database, table)
         else:  # exits
             if if_exists == "error":
@@ -222,7 +244,7 @@ class BulkImportWriter(Writer):
     def close(self):
         """Close a bulk import writer.
         """
-        self.api_client = None
+        self.api_client.close()
 
 
 class SparkWriter(Writer):
