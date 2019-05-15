@@ -2,8 +2,8 @@ import os
 
 import tdclient
 
-from .table import Table
 from .query_engine import HiveQueryEngine, PrestoQueryEngine, QueryEngine
+from .table import Table
 
 
 class Client(object):
@@ -27,7 +27,7 @@ class Client(object):
     database : string, default: 'sample_datasets'
         Name of connected database.
 
-    engine : string, {'presto', 'hive'}, or pytd.query_engine.QueryEngine, \
+    default_engine : string, {'presto', 'hive'}, or pytd.query_engine.QueryEngine, \
                 default: 'presto'
         Query engine. If a QueryEngine instance is given, ``apikey``,
         ``endpoint``, and ``database`` are overwritten by the values configured
@@ -43,14 +43,14 @@ class Client(object):
         apikey=None,
         endpoint=None,
         database="sample_datasets",
-        engine="presto",
+        default_engine="presto",
         header=True,
         **kwargs
     ):
-        if isinstance(engine, QueryEngine):
-            apikey = engine.apikey
-            endpoint = engine.endpoint
-            database = engine.database
+        if isinstance(default_engine, QueryEngine):
+            apikey = default_engine.apikey
+            endpoint = default_engine.endpoint
+            database = default_engine.database
         else:
             apikey = apikey or os.environ.get("TD_API_KEY")
             if apikey is None:
@@ -61,18 +61,21 @@ class Client(object):
             endpoint = endpoint or os.getenv(
                 "TD_API_SERVER", "https://api.treasuredata.com"
             )
-            engine = self._fetch_query_engine(
-                engine, apikey, endpoint, database, header
+            default_engine = self._fetch_query_engine(
+                default_engine, apikey, endpoint, database, header
             )
 
         self.apikey = apikey
         self.endpoint = endpoint
         self.database = database
 
-        self.engine = engine
+        self.default_engine = default_engine
 
         self.api_client = tdclient.Client(
-            apikey=apikey, endpoint=endpoint, user_agent=engine.user_agent, **kwargs
+            apikey=apikey,
+            endpoint=endpoint,
+            user_agent=default_engine.user_agent,
+            **kwargs
         )
 
     def list_databases(self):
@@ -127,16 +130,21 @@ class Client(object):
     def close(self):
         """Close a client I/O session to Treasure Data.
         """
-        self.engine.close()
+        self.default_engine.close()
         self.api_client.close()
 
-    def query(self, query):
+    def query(self, query, engine=None):
         """Run query and get results.
 
         Parameters
         ----------
         query : string
             Query issued on a specified query engine.
+
+        engine : string, {'presto', 'hive'}, or pytd.query_engine.QueryEngine, \
+                optional
+            Query engine. If not given, default query engine created in the
+            constructor will be used.
 
         Returns
         -------
@@ -147,8 +155,28 @@ class Client(object):
             'columns'
                 List of column names.
         """
-        header = self.engine.create_header("Client#query")
-        return self.engine.execute(header + query)
+        if isinstance(engine, QueryEngine):
+            pass  # use the given QueryEngine instance
+        elif isinstance(engine, str):
+            if (
+                engine == "presto"
+                and isinstance(self.default_engine, PrestoQueryEngine)
+            ) or (
+                engine == "hive" and isinstance(self.default_engine, HiveQueryEngine)
+            ):
+                engine = self.default_engine
+            else:
+                engine = self._fetch_query_engine(
+                    engine,
+                    self.apikey,
+                    self.endpoint,
+                    self.database,
+                    self.default_engine.header,
+                )
+        else:
+            engine = self.default_engine
+        header = engine.create_header("Client#query")
+        return engine.execute(header + query)
 
     def get_table(self, database, table):
         """Create a table control instance.
@@ -167,7 +195,9 @@ class Client(object):
         """
         return Table(self, database, table)
 
-    def load_table_from_dataframe(self, dataframe, destination, writer='bulk_import', if_exists='error'):
+    def load_table_from_dataframe(
+        self, dataframe, destination, writer="bulk_import", if_exists="error"
+    ):
         """Write a given DataFrame to a Treasure Data table.
 
         This function initializes a Writer interface at the first time. As a
@@ -195,21 +225,21 @@ class Client(object):
         from_string = isinstance(destination, str)
 
         if from_string:
-            if '.' in destination:
-                database, table = destination.split('.')
+            if "." in destination:
+                database, table = destination.split(".")
             else:
                 database, table = self.database, destination
             destination = self.get_table(database, table)
 
         writer = writer.lower()
-        if writer == 'bulk_import':
+        if writer == "bulk_import":
             destination.bulk_import(dataframe, if_exists)
-        elif writer == 'insert_into':
+        elif writer == "insert_into":
             destination.insert_into(dataframe, if_exists)
-        elif writer == 'spark':
+        elif writer == "spark":
             destination.spark_import(dataframe, if_exists)
         else:
-            raise ValueError('unknown way to upload data to TD is specified')
+            raise ValueError("unknown way to upload data to TD is specified")
 
         if from_string:
             destination.close()

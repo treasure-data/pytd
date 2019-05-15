@@ -9,7 +9,7 @@ from pytd.client import Client
 class ClientTestCase(unittest.TestCase):
     def close(self):
         self.client.close()
-        self.assertTrue(self.client.engine.close.called)
+        self.assertTrue(self.client.default_engine.close.called)
 
     def query(self):
         d = self.client.query("select * from tbl")
@@ -28,10 +28,10 @@ class ClientTest(ClientTestCase):
         self.assertEqual(self.client.database, "sample_datasets")
 
         self.assertTrue(fetch_query_engine.called)
-        self.client.engine = MagicMock()
+        self.client.default_engine = MagicMock()
 
         res = {"columns": ["col1", "col2"], "data": [[1, "a"], [2, "b"]]}
-        self.client.engine.execute = MagicMock(return_value=res)
+        self.client.default_engine.execute = MagicMock(return_value=res)
 
     def test_close(self):
         self.close()
