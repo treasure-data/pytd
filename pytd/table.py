@@ -6,7 +6,6 @@ import time
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
-import numpy as np
 import tdclient
 
 logger = logging.getLogger(__name__)
@@ -94,31 +93,82 @@ class Table(object):
         """
         self.client.api_client.delete_table(self.database, self.table)
 
-    def insert_into(self, dataframe, if_exists="error"):
-        """Write a given DataFrame to a Treasure Data table.
-
-        This method translates a given pandas.DataFrame into an ``INSERT INTO
-        ...  VALUES ...`` Presto query.
+    def import_dataframe(self, dataframe, writer="bulk_import", if_exists="error"):
+        """Import a given DataFrame to a Treasure Data table.
 
         Parameters
         ----------
         dataframe : pandas.DataFrame
             Data loaded to a target table.
 
+        writer : string, {'bulk_import', 'insert_into', 'spark'}, \
+                    default: 'bulk_import'
+            Specify a way to upload data to Treasure Data.
+
         if_exists : {'error', 'overwrite', 'append', 'ignore'}, default: 'error'
             What happens when a target table already exists.
         """
-        column_names, column_types = [], []
-        for c, t in zip(dataframe.columns, dataframe.dtypes):
-            if t == "int64":
-                presto_type = "bigint"
-            elif t == "float64":
-                presto_type = "double"
-            else:  # TODO: Support more array type
-                presto_type = "varchar"
-                dataframe[c] = dataframe[c].astype(str)
-            column_names.append(c)
-            column_types.append(presto_type)
+        # normalize column names so it contains only alphanumeric and `_`
+        dataframe = dataframe.rename(
+            lambda c: re.sub(r"[^a-zA-Z0-9]", " ", str(c)).lower().replace(" ", "_"),
+            axis="columns",
+        )
+
+        writer = writer.lower()
+        if writer == "bulk_import":
+            if "time" not in dataframe.columns:  # need time column for bulk import
+                dataframe["time"] = int(time.time())
+
+            fp = tempfile.NamedTemporaryFile(suffix=".csv")
+            dataframe.to_csv(fp.name)  # XXX: split into multiple CSV files?
+
+            self.bulk_import(fp, if_exists)
+
+            fp.close()
+        elif writer == "insert_into":
+            column_names, column_types = [], []
+            for c, t in zip(dataframe.columns, dataframe.dtypes):
+                if t == "int64":
+                    presto_type = "bigint"
+                elif t == "float64":
+                    presto_type = "double"
+                else:  # TODO: Support more array type
+                    presto_type = "varchar"
+                    dataframe[c] = dataframe[c].astype(str)
+                column_names.append(c)
+                column_types.append(presto_type)
+
+            self.insert_into(
+                dataframe.values.tolist(), column_names, column_types, if_exists
+            )
+        elif writer == "spark":
+            self.spark_import(dataframe, if_exists)
+        else:
+            raise ValueError("unknown way to upload data to TD is specified")
+
+    def insert_into(self, list_of_list, column_names, column_types, if_exists="error"):
+        """Write a given lists to a Treasure Data table.
+
+        This method translates the given data into an ``INSERT INTO ...  VALUES
+        ...`` Presto query.
+
+        Parameters
+        ----------
+        list_of_list : list of lists
+            Data loaded to a target table. Each element is a list that
+            represents single table row.
+
+        column_names : list of string
+            Column names.
+
+        column_types : list of string
+            Column types corresponding to the names. Note that Treasure Data
+            supports limited amount of types as documented in:
+            https://support.treasuredata.com/hc/en-us/articles/360001266468-Schema-Management
+
+        if_exists : {'error', 'overwrite', 'append', 'ignore'}, default: 'error'
+            What happens when a target table already exists.
+        """
 
         if self.exist:
             if if_exists == "error":
@@ -135,31 +185,37 @@ class Table(object):
         else:
             self.create(column_names, column_types)
 
-        values = np.array2string(dataframe.values, separator=", ")[1:-1]
-
-        # convert [] into (), but keep [] for array-like values
-        values = re.sub(r'\]($|[^"])', r")\1", re.sub(r'(^|[^"])\[', r"\1(", values))
-
         # TODO: support array type
-        # e.g., array value can be preprocessed as:
-        #   values = re.sub(r'\"\[(.+?)\]\"', r'array[\1]', values)
+        values = ", ".join(
+            map(
+                lambda lst: "({})".format(
+                    ", ".join(
+                        [
+                            "'{}'".format(e.replace("'", '"'))
+                            if isinstance(e, str)
+                            else str(e)
+                            for e in lst
+                        ]
+                    )
+                ),
+                list_of_list,
+            )
+        )
 
         q_insert = "INSERT INTO {}.{} ({}) VALUES {}".format(
-            self.database, self.table, ", ".join(map(str, dataframe.columns)), values
+            self.database, self.table, ", ".join(map(str, column_names)), values
         )
         self.client.query(q_insert, engine="presto")
 
-    def bulk_import(self, dataframe, if_exists="error"):
-        """Write a given DataFrame to a Treasure Data table.
+    def bulk_import(self, csv, if_exists="error"):
+        """Write a specified CSV file to a Treasure Data table.
 
-        This method internally converts a given pandas.DataFrame into a
-        temporary CSV file, and upload the file to Treasure Data via bulk
-        import API.
+        This method uploads the file to Treasure Data via bulk import API.
 
         Parameters
         ----------
-        dataframe : pandas.DataFrame
-            Data loaded to a target table.
+        csv : File pointer of a CSV file
+            Data in this file will be loaded to a target table.
 
         if_exists : {'error', 'overwrite', 'ignore'}, default: 'error'
             What happens when a target table already exists.
@@ -179,24 +235,14 @@ class Table(object):
         else:
             self.create()
 
-        ts = int(time.time())
-
-        if "time" not in dataframe.columns:  # need time column for bulk import
-            dataframe["time"] = ts
-
-        session_name = "session-{}".format(ts)
+        session_name = "session-{}".format(int(time.time()))
 
         bulk_import = self.client.api_client.create_bulk_import(
             session_name, self.database, self.table
         )
         try:
-            fp = tempfile.NamedTemporaryFile(suffix=".csv")
-            dataframe.to_csv(fp.name)  # XXX: split into multiple CSV files?
-
-            bulk_import.upload_file("part", "csv", fp.name)
+            bulk_import.upload_file("part", "csv", csv.name)
             bulk_import.freeze()
-
-            fp.close()
         except Exception as e:
             bulk_import.delete()
             raise RuntimeError("failed to upload file: {}".format(e))
@@ -257,12 +303,6 @@ class Table(object):
         from py4j.protocol import Py4JJavaError
 
         destination = "{}.{}".format(self.database, self.table)
-
-        # normalize column names so it contains only alphanumeric and `_`
-        dataframe = dataframe.rename(
-            lambda c: re.sub(r"[^a-zA-Z0-9]", " ", str(c)).lower().replace(" ", "_"),
-            axis="columns",
-        )
 
         sdataframe = self.td_spark.createDataFrame(dataframe)
         try:

@@ -231,15 +231,7 @@ class Client(object):
                 database, table = self.database, destination
             destination = self.get_table(database, table)
 
-        writer = writer.lower()
-        if writer == "bulk_import":
-            destination.bulk_import(dataframe, if_exists)
-        elif writer == "insert_into":
-            destination.insert_into(dataframe, if_exists)
-        elif writer == "spark":
-            destination.spark_import(dataframe, if_exists)
-        else:
-            raise ValueError("unknown way to upload data to TD is specified")
+        destination.import_dataframe(dataframe, writer, if_exists)
 
         if from_string:
             destination.close()
