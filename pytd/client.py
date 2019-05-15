@@ -2,8 +2,8 @@ import os
 
 import tdclient
 
+from .table import Table
 from .query_engine import HiveQueryEngine, PrestoQueryEngine, QueryEngine
-from .writer import Writer
 
 
 class Client(object):
@@ -150,9 +150,24 @@ class Client(object):
         header = self.engine.create_header("Client#query")
         return self.engine.execute(header + query)
 
-    def load_table_from_dataframe(
-        self, dataframe, table, writer="bulk_import", if_exists="error"
-    ):
+    def get_table(self, database, table):
+        """Create a table control instance.
+
+        Parameters
+        ----------
+        database : string
+            Database name.
+
+        table : string
+            Table name.
+
+        Returns
+        -------
+        pytd.table.Table
+        """
+        return Table(self, database, table)
+
+    def load_table_from_dataframe(self, dataframe, destination, writer='bulk_import', if_exists='error'):
         """Write a given DataFrame to a Treasure Data table.
 
         This function initializes a Writer interface at the first time. As a
@@ -164,8 +179,8 @@ class Client(object):
         dataframe : pandas.DataFrame
             Data loaded to a target table.
 
-        table : string
-            Name of target table.
+        destination : string, or pytd.table.Table
+            Target table.
 
         writer : string, {'bulk_import', 'insert_into', 'spark'}, or \
                     pytd.writer.Writer, default: 'bulk_import'
@@ -175,17 +190,29 @@ class Client(object):
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}, default: 'error'
             What happens when a target table already exists. 'append' is not
-            supported in BulkImportWriter.
+            supported in `bulk_import`.
         """
-        from_string = isinstance(writer, str)
+        from_string = isinstance(destination, str)
 
         if from_string:
-            writer = Writer.from_string(writer, self.apikey, self.endpoint)
+            if '.' in destination:
+                database, table = destination.split('.')
+            else:
+                database, table = self.database, destination
+            destination = self.get_table(database, table)
 
-        writer.write_dataframe(dataframe, self.database, table, if_exists)
+        writer = writer.lower()
+        if writer == 'bulk_import':
+            destination.bulk_import(dataframe, if_exists)
+        elif writer == 'insert_into':
+            destination.insert_into(dataframe, if_exists)
+        elif writer == 'spark':
+            destination.spark_import(dataframe, if_exists)
+        else:
+            raise ValueError('unknown way to upload data to TD is specified')
 
         if from_string:
-            writer.close()
+            destination.close()
 
     def __enter__(self):
         return self

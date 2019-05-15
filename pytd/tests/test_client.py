@@ -41,11 +41,11 @@ class ClientTest(ClientTestCase):
 
     def test_load_table_from_dataframe(self):
         df = pd.DataFrame([[1, 2], [3, 4]])
-        mock_writer = MagicMock()
+        mock_table = MagicMock()
         self.client.load_table_from_dataframe(
-            df, "foo", writer=mock_writer, if_exists="error"
+            df, mock_table, writer="bulk_import", if_exists="error"
         )
-        self.assertTrue(mock_writer.write_dataframe.called)
+        self.assertTrue(mock_table.bulk_import.called)
 
 
 def test_client_context():
