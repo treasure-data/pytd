@@ -384,7 +384,7 @@ def to_td(
     frame = _convert_index_column(frame, index, index_label)
     frame = _convert_date_format(frame, date_format)
 
-    database, table = name.split('.')
+    database, table = name.split(".")
     con.get_table(database, table).import_dataframe(frame, mode)
 
 

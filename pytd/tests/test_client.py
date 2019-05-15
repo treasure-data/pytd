@@ -35,6 +35,7 @@ class ClientTest(ClientTestCase):
 
     def test_close(self):
         self.close()
+        self.assertTrue(self.client.default_engine.close.called)
 
     def test_query(self):
         self.query()
@@ -45,7 +46,7 @@ class ClientTest(ClientTestCase):
         self.client.load_table_from_dataframe(
             df, mock_table, writer="bulk_import", if_exists="error"
         )
-        self.assertTrue(mock_table.bulk_import.called)
+        self.assertTrue(mock_table.import_dataframe.called)
 
 
 def test_client_context():

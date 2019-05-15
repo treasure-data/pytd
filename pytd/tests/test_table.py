@@ -14,26 +14,36 @@ class TableTestCase(unittest.TestCase):
 
     def test_if_exists_error(self):
         with self.assertRaises(RuntimeError):
-            self.table.insert_into(pd.DataFrame([[1, 2], [3, 4]]), "error")
+            self.table.insert_into(
+                [[1, 2], [3, 4]], ["c1", "c2"], ["bigint", "bigint"], "error"
+            )
 
     def test_if_exists_ignore(self):
-        self.table.insert_into(pd.DataFrame([[1, 2], [3, 4]]), "ignore")
+        self.table.insert_into(
+            [[1, 2], [3, 4]], ["c1", "c2"], ["bigint", "bigint"], "ignore"
+        )
         self.assertFalse(self.table.client.query.called)
 
     def test_if_exists_append(self):
-        self.table.insert_into(pd.DataFrame([[1, 2], [3, 4]]), "append")
+        self.table.insert_into(
+            [[1, 2], [3, 4]], ["c1", "c2"], ["bigint", "bigint"], "append"
+        )
         # 1) INSERT INTO
         self.assertEqual(self.table.client.query.call_count, 1)
 
     def test_if_exists_overwrite(self):
-        self.table.insert_into(pd.DataFrame([[1, 2], [3, 4]]), "overwrite")
+        self.table.insert_into(
+            [[1, 2], [3, 4]], ["c1", "c2"], ["bigint", "bigint"], "overwrite"
+        )
         # 1) Create an alternative table with schema
         # 2) INSERT INTO
         self.assertEqual(self.table.client.query.call_count, 2)
 
     def test_if_exists_invalid(self):
         with self.assertRaises(ValueError):
-            self.table.insert_into(pd.DataFrame([[1, 2], [3, 4]]), "bar")
+            self.table.insert_into(
+                [[1, 2], [3, 4]], ["c1", "c2"], ["bigint", "bigint"], "bar"
+            )
 
     def test_spark_close(self):
         self.table.spark_import(pd.DataFrame([[1, 2], [3, 4]]), "overwrite")
