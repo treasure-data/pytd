@@ -124,6 +124,8 @@ class PrestoQueryEngine(QueryEngine):
 
     def __init__(self, apikey, endpoint, database, header):
         super(PrestoQueryEngine, self).__init__(apikey, endpoint, database, header)
+        api_presto = re.compile(r'(?:https?://)?(api(?:-.+?)?)\.')
+        self.presto_endpoint = api_presto.sub('\\1-presto.', self.endpoint).strip('/')
         self.engine = self._connect()
 
     @property
@@ -147,9 +149,8 @@ class PrestoQueryEngine(QueryEngine):
         self.engine.close()
 
     def _connect(self):
-        http = re.compile(r'https?://')
         return prestodb.dbapi.connect(
-            host=http.sub('', self.endpoint).strip('/').replace('api', 'api-presto'),
+            host=self.presto_endpoint,
             port=443,
             http_scheme='https',
             user=self.apikey,

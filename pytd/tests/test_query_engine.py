@@ -46,6 +46,12 @@ class PrestoQueryEngineTestCase(unittest.TestCase):
         self.presto.close()
         self.assertTrue(self.presto.engine.close.called)
 
+    def test_engine_host(self):
+        self.assertEquals(self.presto.presto_endpoint, 'api-presto.treasuredata.com')
+
+        self.presto_dev = PrestoQueryEngine('1/XXX', 'https://api-development.treasuredata.com/', 'sample_datasets', True)
+        self.assertEquals(self.presto_dev.presto_endpoint, 'api-development-presto.treasuredata.com')
+
 
 class HiveQueryEngineTestCase(unittest.TestCase):
 
