@@ -15,6 +15,9 @@ class ClientTestCase(unittest.TestCase):
     @patch.object(Client, '_fetch_query_engine', return_value=MagicMock())
     def setUp(self, fetch_query_engine):
         self.client = Client(apikey='APIKEY', endpoint='ENDPOINT', database='sample_datasets')
+        self.assertEqual(self.client.apikey, 'APIKEY')
+        self.assertEqual(self.client.endpoint, 'ENDPOINT')
+        self.assertEqual(self.client.database, 'sample_datasets')
 
         self.assertTrue(fetch_query_engine.called)
         self.client.engine = MagicMock()
