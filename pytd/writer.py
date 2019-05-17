@@ -49,7 +49,7 @@ class SparkWriter(Writer):
         if 'eu01' in endpoint:
             site = 'eu01'
 
-        self.td_spark = self._fetch_td_spark(apikey, site, td_spark_path, download_if_missing)
+        self.td_spark = self._fetch_td_spark(apikey, site, td_spark_path, download_if_missing, endpoint)
 
     def write_dataframe(self, df, database, table, if_exists):
         """Write a given DataFrame to a Treasure Data table.
@@ -98,7 +98,7 @@ class SparkWriter(Writer):
         """
         self.td_spark.stop()
 
-    def _fetch_td_spark(self, apikey, site, td_spark_path, download_if_missing):
+    def _fetch_td_spark(self, apikey, site, td_spark_path, download_if_missing, endpoint):
         try:
             from pyspark.sql import SparkSession
         except ImportError:
@@ -114,14 +114,28 @@ class SparkWriter(Writer):
         elif not available:
             raise IOError('td-spark is not found and `download_if_missing` is False')
 
-        os.environ['PYSPARK_SUBMIT_ARGS'] = """
+        api_conf = "--conf spark.td.site={}".format(site)
+
+        _dev_env = [env for env in ['development', 'staging'] if env in endpoint]
+        if len(_dev_env) > 0:
+            api_regex = re.compile(r'(?:https?://)?(api(?:-.+?)?)\.')
+            api_host = api_regex.sub('\\1.', endpoint).strip('/')
+            plazma_api = api_regex.sub('\\1-plazma.', endpoint).strip('/')
+            presto_api = api_regex.sub('\\1-presto.', endpoint).strip('/')
+            api_conf = """\
+            --conf spark.td.api.host=%s
+            --conf spark.td.plazma_api.host=%s
+            --conf spark.td.presto_api.host=%s
+            """ % (api_host, plazma_api, presto_api)
+
+        os.environ['PYSPARK_SUBMIT_ARGS'] = """\
         --jars %s
         --conf spark.td.apikey=%s
-        --conf spark.td.site=%s
+        %s
         --conf spark.serializer=org.apache.spark.serializer.KryoSerializer
         --conf spark.sql.execution.arrow.enabled=true
         pyspark-shell
-        """ % (td_spark_path, apikey, site)
+        """ % (td_spark_path, apikey, api_conf)
 
         try:
             return SparkSession.builder.master('local[*]').getOrCreate()
