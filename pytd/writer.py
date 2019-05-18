@@ -43,13 +43,7 @@ class SparkWriter(Writer):
     """
 
     def __init__(self, apikey, endpoint, td_spark_path=None, download_if_missing=True):
-        site = 'us'
-        if '.co.jp' in endpoint:
-            site = 'jp'
-        if 'eu01' in endpoint:
-            site = 'eu01'
-
-        self.td_spark = self._fetch_td_spark(apikey, site, td_spark_path, download_if_missing, endpoint)
+        self.td_spark = self._fetch_td_spark(apikey, endpoint, td_spark_path, download_if_missing)
 
     def write_dataframe(self, df, database, table, if_exists):
         """Write a given DataFrame to a Treasure Data table.
@@ -98,7 +92,7 @@ class SparkWriter(Writer):
         """
         self.td_spark.stop()
 
-    def _fetch_td_spark(self, apikey, site, td_spark_path, download_if_missing, endpoint):
+    def _fetch_td_spark(self, apikey, endpoint, td_spark_path, download_if_missing):
         try:
             from pyspark.sql import SparkSession
         except ImportError:
@@ -126,6 +120,12 @@ class SparkWriter(Writer):
             --conf spark.td.plazma_api.host=%s
             --conf spark.td.presto_api.host=%s
             """ % (api_host, plazma_api, presto_api)
+
+        site = 'us'
+        if '.co.jp' in endpoint:
+            site = 'jp'
+        if 'eu01' in endpoint:
+            site = 'eu01'
 
         os.environ['PYSPARK_SUBMIT_ARGS'] = """\
         --jars %s
