@@ -1,4 +1,5 @@
 import abc
+import os
 import re
 import prestodb
 import tdclient
@@ -148,8 +149,10 @@ class PrestoQueryEngine(QueryEngine):
 
     def _connect(self):
         http = re.compile(r'https?://')
+        api_presto = os.getenv('TD_PRESTO_API', http.sub('', self.endpoint).strip('/').replace('api', 'api-presto'))
+
         return prestodb.dbapi.connect(
-            host=http.sub('', self.endpoint).strip('/').replace('api', 'api-presto'),
+            host=api_presto,
             port=443,
             http_scheme='https',
             user=self.apikey,
