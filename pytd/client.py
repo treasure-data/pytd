@@ -101,7 +101,7 @@ class Client(object):
         list of tdclient.models.Table
         """
         if database is None:
-            return self.api_client.tables(self.database)
+            database = self.database
         return self.api_client.tables(database)
 
     def list_jobs(self):

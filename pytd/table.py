@@ -258,7 +258,7 @@ class Table(object):
             logger.info("imported {} records.".format(bulk_import.valid_records))
         else:
             raise RuntimeError(
-                "no records have been imported: {}".format(repr(bulk_import.name))
+                "no records have been imported: {}".format(bulk_import.name)
             )
         bulk_import.commit(wait=True)
         bulk_import.delete()
