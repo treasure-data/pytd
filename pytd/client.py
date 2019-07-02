@@ -35,9 +35,15 @@ class Client(object):
     header : string or boolean, default: True
         Prepend comment strings, in the form "-- comment", as a header of queries.
         Set False to disable header.
+
+    writer : pytd.writer.Writer or child class of Writer class, optional
+        A Writer to choose writing method to Treasure Data. If not given, default Writer
+        will be created with executing :func:`~pytd.Client.load_table_from_dataframe`
+        at the first time.
     """
 
-    def __init__(self, apikey=None, endpoint=None, database='sample_datasets', engine='presto', header=True, **kwargs):
+    def __init__(
+            self, apikey=None, endpoint=None, database='sample_datasets', engine='presto', header=True, writer=None, **kwargs):
         if isinstance(engine, QueryEngine):
             apikey = engine.apikey
             endpoint = engine.endpoint
@@ -57,7 +63,7 @@ class Client(object):
 
         self.api_client = tdclient.Client(apikey=apikey, endpoint=endpoint, user_agent=engine.user_agent, **kwargs)
 
-        self.writer = None
+        self.writer = writer
 
     def list_databases(self):
         """Get a list of td-client-python Database objects.
