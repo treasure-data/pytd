@@ -1,19 +1,17 @@
-import os
-import re
 import abc
 import logging
-
+import os
+import re
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
 logger = logging.getLogger(__name__)
 
-TD_SPARK_BASE_URL = 'https://s3.amazonaws.com/td-spark/%s'
-TD_SPARK_JAR_NAME = 'td-spark-assembly_2.11-1.1.0.jar'
+TD_SPARK_BASE_URL = "https://s3.amazonaws.com/td-spark/%s"
+TD_SPARK_JAR_NAME = "td-spark-assembly_2.11-1.1.0.jar"
 
 
 class Writer(metaclass=abc.ABCMeta):
-
     @abc.abstractmethod
     def write_dataframe(self, df, database, table, if_exists):
         pass
@@ -43,7 +41,9 @@ class SparkWriter(Writer):
     """
 
     def __init__(self, apikey, endpoint, td_spark_path=None, download_if_missing=True):
-        self.td_spark = self._fetch_td_spark(apikey, endpoint, td_spark_path, download_if_missing)
+        self.td_spark = self._fetch_td_spark(
+            apikey, endpoint, td_spark_path, download_if_missing
+        )
 
     def write_dataframe(self, df, database, table, if_exists):
         """Write a given DataFrame to a Treasure Data table.
@@ -69,23 +69,33 @@ class SparkWriter(Writer):
         """
         from py4j.protocol import Py4JJavaError
 
-        if if_exists not in ('error', 'overwrite', 'append', 'ignore'):
-            raise ValueError('invalid valud for if_exists: %s' % if_exists)
+        if if_exists not in ("error", "overwrite", "append", "ignore"):
+            raise ValueError("invalid valud for if_exists: %s" % if_exists)
 
         destination = table
-        if '.' not in table:
-            destination = database + '.' + table
+        if "." not in table:
+            destination = database + "." + table
 
         # normalize column names so it contains only alphanumeric and `_`
-        df = df.rename(lambda c: re.sub(r'[^a-zA-Z0-9]', ' ', str(c)).lower().replace(' ', '_'), axis='columns')
+        df = df.rename(
+            lambda c: re.sub(r"[^a-zA-Z0-9]", " ", str(c)).lower().replace(" ", "_"),
+            axis="columns",
+        )
 
         sdf = self.td_spark.createDataFrame(df)
         try:
-            sdf.write.mode(if_exists).format('com.treasuredata.spark').option('table', destination).save()
+            sdf.write.mode(if_exists).format("com.treasuredata.spark").option(
+                "table", destination
+            ).save()
         except Py4JJavaError as e:
-            if 'API_ACCESS_FAILURE' in str(e.java_exception):
-                raise PermissionError('failed to access to Treasure Data Plazma API. Contact customer support to enable access rights.')
-            raise RuntimeError('failed to load table via td-spark: ' + str(e.java_exception))
+            if "API_ACCESS_FAILURE" in str(e.java_exception):
+                raise PermissionError(
+                    "failed to access to Treasure Data Plazma API."
+                    "Contact customer support to enable access rights."
+                )
+            raise RuntimeError(
+                "failed to load table via td-spark: " + str(e.java_exception)
+            )
 
     def close(self):
         """Close a PySpark session connected to Treasure Data.
@@ -96,38 +106,46 @@ class SparkWriter(Writer):
         try:
             from pyspark.sql import SparkSession
         except ImportError:
-            raise RuntimeError('PySpark is not installed')
+            raise RuntimeError("PySpark is not installed")
 
         if td_spark_path is None:
-            td_spark_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), TD_SPARK_JAR_NAME)
+            td_spark_path = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), TD_SPARK_JAR_NAME
+            )
 
         available = os.path.exists(td_spark_path)
 
         if not available and download_if_missing:
             self._download_td_spark(td_spark_path)
         elif not available:
-            raise IOError('td-spark is not found and `download_if_missing` is False')
+            raise IOError("td-spark is not found and `download_if_missing` is False")
 
         plazma_api = os.getenv("TD_PLAZMA_API")
         presto_api = os.getenv("TD_PRESTO_API")
 
         api_conf = ""
         if plazma_api and presto_api:
-            api_regex = re.compile(r'(?:https?://)?(api(?:-.+?)?)\.')
-            api_host = api_regex.sub('\\1.', endpoint).strip('/')
+            api_regex = re.compile(r"(?:https?://)?(api(?:-.+?)?)\.")
+            api_host = api_regex.sub("\\1.", endpoint).strip("/")
             api_conf = """\
             --conf spark.td.api.host=%s
             --conf spark.td.plazma_api.host=%s
             --conf spark.td.presto_api.host=%s
-            """ % (api_host, plazma_api, presto_api)
+            """ % (
+                api_host,
+                plazma_api,
+                presto_api,
+            )
 
-        site = 'us'
-        if '.co.jp' in endpoint:
-            site = 'jp'
-        if 'eu01' in endpoint:
-            site = 'eu01'
+        site = "us"
+        if ".co.jp" in endpoint:
+            site = "jp"
+        if "eu01" in endpoint:
+            site = "eu01"
 
-        os.environ['PYSPARK_SUBMIT_ARGS'] = """\
+        os.environ[
+            "PYSPARK_SUBMIT_ARGS"
+        ] = """\
         --jars %s
         --conf spark.td.apikey=%s
         --conf spark.td.site=%s
@@ -135,27 +153,32 @@ class SparkWriter(Writer):
         --conf spark.serializer=org.apache.spark.serializer.KryoSerializer
         --conf spark.sql.execution.arrow.enabled=true
         pyspark-shell
-        """ % (td_spark_path, apikey, site, api_conf)
+        """ % (
+            td_spark_path,
+            apikey,
+            site,
+            api_conf,
+        )
 
         try:
-            return SparkSession.builder.master('local[*]').getOrCreate()
+            return SparkSession.builder.master("local[*]").getOrCreate()
         except Exception as e:
-            raise RuntimeError('failed to connect to td-spark: ' + str(e))
+            raise RuntimeError("failed to connect to td-spark: " + str(e))
 
     def _download_td_spark(self, destination):
         download_url = TD_SPARK_BASE_URL % TD_SPARK_JAR_NAME
         try:
             response = urlopen(download_url)
         except HTTPError:
-            raise RuntimeError('failed to access to the download URL: ' + download_url)
+            raise RuntimeError("failed to access to the download URL: " + download_url)
 
-        logger.info('Downloading td-spark...')
+        logger.info("Downloading td-spark...")
         try:
-            with open(destination, 'w+b') as f:
+            with open(destination, "w+b") as f:
                 f.write(response.read())
         except Exception:
             os.remove(destination)
             raise
-        logger.info('Completed to download')
+        logger.info("Completed to download")
 
         response.close()

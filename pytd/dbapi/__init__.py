@@ -1,13 +1,21 @@
 from ..client import Client
 from .connection import Connection
 from .error import (
-    Error, Warning, InterfaceError, DatabaseError, InternalError,
-    OperationalError, ProgrammingError, IntegrityError, DataError,
-    NotSupportedError)
+    DatabaseError,
+    DataError,
+    Error,
+    IntegrityError,
+    InterfaceError,
+    InternalError,
+    NotSupportedError,
+    OperationalError,
+    ProgrammingError,
+    Warning,
+)
 
-apilevel = '2.0'
+apilevel = "2.0"
 threadsafety = 3
-paramstyle = 'pyformat'
+paramstyle = "pyformat"
 
 
 def connect(client=None):
@@ -25,19 +33,19 @@ def connect(client=None):
 
 
 __all__ = [
-    'apilevel',
-    'threadsafety',
-    'paramstyle',
-    'connect',
-    'Connection',
-    'Error',
-    'Warning',
-    'InterfaceError',
-    'DatabaseError',
-    'InternalError',
-    'OperationalError',
-    'ProgrammingError',
-    'IntegrityError',
-    'DataError',
-    'NotSupportedError'
+    "apilevel",
+    "threadsafety",
+    "paramstyle",
+    "connect",
+    "Connection",
+    "Error",
+    "Warning",
+    "InterfaceError",
+    "DatabaseError",
+    "InternalError",
+    "OperationalError",
+    "ProgrammingError",
+    "IntegrityError",
+    "DataError",
+    "NotSupportedError",
 ]

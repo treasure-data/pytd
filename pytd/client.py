@@ -1,8 +1,9 @@
 import os
+
 import tdclient
 
+from .query_engine import HiveQueryEngine, PrestoQueryEngine, QueryEngine
 from .writer import SparkWriter
-from .query_engine import QueryEngine, PrestoQueryEngine, HiveQueryEngine
 
 
 class Client(object):
@@ -43,17 +44,32 @@ class Client(object):
     """
 
     def __init__(
-            self, apikey=None, endpoint=None, database='sample_datasets', engine='presto', header=True, writer=None, **kwargs):
+        self,
+        apikey=None,
+        endpoint=None,
+        database="sample_datasets",
+        engine="presto",
+        header=True,
+        writer=None,
+        **kwargs
+    ):
         if isinstance(engine, QueryEngine):
             apikey = engine.apikey
             endpoint = engine.endpoint
             database = engine.database
         else:
-            apikey = apikey or os.environ.get('TD_API_KEY')
+            apikey = apikey or os.environ.get("TD_API_KEY")
             if apikey is None:
-                raise ValueError("either argument 'apikey' or environment variable 'TD_API_KEY' should be set")
-            endpoint = endpoint or os.getenv('TD_API_SERVER', 'https://api.treasuredata.com')
-            engine = self._fetch_query_engine(engine, apikey, endpoint, database, header)
+                raise ValueError(
+                    "either argument 'apikey' or environment variable"
+                    "'TD_API_KEY' should be set"
+                )
+            endpoint = endpoint or os.getenv(
+                "TD_API_SERVER", "https://api.treasuredata.com"
+            )
+            engine = self._fetch_query_engine(
+                engine, apikey, endpoint, database, header
+            )
 
         self.apikey = apikey
         self.endpoint = endpoint
@@ -61,7 +77,9 @@ class Client(object):
 
         self.engine = engine
 
-        self.api_client = tdclient.Client(apikey=apikey, endpoint=endpoint, user_agent=engine.user_agent, **kwargs)
+        self.api_client = tdclient.Client(
+            apikey=apikey, endpoint=endpoint, user_agent=engine.user_agent, **kwargs
+        )
 
         self.managed_writer = writer is None
         self.writer = writer
@@ -140,10 +158,10 @@ class Client(object):
             'columns'
                 List of column names.
         """
-        header = self.engine.create_header('Client#query')
+        header = self.engine.create_header("Client#query")
         return self.engine.execute(header + query)
 
-    def load_table_from_dataframe(self, dataframe, table, if_exists='error'):
+    def load_table_from_dataframe(self, dataframe, table, if_exists="error"):
         """Write a given DataFrame to a Treasure Data table.
 
         This function initializes a Writer interface at the first time. As a
@@ -173,9 +191,11 @@ class Client(object):
         self.close()
 
     def _fetch_query_engine(self, engine, apikey, endpoint, database, header):
-        if engine == 'presto':
+        if engine == "presto":
             return PrestoQueryEngine(apikey, endpoint, database, header)
-        elif engine == 'hive':
+        elif engine == "hive":
             return HiveQueryEngine(apikey, endpoint, database, header)
         else:
-            raise ValueError('`engine` should be "presto" or "hive", or actual QueryEngine instance')
+            raise ValueError(
+                '`engine` should be "presto" or "hive", or actual QueryEngine instance'
+            )
