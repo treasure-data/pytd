@@ -161,7 +161,8 @@ class Client(object):
         if_exists : {'error', 'overwrite', 'append', 'ignore'}, default: 'error'
             What happens when a target table already exists.
         """
-        self.writer = SparkWriter(self.apikey, self.endpoint)
+        if self.writer is None:
+            self.writer = SparkWriter(self.apikey, self.endpoint)
 
         self.writer.write_dataframe(dataframe, self.database, table, if_exists)
 
