@@ -3,3 +3,5 @@ td-spark*
 build/
 dist/
 *.egg-info/
+__pycache__
+.venv
