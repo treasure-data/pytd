@@ -16,7 +16,6 @@ class ClientTestCase(unittest.TestCase):
         self.client.writer = MagicMock()
         self.client.close()
         self.assertTrue(self.client.engine.close.called)
-        self.assertFalse(self.client.writer.close.called)
 
     def query(self):
         d = self.client.query('select * from tbl')
@@ -41,6 +40,7 @@ class ClientTestWithoutWriter(ClientTestCase):
 
     def test_close(self):
         self.close()
+        self.assertTrue(self.client.writer.close.called)
 
     def test_query(self):
         self.query()
@@ -75,6 +75,7 @@ class ClientTestWithWriter(ClientTestCase):
 
     def test_close(self):
         self.close()
+        self.assertFalse(self.client.writer.close.called)
 
     def test_query(self):
         self.query()

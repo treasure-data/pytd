@@ -345,9 +345,7 @@ def to_td(frame, name, con, if_exists='fail', time_col=None, time_index=None, in
     frame = _convert_index_column(frame, index, index_label)
     frame = _convert_date_format(frame, date_format)
 
-    if con.writer is None:
-        con.writer = SparkWriter(con.apikey, con.endpoint)
-    con.writer.write_dataframe(frame, con.database, name, mode)
+    con.load_table_from_dataframe(frame, name, mode)
 
 
 def _convert_time_column(frame, time_col=None, time_index=None):
