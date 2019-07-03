@@ -63,6 +63,7 @@ class Client(object):
 
         self.api_client = tdclient.Client(apikey=apikey, endpoint=endpoint, user_agent=engine.user_agent, **kwargs)
 
+        self.managed_writer = False
         self.writer = writer
 
     def list_databases(self):
@@ -119,7 +120,7 @@ class Client(object):
         """
         self.engine.close()
         self.api_client.close()
-        if self.writer is not None:
+        if self.writer is not None and self.managed_writer:
             self.writer.close()
 
     def query(self, query):
@@ -161,6 +162,7 @@ class Client(object):
             What happens when a target table already exists.
         """
         if self.writer is None:
+            self.managed_writer = True
             self.writer = SparkWriter(self.apikey, self.endpoint)
 
         self.writer.write_dataframe(dataframe, self.database, table, if_exists)

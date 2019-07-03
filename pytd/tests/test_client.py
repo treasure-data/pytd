@@ -16,19 +16,12 @@ class ClientTestCase(unittest.TestCase):
         self.client.writer = MagicMock()
         self.client.close()
         self.assertTrue(self.client.engine.close.called)
-        self.assertTrue(self.client.writer.close.called)
+        self.assertFalse(self.client.writer.close.called)
 
     def query(self):
         d = self.client.query('select * from tbl')
         self.assertListEqual(d['columns'], ['col1', 'col2'])
         self.assertListEqual(d['data'], [[1, 'a'], [2, 'b']])
-
-    def load_table_from_dataframe(self):
-        df = pd.DataFrame([[1, 2], [3, 4]])
-        self.assertTrue(self.client.writer is self.writer)
-        self.client.writer = MagicMock()
-        self.client.load_table_from_dataframe(df, 'foo', 'error')
-        self.assertTrue(self.client.writer.write_dataframe.called)
 
 
 class ClientTestWithoutWriter(ClientTestCase):
@@ -53,7 +46,15 @@ class ClientTestWithoutWriter(ClientTestCase):
         self.query()
 
     def test_load_table_from_dataframe(self):
-        self.load_table_from_dataframe()
+        df = pd.DataFrame([[1, 2], [3, 4]])
+        self.assertTrue(self.client.writer is None)
+        self.client.writer = MagicMock()
+        self.client.managed_writer = True
+
+        self.client.load_table_from_dataframe(df, 'foo', 'error')
+        self.assertTrue(self.client.writer.write_dataframe.called)
+        self.client.close()
+        self.assertTrue(self.client.writer.close.called)
 
 
 class ClientTestWithWriter(ClientTestCase):
@@ -79,7 +80,14 @@ class ClientTestWithWriter(ClientTestCase):
         self.query()
 
     def test_load_table_from_dataframe(self):
-        self.load_table_from_dataframe()
+        df = pd.DataFrame([[1, 2], [3, 4]])
+        self.assertTrue(self.client.writer is self.writer)
+
+        self.client.load_table_from_dataframe(df, 'foo', 'error')
+        self.assertFalse(self.client.managed_writer)
+        self.assertTrue(self.client.writer.write_dataframe.called)
+        self.client.close()
+        self.assertFalse(self.client.writer.close.called)
 
 
 def test_client_context():
