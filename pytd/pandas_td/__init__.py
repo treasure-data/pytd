@@ -274,7 +274,7 @@ def _parse_dates(frame, parse_dates):
 read_td = read_td_query
 
 
-def to_td(frame, name, con, if_exists='fail', time_col=None, time_index=None, index=True, index_label=None, chunksize=10000, date_format=None, writer=None):
+def to_td(frame, name, con, if_exists='fail', time_col=None, time_index=None, index=True, index_label=None, chunksize=10000, date_format=None):
     """Write a DataFrame to a Treasure Data table.
 
     This method converts the dataframe into a series of key-value pairs
@@ -327,10 +327,6 @@ def to_td(frame, name, con, if_exists='fail', time_col=None, time_index=None, in
 
     date_format : string, default: None
         Format string for datetime objects
-
-    writer : pytd.writer.Writer or child class of Writer class, optional
-        A Writer to choose writing method to Treasure Data. If not given, default Writer
-        will be created.
     """
     if if_exists == 'fail' or if_exists == 'error':
         mode = 'error'
@@ -349,9 +345,9 @@ def to_td(frame, name, con, if_exists='fail', time_col=None, time_index=None, in
     frame = _convert_index_column(frame, index, index_label)
     frame = _convert_date_format(frame, date_format)
 
-    if writer is None:
-        writer = SparkWriter(con.apikey, con.endpoint)
-    writer.write_dataframe(frame, con.database, name, mode)
+    if con.writer is None:
+        con.writer = SparkWriter(con.apikey, con.endpoint)
+    con.writer.write_dataframe(frame, con.database, name, mode)
 
 
 def _convert_time_column(frame, time_col=None, time_index=None):

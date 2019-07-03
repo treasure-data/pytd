@@ -59,6 +59,14 @@ df = pd.DataFrame(data={'col1': [1, 2], 'col2': [3, 10]})
 client.load_table_from_dataframe(df, 'takuti.foo', if_exists='overwrite')
 ```
 
+If you want to use existing td-spark JAR file, creating `SparkWriter` with `td_spark_path` option would be helpful.
+
+```py
+writer = pytd.writer.SparkWriter(apikey='1/XXX', endpoint='https://api.treasuredata.com/', td_spark_path='/path/to/td-spark-assembly.jar')
+client = pytd.Client(database='sample_datasets', writer=writer)
+client.load_table_from_dataframe(df, 'mydb.bar', if_exists='overwrite')
+```
+
 ### DB-API
 
 `pytd` implements [Python Database API Specification v2.0](https://www.python.org/dev/peps/pep-0249/) with the help of [prestodb/presto-python-client](https://github.com/prestodb/presto-python-client).
@@ -120,7 +128,7 @@ for index, row in iterrows('select symbol, count(1) as cnt from nasdaq group by 
 First, install the package from PyPI:
 
 ```sh
-pip install pytd  
+pip install pytd
 # or, `pip install pytd[spark]` if you wish to use `to_td`
 ```
 
@@ -147,3 +155,21 @@ In [1]: %%load_ext pytd.pandas_td.ipython
 ```
 
 Consequently, all `pandas_td` code should keep running correctly with `pytd`. Report an issue from [here](https://github.com/treasure-data/pytd/issues/new) if you noticed any incompatible behaviors.
+
+### Use existing td-spark-assembly.jar file
+
+If you want to use existing td-spark JAR file, creating `SparkWriter` with `td_spark_path` option would be helpful. You can pass a writer to `connect()` function.
+
+```py
+import pytd
+import pytd.pandas_td as td
+import pandas as pd
+apikey = '1/XXX'
+endpoint = 'https://api.treasuredata.com/'
+
+writer = pytd.writer.SparkWriter(apikey=apikey, endpoint=endpoint, td_spark_path='/path/to/td-spark-assembly.jar')
+con = td.connect(apikey=apikey, endpoint=endpoint, writer=writer)
+
+df = pd.DataFrame(data={'col1': [1, 2], 'col2': [3, 10]})
+td.to_td(df, 'mydb.buzz', con, if_exists='replace', index=False)
+```
