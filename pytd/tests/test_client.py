@@ -1,15 +1,9 @@
 import unittest
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
 from pytd.client import Client
-
-try:
-    from unittest.mock import MagicMock
-    from unittest.mock import patch
-except ImportError:
-    from mock import MagicMock
-    from mock import patch
 
 
 class ClientTestCase(unittest.TestCase):

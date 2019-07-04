@@ -1,17 +1,11 @@
 import unittest
+from unittest.mock import MagicMock, patch
 
 import prestodb
 import tdclient
 
 from pytd.query_engine import HiveQueryEngine, PrestoQueryEngine
 from pytd.version import __version__
-
-try:
-    from unittest.mock import MagicMock
-    from unittest.mock import patch
-except ImportError:
-    from mock import MagicMock
-    from mock import patch
 
 
 class PrestoQueryEngineTestCase(unittest.TestCase):
