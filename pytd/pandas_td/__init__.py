@@ -7,7 +7,6 @@ import pandas as pd
 
 from ..client import Client
 from ..query_engine import HiveQueryEngine, PrestoQueryEngine
-from ..writer import SparkWriter
 
 logger = logging.getLogger(__name__)
 

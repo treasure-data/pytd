@@ -55,7 +55,7 @@ class ClientTestWithoutWriter(ClientTestCase):
         self.assertTrue(self.client.managed_writer)
         self.client.writer = MagicMock()
 
-        self.client.load_table_from_dataframe(df, 'foo', 'error')
+        self.client.load_table_from_dataframe(df, "foo", "error")
         self.assertTrue(self.client.writer.write_dataframe.called)
         self.client.close()
         self.assertTrue(self.client.writer.close.called)
@@ -93,7 +93,7 @@ class ClientTestWithWriter(ClientTestCase):
         self.assertTrue(self.client.writer is self.writer)
         self.assertFalse(self.client.managed_writer)
 
-        self.client.load_table_from_dataframe(df, 'foo', 'error')
+        self.client.load_table_from_dataframe(df, "foo", "error")
         self.assertTrue(self.client.writer.write_dataframe.called)
         self.client.close()
         self.assertFalse(self.client.writer.close.called)
