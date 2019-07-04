@@ -67,7 +67,10 @@ def setup_package():
             "td-client>=0.12.0",
             "pytz>=2018.5",
         ],
-        extras_require={"spark": ["pyspark>=2.4.0", "pyarrow>=0.11.0"]},
+        extras_require={
+            "spark": ["pyspark>=2.4.0", "pyarrow>=0.11.0"],
+            "dev": ["black", "isort", "flake8"],
+        },
     )
 
     setup(**metadata)

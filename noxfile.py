@@ -3,16 +3,15 @@ import nox
 
 @nox.session
 def lint(session):
-    lint_tools = ["flake8", "black", "isort"]
     targets = ["pytd", "setup.py", "noxfile.py"]
-    session.install(*lint_tools)
+    session.install("-e", ".[dev]")
     session.run("flake8", *targets)
     session.run("black", "--diff", "--check", *targets)
-    session.run("isort", "--check-only", *targets)
+    session.run("isort", "--check-only")
 
 
 @nox.session
 def tests(session):
     session.install("pytest")
-    session.install(".[spark]")
+    session.install(".[dev,spark]")
     session.run("pytest", "-v")
