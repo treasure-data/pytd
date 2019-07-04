@@ -15,4 +15,4 @@ def lint(session):
 def tests(session):
     session.install("nose")
     session.install(".[spark]")
-    session.run("nosetests", ".", "-v")
+    session.run("pytest", "-v")
