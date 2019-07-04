@@ -3,7 +3,8 @@ pandas
 td-client
 pyspark
 pyarrow
-nose
+pytest
 mock
 wheel
 pytz
+nox
