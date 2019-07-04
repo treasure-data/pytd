@@ -18,13 +18,14 @@ before_install:
 
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION nose mock
   - source activate test-environment
+  - pip install nox
 
 install:
   - pip install .[spark]
   - pip check
 
 script:
-  - nosetests . -v
+  - nox
 
 notifications:
   email: false
