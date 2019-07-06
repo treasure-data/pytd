@@ -12,6 +12,5 @@ def lint(session):
 
 @nox.session
 def tests(session):
-    session.install("pytest")
-    session.install(".[dev,spark]")
+    session.install(".[dev,test,spark]")
     session.run("pytest", "-v")
