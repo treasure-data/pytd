@@ -69,7 +69,6 @@ def setup_package():
         ],
         extras_require={
             "spark": ["pyspark>=2.4.0", "pyarrow>=0.11.0"],
-            "dev": ["black", "isort", "flake8"],
             "test": ["pytest"],
         },
     )
