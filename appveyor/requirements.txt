@@ -4,7 +4,6 @@ td-client
 pyspark
 pyarrow
 pytest
-mock
 wheel
 pytz
 nox
