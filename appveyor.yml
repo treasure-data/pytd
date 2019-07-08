@@ -29,6 +29,7 @@ environment:
     - PYTHON: "C:\\Python37-x64"
       PYTHON_VERSION: "3.7.0"
       PYTHON_ARCH: "64"
+      NOX_SESSION: "tests-3.7"
 
 # Because we only have a single worker, we don't want to waste precious
 # appveyor CI time and make other PRs wait for repeated failures in a failing
@@ -78,7 +79,7 @@ build_script:
 
 test_script:
   # Run the project tests
-  - "%CMD_IN_ENV% python setup.py nosetests"
+  - "%CMD_IN_ENV% nox.exe --session \"%NOX_SESSION%\""
 
 after_test:
   # If tests are successful, create binary packages for the project.

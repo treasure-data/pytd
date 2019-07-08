@@ -10,21 +10,20 @@ import argparse
 import os
 import re
 import sys
+
 import numpy as np
 import pandas as pd
 import pytz
 import tdclient
+from IPython import display, get_ipython
+from IPython.core import magic
 
 from . import connect, create_engine, read_td_job, read_td_query
 
-from IPython import get_ipython, display
-from IPython.core import magic
-
-MAGIC_CONTEXT_NAME = '_td_magic'
+MAGIC_CONTEXT_NAME = "_td_magic"
 
 
 class MagicContext(object):
-
     def __init__(self):
         self.database = None
 
@@ -33,13 +32,12 @@ class MagicContext(object):
 
 
 class MagicTable(object):
-
     def __init__(self, table):
         print("INFO: import {0}".format(table.name))
         self.table = table
-        data = [c if len(c) == 3 else [c[0], c[1], ''] for c in table.schema]
+        data = [c if len(c) == 3 else [c[0], c[1], ""] for c in table.schema]
         self.columns = [c[2] if c[2] else c[0] for c in data]
-        self.frame = pd.DataFrame(data, columns=['field', 'type', 'alias'])
+        self.frame = pd.DataFrame(data, columns=["field", "type", "alias"])
 
     def __dir__(self):
         return self.columns
@@ -59,7 +57,6 @@ def get_td_magic_context():
 
 
 class TDMagics(magic.Magics):
-
     def __init__(self, shell):
         super(TDMagics, self).__init__(shell)
         self.context = get_td_magic_context()
@@ -67,7 +64,6 @@ class TDMagics(magic.Magics):
 
 @magic.magics_class
 class DatabasesMagics(TDMagics):
-
     @magic.line_magic
     def td_databases(self, pattern):
         """List databases in the form of pandas.DataFrame.
@@ -78,7 +74,8 @@ class DatabasesMagics(TDMagics):
         Parameters
         ----------
         ``<database_name_pattern>`` : string, optional
-            List databases matched to a given pattern. If not given, all existing databases will be listed.
+            List databases matched to a given pattern. If not given, all existing
+            databases will be listed.
 
         Returns
         -------
@@ -106,16 +103,17 @@ class DatabasesMagics(TDMagics):
             ...
         """
         con = self.context.connect()
-        columns = ['name', 'count', 'permission', 'created_at', 'updated_at']
-        values = [[getattr(db, c) for c in columns]
-                  for db in con.list_databases()
-                  if re.search(pattern, db.name)]
+        columns = ["name", "count", "permission", "created_at", "updated_at"]
+        values = [
+            [getattr(db, c) for c in columns]
+            for db in con.list_databases()
+            if re.search(pattern, db.name)
+        ]
         return pd.DataFrame(values, columns=columns)
 
 
 @magic.magics_class
 class TablesMagics(TDMagics):
-
     @magic.line_magic
     def td_tables(self, pattern):
         """List tables in databases.
@@ -156,17 +154,25 @@ class TablesMagics(TDMagics):
             ...
         """
         con = self.context.connect()
-        columns = ['db_name', 'name', 'count', 'estimated_storage_size', 'last_log_timestamp', 'created_at']
-        values = [[getattr(t, c) for c in columns]
-                  for db in con.list_databases()
-                  for t in con.list_tables(db.name)
-                  if re.search(pattern, t.identifier)]
+        columns = [
+            "db_name",
+            "name",
+            "count",
+            "estimated_storage_size",
+            "last_log_timestamp",
+            "created_at",
+        ]
+        values = [
+            [getattr(t, c) for c in columns]
+            for db in con.list_databases()
+            for t in con.list_tables(db.name)
+            if re.search(pattern, t.identifier)
+        ]
         return pd.DataFrame(values, columns=columns)
 
 
 @magic.magics_class
 class JobsMagics(TDMagics):
-
     @magic.line_magic
     def td_jobs(self, line):
         """List job activities in an account.
@@ -192,15 +198,16 @@ class JobsMagics(TDMagics):
             ...
         """
         con = self.context.connect()
-        columns = ['status', 'job_id', 'type', 'start_at', 'query']
-        values = [[j.status(), j.job_id, j.type, j._start_at, j.query]
-                  for j in con.list_jobs()]
+        columns = ["status", "job_id", "type", "start_at", "query"]
+        values = [
+            [j.status(), j.job_id, j.type, j._start_at, j.query]
+            for j in con.list_jobs()
+        ]
         return pd.DataFrame(values, columns=columns)
 
 
 @magic.magics_class
 class UseMagics(TDMagics):
-
     @magic.line_magic
     def td_use(self, line):
         """Use a specific database.
@@ -242,34 +249,37 @@ class UseMagics(TDMagics):
 
 @magic.magics_class
 class QueryMagics(TDMagics):
-
     def create_job_parser(self):
         parser = argparse.ArgumentParser(
-            prog='job',
-            description='Line magic to get job result.',
-            add_help=False)
-        parser.add_argument('job_id', type=int,
-                            help='job ID')
-        parser.add_argument('--pivot', action='store_true',
-                            help='run pivot_table against dimensions')
-        parser.add_argument('--plot', action='store_true',
-                            help='plot the query result')
-        parser.add_argument('-n', '--dry-run', action='store_true',
-                            help='output translated code without running query')
-        parser.add_argument('-v', '--verbose', action='store_true',
-                            help='verbose output')
-        parser.add_argument('-c', '--connection',
-                            help='use specified connection')
-        parser.add_argument('-d', '--dropna', action='store_true',
-                            help='drop columns if all values are NA')
-        parser.add_argument('-o', '--out',
-                            help='store the result to variable')
-        parser.add_argument('-O', '--out-file',
-                            help='store the result to file')
-        parser.add_argument('-q', '--quiet', action='store_true',
-                            help='disable progress output')
-        parser.add_argument('-T', '--timezone',
-                            help='set timezone to time index')
+            prog="job", description="Line magic to get job result.", add_help=False
+        )
+        parser.add_argument("job_id", type=int, help="job ID")
+        parser.add_argument(
+            "--pivot", action="store_true", help="run pivot_table against dimensions"
+        )
+        parser.add_argument("--plot", action="store_true", help="plot the query result")
+        parser.add_argument(
+            "-n",
+            "--dry-run",
+            action="store_true",
+            help="output translated code without running query",
+        )
+        parser.add_argument(
+            "-v", "--verbose", action="store_true", help="verbose output"
+        )
+        parser.add_argument("-c", "--connection", help="use specified connection")
+        parser.add_argument(
+            "-d",
+            "--dropna",
+            action="store_true",
+            help="drop columns if all values are NA",
+        )
+        parser.add_argument("-o", "--out", help="store the result to variable")
+        parser.add_argument("-O", "--out-file", help="store the result to file")
+        parser.add_argument(
+            "-q", "--quiet", action="store_true", help="disable progress output"
+        )
+        parser.add_argument("-T", "--timezone", help="set timezone to time index")
         return parser
 
     def parse_job_args(self, line):
@@ -288,31 +298,35 @@ class QueryMagics(TDMagics):
 
     def create_query_parser(self, engine_type):
         parser = argparse.ArgumentParser(
-            prog=engine_type,
-            description='Cell magic to run a query.',
-            add_help=False)
-        parser.add_argument('database', nargs='?',
-                            help='database name')
-        parser.add_argument('--pivot', action='store_true',
-                            help='run pivot_table against dimensions')
-        parser.add_argument('--plot', action='store_true',
-                            help='plot the query result')
-        parser.add_argument('-n', '--dry-run', action='store_true',
-                            help='output translated code without running query')
-        parser.add_argument('-v', '--verbose', action='store_true',
-                            help='verbose output')
-        parser.add_argument('-c', '--connection',
-                            help='use specified connection')
-        parser.add_argument('-d', '--dropna', action='store_true',
-                            help='drop columns if all values are NA')
-        parser.add_argument('-o', '--out',
-                            help='store the result to variable')
-        parser.add_argument('-O', '--out-file',
-                            help='store the result to file')
-        parser.add_argument('-q', '--quiet', action='store_true',
-                            help='disable progress output')
-        parser.add_argument('-T', '--timezone',
-                            help='set timezone to time index')
+            prog=engine_type, description="Cell magic to run a query.", add_help=False
+        )
+        parser.add_argument("database", nargs="?", help="database name")
+        parser.add_argument(
+            "--pivot", action="store_true", help="run pivot_table against dimensions"
+        )
+        parser.add_argument("--plot", action="store_true", help="plot the query result")
+        parser.add_argument(
+            "-n",
+            "--dry-run",
+            action="store_true",
+            help="output translated code without running query",
+        )
+        parser.add_argument(
+            "-v", "--verbose", action="store_true", help="verbose output"
+        )
+        parser.add_argument("-c", "--connection", help="use specified connection")
+        parser.add_argument(
+            "-d",
+            "--dropna",
+            action="store_true",
+            help="drop columns if all values are NA",
+        )
+        parser.add_argument("-o", "--out", help="store the result to variable")
+        parser.add_argument("-O", "--out-file", help="store the result to file")
+        parser.add_argument(
+            "-q", "--quiet", action="store_true", help="disable progress output"
+        )
+        parser.add_argument("-T", "--timezone", help="set timezone to time index")
         return parser
 
     def parse_query_args(self, engine_type, line):
@@ -333,13 +347,13 @@ class QueryMagics(TDMagics):
 
         return args
 
-    def push_code(self, code, end='\n'):
+    def push_code(self, code, end="\n"):
         self.code_list.append(code + end)
 
     def display_code_block(self):
         html = '<pre style="background-color: #ffe;">'
-        html += ''.join(self.code_list)
-        html += '</pre>\n'
+        html += "".join(self.code_list)
+        html += "</pre>\n"
         display.display(display.HTML(html))
 
     def build_query(self, cell):
@@ -352,48 +366,55 @@ class QueryMagics(TDMagics):
 
     def build_engine(self, engine_type, database, args):
         ip = get_ipython()
-        name = '{}:{}'.format(engine_type, database)
+        name = "{}:{}".format(engine_type, database)
         code_args = [repr(name)]
         # connection
         if args.connection:
             con = ip.ev(args.connection)
-            code_args.append('con={}'.format(args.connection))
+            code_args.append("con={}".format(args.connection))
         else:
             con = self.context.connect()
         # engine
         if args.quiet:
-            params = {'show_progress': False, 'clear_progress': False}
+            params = {"show_progress": False, "clear_progress": False}
         elif args.verbose:
-            params = {'show_progress': True, 'clear_progress': False}
+            params = {"show_progress": True, "clear_progress": False}
         else:
             params = {}
-        code_args += ['{}={}'.format(k, v) for k, v in params.items()]
-        self.push_code("_e = pytd.pandas_td.create_engine({})".format(', '.join(code_args)))
+        code_args += ["{}={}".format(k, v) for k, v in params.items()]
+        self.push_code(
+            "_e = pytd.pandas_td.create_engine({})".format(", ".join(code_args))
+        )
         return create_engine(name, con=con, **params)
 
     def convert_time(self, d):
-        if 'time' in d.columns:
-            if d['time'].dtype == np.dtype('O'):
+        if "time" in d.columns:
+            if d["time"].dtype == np.dtype("O"):
                 self.push_code("_d['time'] = pd.to_datetime(_d['time'])")
-                d['time'] = pd.to_datetime(d['time'])
+                d["time"] = pd.to_datetime(d["time"])
             else:
                 self.push_code("_d['time'] = pd.to_datetime(_d['time'], unit='s')")
-                d['time'] = pd.to_datetime(d['time'], unit='s')
+                d["time"] = pd.to_datetime(d["time"], unit="s")
 
     def set_index(self, d, index, args):
         self.push_code("_d.set_index({}, inplace=True)".format(repr(index)))
         d.set_index(index, inplace=True)
-        if index == 'time' and args.timezone:
+        if index == "time" and args.timezone:
             self.push_code("_d.tz_localize('UTC', copy=False)")
             self.push_code("_d.tz_convert('{}', copy=False)".format(args.timezone))
-            d.tz_localize('UTC', copy=False).tz_convert(args.timezone, copy=False)
+            d.tz_localize("UTC", copy=False).tz_convert(args.timezone, copy=False)
 
     def pivot(self, d, args):
         def is_dimension(c, t):
-            return c.endswith('_id') or t == np.dtype('O')
+            return c.endswith("_id") or t == np.dtype("O")
+
         index = d.columns[0]
-        dimension = [c for c, t in zip(d.columns[1:], d.dtypes[1:]) if is_dimension(c, t)]
-        measure = [c for c, t in zip(d.columns[1:], d.dtypes[1:]) if not is_dimension(c, t)]
+        dimension = [
+            c for c, t in zip(d.columns[1:], d.dtypes[1:]) if is_dimension(c, t)
+        ]
+        measure = [
+            c for c, t in zip(d.columns[1:], d.dtypes[1:]) if not is_dimension(c, t)
+        ]
         if len(dimension) == 0:
             self.set_index(d, index, args)
             return d
@@ -401,7 +422,11 @@ class QueryMagics(TDMagics):
             dimension = dimension[0]
         if len(measure) == 1:
             measure = measure[0]
-        self.push_code("_d = _d.pivot({0}, {1}, {2})".format(repr(index), repr(dimension), repr(measure)))
+        self.push_code(
+            "_d = _d.pivot({0}, {1}, {2})".format(
+                repr(index), repr(dimension), repr(measure)
+            )
+        )
         return d.pivot(index, dimension, measure)
 
     def post_process(self, d, args):
@@ -413,13 +438,13 @@ class QueryMagics(TDMagics):
         # dropna by columns all
         if args.dropna:
             self.push_code("_d.dropna(axis='columns', how='all', inplace=True)")
-            d.dropna(axis='columns', how='all', inplace=True)
+            d.dropna(axis="columns", how="all", inplace=True)
 
         # pivot_table
         if args.pivot:
             d = self.pivot(d, args)
-        elif 'time' in d.columns:
-            self.set_index(d, 'time', args)
+        elif "time" in d.columns:
+            self.set_index(d, "time", args)
 
         # return value
         r = d
@@ -634,7 +659,7 @@ class QueryMagics(TDMagics):
                                      _c0
             0  0.6.0-SNAPSHOT-201901-r01
         """
-        return self.run_query('hive', line, cell)
+        return self.run_query("hive", line, cell)
 
     @magic.cell_magic
     def td_presto(self, line, cell):
@@ -707,12 +732,12 @@ class QueryMagics(TDMagics):
             1989-01-26 16:00:00   NAVG   0.0    1800  14.6740  14.1738  14.6740
             1989-01-26 16:00:00   MOCO   0.0   71101   3.6722   3.5609   3.5980
         """
-        return self.run_query('presto', line, cell)
+        return self.run_query("presto", line, cell)
 
 
 # extension
 def load_ipython_extension(ipython):
-    ipython.push('get_td_magic_context')
+    ipython.push("get_td_magic_context")
     ipython.register_magics(DatabasesMagics)
     ipython.register_magics(TablesMagics)
     ipython.register_magics(JobsMagics)

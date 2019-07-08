@@ -1,14 +1,10 @@
-from pytd.dbapi import Connection, NotSupportedError
-
 import unittest
-try:
-    from unittest.mock import MagicMock
-except ImportError:
-    from mock import MagicMock
+from unittest.mock import MagicMock
+
+from pytd.dbapi import Connection, NotSupportedError
 
 
 class ConnectionTestCase(unittest.TestCase):
-
     def setUp(self):
         self.mock_client = MagicMock()
         self.conn = Connection(self.mock_client)

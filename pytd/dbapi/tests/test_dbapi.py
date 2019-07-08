@@ -8,9 +8,9 @@ def test_constructors():
 
 
 def test_globals():
-    assert hasattr(dbapi, 'apilevel')
-    assert hasattr(dbapi, 'threadsafety')
-    assert hasattr(dbapi, 'paramstyle')
+    assert hasattr(dbapi, "apilevel")
+    assert hasattr(dbapi, "threadsafety")
+    assert hasattr(dbapi, "paramstyle")
 
 
 def test_exceptions():

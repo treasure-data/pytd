@@ -1,42 +1,43 @@
-from pytd.query_engine import PrestoQueryEngine, HiveQueryEngine
-from pytd.version import __version__
+import unittest
+from unittest.mock import MagicMock, patch
+
 import prestodb
 import tdclient
 
-import unittest
-try:
-    from unittest.mock import MagicMock
-    from unittest.mock import patch
-except ImportError:
-    from mock import MagicMock
-    from mock import patch
+from pytd.query_engine import HiveQueryEngine, PrestoQueryEngine
+from pytd.version import __version__
 
 
 class PrestoQueryEngineTestCase(unittest.TestCase):
-
-    @patch.object(PrestoQueryEngine, '_connect', return_value=MagicMock())
+    @patch.object(PrestoQueryEngine, "_connect", return_value=MagicMock())
     def setUp(self, connect):
-        self.presto = PrestoQueryEngine('1/XXX', 'https://api.treasuredata.com/', 'sample_datasets', True)
+        self.presto = PrestoQueryEngine(
+            "1/XXX", "https://api.treasuredata.com/", "sample_datasets", True
+        )
         self.assertTrue(connect.called)
 
     def test_user_agent(self):
         ua = self.presto.user_agent
-        self.assertEquals(ua, 'pytd/%s (prestodb/%s)' % (__version__, prestodb.__version__))
+        self.assertEqual(
+            ua, "pytd/%s (prestodb/%s)" % (__version__, prestodb.__version__)
+        )
 
     def test_create_header(self):
-        presto_no_header = PrestoQueryEngine('1/XXX', 'https://api.treasuredata.com/', 'sample_datasets', False)
-        self.assertEquals(presto_no_header.create_header('foo'), '')
+        presto_no_header = PrestoQueryEngine(
+            "1/XXX", "https://api.treasuredata.com/", "sample_datasets", False
+        )
+        self.assertEqual(presto_no_header.create_header("foo"), "")
 
         ua = self.presto.user_agent
 
         header = self.presto.create_header()
-        self.assertEquals(header, "-- client: {0}\n".format(ua))
+        self.assertEqual(header, "-- client: {0}\n".format(ua))
 
-        header = self.presto.create_header('foo')
-        self.assertEquals(header, "-- client: {0}\n-- foo\n".format(ua))
+        header = self.presto.create_header("foo")
+        self.assertEqual(header, "-- client: {0}\n-- foo\n".format(ua))
 
-        header = self.presto.create_header(['foo', 'bar'])
-        self.assertEquals(header, "-- client: {0}\n-- foo\n-- bar\n".format(ua))
+        header = self.presto.create_header(["foo", "bar"])
+        self.assertEqual(header, "-- client: {0}\n-- foo\n-- bar\n".format(ua))
 
     def test_cursor(self):
         self.presto.cursor()
@@ -48,30 +49,35 @@ class PrestoQueryEngineTestCase(unittest.TestCase):
 
 
 class HiveQueryEngineTestCase(unittest.TestCase):
-
-    @patch.object(HiveQueryEngine, '_connect', return_value=MagicMock())
+    @patch.object(HiveQueryEngine, "_connect", return_value=MagicMock())
     def setUp(self, connect):
-        self.hive = HiveQueryEngine('1/XXX', 'https://api.treasuredata.com/', 'sample_datasets', True)
+        self.hive = HiveQueryEngine(
+            "1/XXX", "https://api.treasuredata.com/", "sample_datasets", True
+        )
         self.assertTrue(connect.called)
 
     def test_user_agent(self):
-        hive_no_header = HiveQueryEngine('1/XXX', 'https://api.treasuredata.com/', 'sample_datasets', False)
-        self.assertEquals(hive_no_header.create_header('foo'), '')
+        hive_no_header = HiveQueryEngine(
+            "1/XXX", "https://api.treasuredata.com/", "sample_datasets", False
+        )
+        self.assertEqual(hive_no_header.create_header("foo"), "")
 
         ua = self.hive.user_agent
-        self.assertEquals(ua, 'pytd/%s (tdclient/%s)' % (__version__, tdclient.__version__))
+        self.assertEqual(
+            ua, "pytd/%s (tdclient/%s)" % (__version__, tdclient.__version__)
+        )
 
     def test_create_header(self):
         ua = self.hive.user_agent
 
         header = self.hive.create_header()
-        self.assertEquals(header, "-- client: {0}\n".format(ua))
+        self.assertEqual(header, "-- client: {0}\n".format(ua))
 
-        header = self.hive.create_header('foo')
-        self.assertEquals(header, "-- client: {0}\n-- foo\n".format(ua))
+        header = self.hive.create_header("foo")
+        self.assertEqual(header, "-- client: {0}\n-- foo\n".format(ua))
 
-        header = self.hive.create_header(['foo', 'bar'])
-        self.assertEquals(header, "-- client: {0}\n-- foo\n-- bar\n".format(ua))
+        header = self.hive.create_header(["foo", "bar"])
+        self.assertEqual(header, "-- client: {0}\n-- foo\n-- bar\n".format(ua))
 
     def test_cursor(self):
         self.hive.cursor()

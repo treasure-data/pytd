@@ -1,13 +1,13 @@
+import datetime
+import logging
 import re
 import time
-import datetime
+
 import pandas as pd
 
 from ..client import Client
-from ..writer import SparkWriter
-from ..query_engine import PrestoQueryEngine, HiveQueryEngine
+from ..query_engine import HiveQueryEngine, PrestoQueryEngine
 
-import logging
 logger = logging.getLogger(__name__)
 
 
@@ -15,8 +15,13 @@ def connect(apikey=None, endpoint=None, **kwargs):
     return Client(apikey=apikey, endpoint=endpoint, **kwargs)
 
 
-RE_ENGINE_DESC = re.compile("(?P<type>presto|hive)://(?P<apikey>[0-9]+/[a-z0-9]+)@(?P<host>[^/]+)/(?P<database>[a-z0-9_]+)(\?.*)?")
-RE_ENGINE_DESC_SHORT = re.compile("(?P<type>presto|hive):(?P<database>[a-z0-9_]+)(\?.*)?")
+RE_ENGINE_DESC = re.compile(
+    r"(?P<type>presto|hive)://(?P<apikey>[0-9]+/[a-z0-9]+)@"
+    r"(?P<host>[^/]+)/(?P<database>[a-z0-9_]+)(\?.*)?"
+)
+RE_ENGINE_DESC_SHORT = re.compile(
+    r"(?P<type>presto|hive):(?P<database>[a-z0-9_]+)(\?.*)?"
+)
 
 
 def create_engine(url, con=None, header=True, show_progress=5.0, clear_progress=True):
@@ -32,10 +37,12 @@ def create_engine(url, con=None, header=True, show_progress=5.0, clear_progress=
     url : string
         Engine descriptor in the form "type://apikey@host/database?params..."
         Use shorthand notation "type:database?params..." for the default connection.
-        pytd: "params" will be ignored since pytd.QueryEngine does not have any extra parameters.
+        pytd: "params" will be ignored since pytd.QueryEngine does not have any extra
+              parameters.
 
     con : pytd.Client, optional
-        Handler returned by pytd.pandas_td.connect. If not given, default client is used.
+        Handler returned by pytd.pandas_td.connect. If not given, default client is
+        used.
 
     header : string or boolean, default: True
         Prepend comment strings, in the form "-- comment", as a header of queries.
@@ -59,30 +66,32 @@ def create_engine(url, con=None, header=True, show_progress=5.0, clear_progress=
 
     res = RE_ENGINE_DESC.search(url)
     if res is not None:
-        engine_type = res.group('type')
-        apikey = res.group('apikey')
-        host = res.group('host')
-        database = res.group('database')
+        engine_type = res.group("type")
+        apikey = res.group("apikey")
+        host = res.group("host")
+        database = res.group("database")
 
         endpoint = "https://{0}/".format(host)
     else:
         res = RE_ENGINE_DESC_SHORT.search(url)
         if res is not None:
-            engine_type = res.group('type')
-            database = res.group('database')
+            engine_type = res.group("type")
+            database = res.group("database")
         else:
-            raise ValueError('invalid engine descriptor format')
+            raise ValueError("invalid engine descriptor format")
 
     if con is None:
         con = connect(apikey=apikey, endpoint=endpoint)
     apikey, endpoint = con.apikey, con.endpoint
 
-    if engine_type == 'presto':
+    if engine_type == "presto":
         return PrestoQueryEngine(apikey, endpoint, database, header=header)
     return HiveQueryEngine(apikey, endpoint, database, header=header)
 
 
-def read_td_query(query, engine, index_col=None, parse_dates=None, distributed_join=False, params=None):
+def read_td_query(
+    query, engine, index_col=None, parse_dates=None, distributed_join=False, params=None
+):
     """Read Treasure Data query into a DataFrame.
 
     Returns a DataFrame corresponding to the result set of the query string.
@@ -107,7 +116,8 @@ def read_td_query(query, engine, index_col=None, parse_dates=None, distributed_j
           in case of parsing integer timestamps
 
     distributed_join : boolean, default: False
-        (Presto only) If True, distributed join is enabled. If False, broadcast join is used.
+        (Presto only) If True, distributed join is enabled. If False, broadcast join is
+        used.
         See https://prestodb.io/docs/current/release/release-0.77.html
 
     params : dict, optional
@@ -123,9 +133,16 @@ def read_td_query(query, engine, index_col=None, parse_dates=None, distributed_j
     DataFrame
     """
     if isinstance(engine, PrestoQueryEngine) and distributed_join is not None:
-        header = engine.create_header(['read_td_query', "set session distributed_join = '{0}'\n".format('true' if distributed_join else 'false')])
+        header = engine.create_header(
+            [
+                "read_td_query",
+                "set session distributed_join = '{0}'\n".format(
+                    "true" if distributed_join else "false"
+                ),
+            ]
+        )
     else:
-        header = engine.create_header('read_td_query')
+        header = engine.create_header("read_td_query")
 
     return _to_dataframe(engine.execute(header + query), index_col, parse_dates)
 
@@ -167,8 +184,8 @@ def read_td_job(job_id, engine, index_col=None, parse_dates=None):
     job.wait()
 
     if not job.success():
-        if job.debug and job.debug['stderr']:
-            logger.error(job.debug['stderr'])
+        if job.debug and job.debug["stderr"]:
+            logger.error(job.debug["stderr"])
         raise RuntimeError("job {0} {1}".format(job.job_id, job.status()))
 
     if not job.finished():
@@ -177,10 +194,18 @@ def read_td_job(job_id, engine, index_col=None, parse_dates=None):
     columns = [c[0] for c in job.result_schema]
     rows = job.result()
 
-    return _to_dataframe({'data': rows, 'columns': columns}, index_col, parse_dates)
+    return _to_dataframe({"data": rows, "columns": columns}, index_col, parse_dates)
 
 
-def read_td_table(table_name, engine, index_col=None, parse_dates=None, columns=None, time_range=None, limit=10000):
+def read_td_table(
+    table_name,
+    engine,
+    index_col=None,
+    parse_dates=None,
+    columns=None,
+    time_range=None,
+    limit=10000,
+):
     """Read Treasure Data table into a DataFrame.
 
     The number of returned rows is limited by "limit" (default 10,000).
@@ -221,13 +246,15 @@ def read_td_table(table_name, engine, index_col=None, parse_dates=None, columns=
     # header
     query = engine.create_header("read_td_table('{0}')".format(table_name))
     # SELECT
-    query += "SELECT {0}\n".format('*' if columns is None else ', '.join(columns))
+    query += "SELECT {0}\n".format("*" if columns is None else ", ".join(columns))
     # FROM
     query += "FROM {0}\n".format(table_name)
     # WHERE
     if time_range is not None:
         start, end = time_range
-        query += "WHERE td_time_range(time, {0}, {1})\n".format(_convert_time(start), _convert_time(end))
+        query += "WHERE td_time_range(time, {0}, {1})\n".format(
+            _convert_time(start), _convert_time(end)
+        )
     # LIMIT
     if limit is not None:
         query += "LIMIT {0}\n".format(limit)
@@ -239,13 +266,13 @@ def _convert_time(time):
     if time is None:
         return "NULL"
     elif isinstance(time, int):
-        t = pd.to_datetime(time, unit='s')
+        t = pd.to_datetime(time, unit="s")
     elif isinstance(time, str):
         t = pd.to_datetime(time)
     elif isinstance(time, (datetime.date, datetime.datetime)):
         t = pd.to_datetime(time)
     else:
-        raise ValueError('invalid time value: {0}'.format(time))
+        raise ValueError("invalid time value: {0}".format(time))
     return "'{0}'".format(t.replace(microsecond=0))
 
 
@@ -263,7 +290,7 @@ def _parse_dates(frame, parse_dates):
         if type(parse_dates) is list:
             frame[name] = pd.to_datetime(frame[name])
         else:
-            if frame[name].dtype.kind == 'O':
+            if frame[name].dtype.kind == "O":
                 frame[name] = pd.to_datetime(frame[name], format=parse_dates[name])
             else:
                 frame[name] = pd.to_datetime(frame[name], unit=parse_dates[name])
@@ -274,7 +301,18 @@ def _parse_dates(frame, parse_dates):
 read_td = read_td_query
 
 
-def to_td(frame, name, con, if_exists='fail', time_col=None, time_index=None, index=True, index_label=None, chunksize=10000, date_format=None):
+def to_td(
+    frame,
+    name,
+    con,
+    if_exists="fail",
+    time_col=None,
+    time_index=None,
+    index=True,
+    index_label=None,
+    chunksize=10000,
+    date_format=None,
+):
     """Write a DataFrame to a Treasure Data table.
 
     This method converts the dataframe into a series of key-value pairs
@@ -297,7 +335,8 @@ def to_td(frame, name, con, if_exists='fail', time_col=None, time_index=None, in
     con : pytd.Client
         A client for a Treasure Data account returned by pytd.pandas_td.connect.
 
-    if_exists : {'error' ('fail'), 'overwrite' ('replace'), 'append', 'ignore'}, default: 'error'
+    if_exists : {'error' ('fail'), 'overwrite' ('replace'), 'append', 'ignore'}, \
+                    default: 'error'
         What happens when a target table already exists. For pandas-td
         compatibility, 'error', 'overwrite', and 'append' can respectively be:
             - fail: If table exists, do nothing.
@@ -328,16 +367,16 @@ def to_td(frame, name, con, if_exists='fail', time_col=None, time_index=None, in
     date_format : string, default: None
         Format string for datetime objects
     """
-    if if_exists == 'fail' or if_exists == 'error':
-        mode = 'error'
-    elif if_exists == 'replace' or if_exists == 'overwrite':
-        mode = 'overwrite'
-    elif if_exists == 'append':
-        mode = 'append'
-    elif if_exists == 'ignore':
-        mode = 'ignore'
+    if if_exists == "fail" or if_exists == "error":
+        mode = "error"
+    elif if_exists == "replace" or if_exists == "overwrite":
+        mode = "overwrite"
+    elif if_exists == "append":
+        mode = "append"
+    elif if_exists == "ignore":
+        mode = "ignore"
     else:
-        raise ValueError('invalid value for if_exists: %s' % if_exists)
+        raise ValueError("invalid value for if_exists: %s" % if_exists)
 
     # convert
     frame = frame.copy()
@@ -350,62 +389,66 @@ def to_td(frame, name, con, if_exists='fail', time_col=None, time_index=None, in
 
 def _convert_time_column(frame, time_col=None, time_index=None):
     if time_col is not None and time_index is not None:
-        raise ValueError('time_col and time_index cannot be used at the same time')
-    if 'time' in frame.columns and time_col != 'time':
+        raise ValueError("time_col and time_index cannot be used at the same time")
+    if "time" in frame.columns and time_col != "time":
         raise ValueError('"time" column already exists')
     if time_col is not None:
         # Use 'time_col' as time column
-        if time_col != 'time':
-            frame.rename(columns={time_col: 'time'}, inplace=True)
-        col = frame['time']
+        if time_col != "time":
+            frame.rename(columns={time_col: "time"}, inplace=True)
+        col = frame["time"]
         # convert python string to pandas datetime
-        if col.dtype.name == 'object' and len(col) > 0 and isinstance(col[0], str):
+        if col.dtype.name == "object" and len(col) > 0 and isinstance(col[0], str):
             col = pd.to_datetime(col)
         # convert pandas datetime to unixtime
-        if col.dtype.name == 'datetime64[ns]':
-            frame['time'] = col.astype('int64') // (10 ** 9)
+        if col.dtype.name == "datetime64[ns]":
+            frame["time"] = col.astype("int64") // (10 ** 9)
     elif time_index is not None:
         # Use 'time_index' as time column
         if type(time_index) is bool or not isinstance(time_index, int):
-            raise TypeError('invalid type for time_index')
+            raise TypeError("invalid type for time_index")
         if isinstance(frame.index, pd.MultiIndex):
             idx = frame.index.levels[time_index]
         else:
             if time_index == 0:
                 idx = frame.index
             else:
-                raise IndexError('list index out of range')
-        if idx.dtype.name != 'datetime64[ns]':
-            raise TypeError('index type must be datetime64[ns]')
+                raise IndexError("list index out of range")
+        if idx.dtype.name != "datetime64[ns]":
+            raise TypeError("index type must be datetime64[ns]")
         # convert pandas datetime to unixtime
-        frame['time'] = idx.astype('int64') // (10 ** 9)
+        frame["time"] = idx.astype("int64") // (10 ** 9)
     else:
         # Use current time as time column
-        frame['time'] = int(time.time())
+        frame["time"] = int(time.time())
     return frame
 
 
 def _convert_index_column(frame, index=None, index_label=None):
     if index is not None and not isinstance(index, bool):
-        raise TypeError('index must be boolean')
+        raise TypeError("index must be boolean")
     if index:
         if isinstance(frame.index, pd.MultiIndex):
             if index_label is None:
-                index_label = [v if v else "level_%d" % i for i, v in enumerate(frame.index.names)]
+                index_label = [
+                    v if v else "level_%d" % i for i, v in enumerate(frame.index.names)
+                ]
             for i, name in zip(frame.index.levels, index_label):
-                frame[name] = i.astype('object')
+                frame[name] = i.astype("object")
         else:
             if index_label is None:
-                index_label = frame.index.name if frame.index.name else 'index'
-            frame[index_label] = frame.index.astype('object')
+                index_label = frame.index.name if frame.index.name else "index"
+            frame[index_label] = frame.index.astype("object")
     return frame
 
 
 def _convert_date_format(frame, date_format=None):
     if date_format is not None:
+
         def _convert(col):
-            if col.dtype.name == 'datetime64[ns]':
+            if col.dtype.name == "datetime64[ns]":
                 return col.apply(lambda x: x.strftime(date_format))
             return col
+
         frame = frame.apply(_convert)
     return frame

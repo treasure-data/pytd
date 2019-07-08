@@ -173,3 +173,41 @@ con = td.connect(apikey=apikey, endpoint=endpoint, writer=writer)
 df = pd.DataFrame(data={'col1': [1, 2], 'col2': [3, 10]})
 td.to_td(df, 'mydb.buzz', con, if_exists='replace', index=False)
 ```
+
+## For developers
+
+We use [black](https://black.readthedocs.io/en/stable/) and [isort](https://github.com/timothycrosley/isort) as a formatter, and [flake8](http://flake8.pycqa.org/en/latest/) as a linter. Our CI checks format with them.
+
+Note that black requires Python 3.6+ while pytd supports 3.5+, so you must need to have Python 3.6+ for development.
+
+We highly recommend you to introduce [pre-commit](https://pre-commit.com/) to ensure your commit follows required format.
+
+You can install pre-commit as follows:
+
+```sh
+pip install pre-commit
+pre-commit install
+```
+
+Now, black, isort, and flake8 will check each time you commit changes. You can skip these check with `git commit --no-verify`.
+
+If you want to check code format manually, you can install them as follows:
+
+```sh
+pip install black isort flake8
+```
+
+Then, you can run those tool manually;
+
+```sh
+black pytd
+flake8 pytd
+isort
+```
+
+You can run formatter, linter, and test by using nox as the following:
+
+```sh
+pip install nox # You should install at the first time
+nox
+```

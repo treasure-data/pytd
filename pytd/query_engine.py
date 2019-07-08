@@ -1,12 +1,13 @@
 import abc
+import logging
 import os
 import re
+
 import prestodb
 import tdclient
 
 from .version import __version__
 
-import logging
 logger = logging.getLogger(__name__)
 
 
@@ -61,7 +62,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
         cur.execute(query)
         rows = cur.fetchall()
         columns = [desc[0] for desc in cur.description]
-        return {'data': rows, 'columns': columns}
+        return {"data": rows, "columns": columns}
 
     def create_header(self, extra_lines=[]):
         """Build header comments.
@@ -78,7 +79,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
         string
         """
         if self.header is False:
-            return ''
+            return ""
 
         if isinstance(self.header, str):
             header = "-- {0}\n".format(self.header)
@@ -88,7 +89,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
         if isinstance(extra_lines, str):
             header += "-- {0}\n".format(extra_lines)
         elif isinstance(extra_lines, (list, tuple)):
-            header += ''.join(["-- {0}\n".format(line) for line in extra_lines])
+            header += "".join(["-- {0}\n".format(line) for line in extra_lines])
 
         return header
 
@@ -148,17 +149,20 @@ class PrestoQueryEngine(QueryEngine):
         self.engine.close()
 
     def _connect(self):
-        http = re.compile(r'https?://')
-        api_presto = os.getenv('TD_PRESTO_API', http.sub('', self.endpoint).strip('/').replace('api', 'api-presto'))
+        http = re.compile(r"https?://")
+        api_presto = os.getenv(
+            "TD_PRESTO_API",
+            http.sub("", self.endpoint).strip("/").replace("api", "api-presto"),
+        )
 
         return prestodb.dbapi.connect(
             host=api_presto,
             port=443,
-            http_scheme='https',
+            http_scheme="https",
             user=self.apikey,
-            catalog='td-presto',
+            catalog="td-presto",
             schema=self.database,
-            http_headers={'user-agent': self.user_agent}
+            http_headers={"user-agent": self.user_agent},
         )
 
 
@@ -210,5 +214,5 @@ class HiveQueryEngine(QueryEngine):
             endpoint=self.endpoint,
             db=self.database,
             user_agent=self.user_agent,
-            type='hive'
+            type="hive",
         )
