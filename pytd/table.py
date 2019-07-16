@@ -10,7 +10,7 @@ import tdclient
 
 logger = logging.getLogger(__name__)
 
-TD_SPARK_BASE_URL = "https://s3.amazonaws.com/td-spark/%s"
+TD_SPARK_BASE_URL = "https://s3.amazonaws.com/td-spark/{}"
 TD_SPARK_JAR_NAME = "td-spark-assembly_2.11-1.1.0.jar"
 
 
@@ -288,7 +288,7 @@ class Table(object):
             Download td-spark if it does not exist at the time of initialization.
         """
         if if_exists not in ["error", "overwrite", "append", "ignore"]:
-            raise ValueError("invalid valud for if_exists: %s" % if_exists)
+            raise ValueError("invalid valud for if_exists: {}".format(if_exists))
 
         if self.td_spark is None:
             site = "us"
@@ -361,7 +361,7 @@ class Table(object):
             raise RuntimeError("failed to connect to td-spark: {}".format(e))
 
     def _download_td_spark(self, destination):
-        download_url = TD_SPARK_BASE_URL % TD_SPARK_JAR_NAME
+        download_url = TD_SPARK_BASE_URL.format(TD_SPARK_JAR_NAME)
         try:
             response = urlopen(download_url)
         except HTTPError:

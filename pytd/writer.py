@@ -13,7 +13,7 @@ import tdclient
 from .query_engine import PrestoQueryEngine
 from .version import __version__
 
-TD_SPARK_BASE_URL = "https://s3.amazonaws.com/td-spark/%s"
+TD_SPARK_BASE_URL = "https://s3.amazonaws.com/td-spark/{}"
 TD_SPARK_JAR_NAME = "td-spark-assembly_2.11-1.1.0.jar"
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class Writer(metaclass=abc.ABCMeta):
         self, if_exists, candidates=["error", "overwrite", "append", "ignore"]
     ):
         if if_exists not in candidates:
-            raise ValueError("invalid valud for if_exists: %s" % if_exists)
+            raise ValueError("invalid valud for if_exists: {}".format(if_exists))
 
     @staticmethod
     def from_string(writer, apikey, endpoint):
@@ -105,9 +105,9 @@ class InsertIntoWriter(Writer):
                 df[c] = df[c].astype(str)
             schema.append(str(c) + " " + presto_type)
 
-        q_delete = "DROP TABLE IF EXISTS %s" % (destination,)
+        q_delete = "DROP TABLE IF EXISTS {}".format(destination)
 
-        q_create = "CREATE TABLE %s (%s)" % (destination, ", ".join(schema))
+        q_create = "CREATE TABLE {} ({})".format(destination, ", ".join(schema))
 
         try:
             self.api_client.table(database, table)
@@ -205,14 +205,14 @@ class BulkImportWriter(Writer):
                 self.api_client.delete_table(database, table)
                 self.api_client.create_log_table(database, table)
             else:
-                raise ValueError("invalid valud for if_exists: %s" % if_exists)
+                raise ValueError("invalid valud for if_exists: {}".format(if_exists))
 
         ts = int(time.time())
 
         if "time" not in df.columns:  # need time column for bulk import
             df["time"] = ts
 
-        session_name = "session-%d" % ts
+        session_name = "session-{}".format(ts)
 
         bulk_import = self.api_client.create_bulk_import(session_name, database, table)
         try:
@@ -230,13 +230,15 @@ class BulkImportWriter(Writer):
         bulk_import.perform(wait=True)
 
         if 0 < bulk_import.error_records:
-            logger.warning("detected %d error records." % bulk_import.error_records)
+            logger.warning(
+                "detected {} error records.".format(bulk_import.error_records)
+            )
 
         if 0 < bulk_import.valid_records:
-            logger.info("imported %d records." % bulk_import.valid_records)
+            logger.info("imported {} records.".format(bulk_import.valid_records))
         else:
             raise RuntimeError(
-                "no records have been imported: %s" % repr(bulk_import.name)
+                "no records have been imported: {}".format(bulk_import.name)
             )
         bulk_import.commit(wait=True)
         bulk_import.delete()
@@ -296,7 +298,7 @@ class SparkWriter(Writer):
         self._validate_if_exists(if_exists)
 
         if if_exists not in ("error", "overwrite", "append", "ignore"):
-            raise ValueError("invalid valud for if_exists: %s" % if_exists)
+            raise ValueError("invalid valud for if_exists: {}".format(if_exists))
 
         from py4j.protocol import Py4JJavaError
 
@@ -356,13 +358,11 @@ class SparkWriter(Writer):
             api_regex = re.compile(r"(?:https?://)?(api(?:-.+?)?)\.")
             api_host = api_regex.sub("\\1.", endpoint).strip("/")
             api_conf = """\
-            --conf spark.td.api.host=%s
-            --conf spark.td.plazma_api.host=%s
-            --conf spark.td.presto_api.host=%s
-            """ % (
-                api_host,
-                plazma_api,
-                presto_api,
+            --conf spark.td.api.host={}
+            --conf spark.td.plazma_api.host={}
+            --conf spark.td.presto_api.host={}
+            """.format(
+                api_host, plazma_api, presto_api
             )
 
         site = "us"
@@ -374,18 +374,15 @@ class SparkWriter(Writer):
         os.environ[
             "PYSPARK_SUBMIT_ARGS"
         ] = """\
-        --jars %s
-        --conf spark.td.apikey=%s
-        --conf spark.td.site=%s
-        %s
+        --jars {}
+        --conf spark.td.apikey={}
+        --conf spark.td.site={}
+        {}
         --conf spark.serializer=org.apache.spark.serializer.KryoSerializer
         --conf spark.sql.execution.arrow.enabled=true
         pyspark-shell
-        """ % (
-            td_spark_path,
-            apikey,
-            site,
-            api_conf,
+        """.format(
+            td_spark_path, apikey, site, api_conf
         )
 
         try:
@@ -394,7 +391,7 @@ class SparkWriter(Writer):
             raise RuntimeError("failed to connect to td-spark: " + str(e))
 
     def _download_td_spark(self, destination):
-        download_url = TD_SPARK_BASE_URL % TD_SPARK_JAR_NAME
+        download_url = TD_SPARK_BASE_URL.format(TD_SPARK_JAR_NAME)
         try:
             response = urlopen(download_url)
         except HTTPError:

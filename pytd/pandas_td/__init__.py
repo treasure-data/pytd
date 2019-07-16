@@ -376,7 +376,7 @@ def to_td(
     elif if_exists == "ignore":
         mode = "ignore"
     else:
-        raise ValueError("invalid value for if_exists: %s" % if_exists)
+        raise ValueError("invalid value for if_exists: {}".format(if_exists))
 
     # convert
     frame = frame.copy()
@@ -432,7 +432,8 @@ def _convert_index_column(frame, index=None, index_label=None):
         if isinstance(frame.index, pd.MultiIndex):
             if index_label is None:
                 index_label = [
-                    v if v else "level_%d" % i for i, v in enumerate(frame.index.names)
+                    v if v else "level_{}".format(i)
+                    for i, v in enumerate(frame.index.names)
                 ]
             for i, name in zip(frame.index.levels, index_label):
                 frame[name] = i.astype("object")

@@ -19,7 +19,7 @@ class PrestoQueryEngineTestCase(unittest.TestCase):
     def test_user_agent(self):
         ua = self.presto.user_agent
         self.assertEqual(
-            ua, "pytd/%s (prestodb/%s)" % (__version__, prestodb.__version__)
+            ua, "pytd/{0} (prestodb/{1})".format(__version__, prestodb.__version__)
         )
 
     def test_create_header(self):
@@ -64,7 +64,7 @@ class HiveQueryEngineTestCase(unittest.TestCase):
 
         ua = self.hive.user_agent
         self.assertEqual(
-            ua, "pytd/%s (tdclient/%s)" % (__version__, tdclient.__version__)
+            ua, "pytd/{0} (tdclient/{1})".format(__version__, tdclient.__version__)
         )
 
     def test_create_header(self):
