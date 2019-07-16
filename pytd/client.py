@@ -4,6 +4,7 @@ import tdclient
 
 from .query_engine import HiveQueryEngine, PrestoQueryEngine, QueryEngine
 from .table import Table
+from .writer import Writer
 
 
 class Client(object):
@@ -196,7 +197,7 @@ class Client(object):
         return Table(self, database, table)
 
     def load_table_from_dataframe(
-        self, dataframe, destination, writer="bulk_import", if_exists="error"
+        self, dataframe, destination, writer="bulk_import", if_exists="error", **kwargs
     ):
         """Write a given DataFrame to a Treasure Data table.
 
@@ -222,19 +223,25 @@ class Client(object):
             What happens when a target table already exists. 'append' is not
             supported in `bulk_import`.
         """
-        from_string = isinstance(destination, str)
-
-        if from_string:
+        destination_from_string = isinstance(destination, str)
+        if destination_from_string:
             if "." in destination:
                 database, table = destination.split(".")
             else:
                 database, table = self.database, destination
             destination = self.get_table(database, table)
 
-        destination.import_dataframe(dataframe, writer, if_exists)
+        writer_from_string = isinstance(writer, str)
+        if writer_from_string:
+            writer = Writer.from_string(writer, **kwargs)
 
-        if from_string:
+        destination.import_dataframe(dataframe, writer, if_exists, kwargs)
+
+        if destination_from_string:
             destination.close()
+
+        if writer_from_string:
+            writer.close()
 
     def __enter__(self):
         return self
