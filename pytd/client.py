@@ -235,7 +235,7 @@ class Client(object):
         if writer_from_string:
             writer = Writer.from_string(writer, **kwargs)
 
-        destination.import_dataframe(dataframe, writer, if_exists, kwargs)
+        destination.import_dataframe(dataframe, writer, if_exists)
 
         if destination_from_string:
             destination.close()
