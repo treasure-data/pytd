@@ -61,9 +61,14 @@ class InsertIntoWriter(Writer):
                 presto_type = "bigint"
             elif t == "float64":
                 presto_type = "double"
-            else:  # TODO: Support more array type
+            else:
                 presto_type = "varchar"
                 dataframe[c] = dataframe[c].astype(str)
+                logger.info(
+                    "column '{}' has non-numeric numpy.dtype '{}', and be "
+                    "converted into and stored as 'varchar' type on Treasure "
+                    "Data.".format(c, t)
+                )
             column_names.append(c)
             column_types.append(presto_type)
 
@@ -115,7 +120,6 @@ class InsertIntoWriter(Writer):
         else:
             table.create(column_names, column_types)
 
-        # TODO: support array type
         values = ", ".join(
             map(
                 lambda lst: "({})".format(
