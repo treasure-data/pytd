@@ -223,8 +223,7 @@ class Client(object):
             What happens when a target table already exists. 'append' is not
             supported in `bulk_import`.
         """
-        destination_from_string = isinstance(destination, str)
-        if destination_from_string:
+        if isinstance(destination, str):
             if "." in destination:
                 database, table = destination.split(".")
             else:
@@ -232,13 +231,11 @@ class Client(object):
             destination = self.get_table(database, table)
 
         writer_from_string = isinstance(writer, str)
+
         if writer_from_string:
             writer = Writer.from_string(writer, **kwargs)
 
         destination.import_dataframe(dataframe, writer, if_exists)
-
-        if destination_from_string:
-            destination.close()
 
         if writer_from_string:
             writer.close()
