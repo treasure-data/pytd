@@ -212,12 +212,14 @@ class BulkImportWriter(Writer):
             session_name, table.database, table.table
         )
         try:
+            logger.info("uploading data converted into a CSV file")
             bulk_import.upload_file("part", "csv", csv.name)
             bulk_import.freeze()
         except Exception as e:
             bulk_import.delete()
             raise RuntimeError("failed to upload file: {}".format(e))
 
+        logger.info("performing a bulk import job")
         bulk_import.perform(wait=True)
 
         if 0 < bulk_import.error_records:
