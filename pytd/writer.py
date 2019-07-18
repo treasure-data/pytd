@@ -312,7 +312,8 @@ class SparkWriter(Writer):
     def close(self):
         """Close a PySpark session connected to Treasure Data.
         """
-        self.td_spark.stop()
+        if self.td_spark is not None:
+            self.td_spark.stop()
 
     def _fetch_td_spark(self, apikey, endpoint, td_spark_path, download_if_missing):
         try:
