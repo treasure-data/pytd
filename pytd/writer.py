@@ -28,7 +28,7 @@ class Writer(metaclass=abc.ABCMeta):
         elif writer == "insert_into":
             return InsertIntoWriter()
         elif writer == "spark":
-            return SparkWriter()
+            return SparkWriter(**kwargs)
         else:
             raise ValueError("unknown way to upload data to TD is specified")
 
