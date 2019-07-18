@@ -4,7 +4,6 @@ import tdclient
 
 from .query_engine import HiveQueryEngine, PrestoQueryEngine, QueryEngine
 from .table import Table
-from .writer import Writer
 
 
 class Client(object):
@@ -215,9 +214,8 @@ class Client(object):
 
         writer : string, {'bulk_import', 'insert_into', 'spark'}, or \
                     pytd.writer.Writer, default: 'bulk_import'
-            A Writer to choose writing method to Treasure Data. If not given,
-            default Writer will be created with executing
-            :func:`~pytd.Client.load_table_from_dataframe` at the first time.
+            A Writer to choose writing method to Treasure Data. If not given or
+            string value, an ad-hoc Writer instance will be created.
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}, default: 'error'
             What happens when a target table already exists. 'append' is not
@@ -230,15 +228,7 @@ class Client(object):
                 database, table = self.database, destination
             destination = self.get_table(database, table)
 
-        writer_from_string = isinstance(writer, str)
-
-        if writer_from_string:
-            writer = Writer.from_string(writer, **kwargs)
-
-        destination.import_dataframe(dataframe, writer, if_exists)
-
-        if writer_from_string:
-            writer.close()
+        destination.import_dataframe(dataframe, writer, if_exists, **kwargs)
 
     def __enter__(self):
         return self

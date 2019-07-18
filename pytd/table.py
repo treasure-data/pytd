@@ -3,6 +3,8 @@ import re
 
 import tdclient
 
+from .writer import Writer
+
 logger = logging.getLogger(__name__)
 
 TD_SPARK_BASE_URL = "https://s3.amazonaws.com/td-spark/{}"
@@ -87,7 +89,7 @@ class Table(object):
         """
         self.client.api_client.delete_table(self.database, self.table)
 
-    def import_dataframe(self, dataframe, writer, if_exists="error"):
+    def import_dataframe(self, dataframe, writer, if_exists="error", **kwargs):
         """Import a given DataFrame to a Treasure Data table.
 
         Parameters
@@ -95,8 +97,10 @@ class Table(object):
         dataframe : pandas.DataFrame
             Data loaded to a target table.
 
-        writer : pytd.writer.Writer
-            A Writer to choose writing method to Treasure Data.
+        writer : string, {'bulk_import', 'insert_into', 'spark'}, or \
+                    pytd.writer.Writer
+            A Writer to choose writing method to Treasure Data. If string
+            value, a temporal Writer instance will be created.
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}, default: 'error'
             What happens when a target table already exists.
@@ -107,4 +111,12 @@ class Table(object):
             axis="columns",
         )
 
+        writer_from_string = isinstance(writer, str)
+
+        if writer_from_string:
+            writer = Writer.from_string(writer, **kwargs)
+
         writer.write_dataframe(dataframe, self, if_exists)
+
+        if writer_from_string:
+            writer.close()
