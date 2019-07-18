@@ -272,7 +272,7 @@ class SparkWriter(Writer):
         if if_exists not in ("error", "overwrite", "append", "ignore"):
             raise ValueError("invalid valud for if_exists: {}".format(if_exists))
 
-        if self.td_spark is None:
+        if self.td_spark is None or self.td_spark._jsc.sc().isStopped():
             self.td_spark = self._fetch_td_spark(
                 table.client.apikey,
                 table.client.endpoint,

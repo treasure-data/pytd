@@ -102,7 +102,9 @@ class SparkWriterTestCase(unittest.TestCase):
     def setUp(self, _fetch_td_spark):
         self.writer = SparkWriter()
 
-        self.writer.td_spark = MagicMock()
+        td_spark = MagicMock()
+        td_spark._jsc.sc().isStopped.return_value = False
+        self.writer.td_spark = td_spark
         self.writer.fetched_apikey = "1/XXX"
         self.writer.fetched_endpoint = "ENDPOINT"
 
