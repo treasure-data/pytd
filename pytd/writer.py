@@ -136,24 +136,19 @@ class InsertIntoWriter(Writer):
         else:
             table.create(column_names, column_types)
 
-        values = ", ".join(
-            map(
-                lambda lst: "({})".format(
-                    ", ".join(
-                        [
-                            "'{}'".format(e.replace("'", '"'))
-                            if isinstance(e, str)
-                            else str(e)
-                            for e in lst
-                        ]
-                    )
-                ),
-                list_of_list,
-            )
-        )
+        rows = []
+        for lst in list_of_list:
+            list_of_value_strings = [
+                "'{}'".format(e.replace("'", '"')) if isinstance(e, str) else str(e)
+                for e in lst
+            ]
+            rows.append("({})".format(", ".join(list_of_value_strings)))
 
         q_insert = "INSERT INTO {}.{} ({}) VALUES {}".format(
-            table.database, table.table, ", ".join(map(str, column_names)), values
+            table.database,
+            table.table,
+            ", ".join(map(str, column_names)),
+            ", ".join(rows),
         )
         table.client.query(q_insert, engine="presto")
 
