@@ -50,6 +50,11 @@ class InsertIntoWriterTestCase(unittest.TestCase):
 
     def test_close(self):
         self.writer.close()
+        self.assertTrue(self.writer.closed)
+        with self.assertRaises(RuntimeError):
+            self.writer.write_dataframe(
+                pd.DataFrame([[1, 2], [3, 4]]), self.table, "error"
+            )
 
 
 class BulkImportWriterTestCase(unittest.TestCase):
@@ -95,6 +100,11 @@ class BulkImportWriterTestCase(unittest.TestCase):
 
     def test_close(self):
         self.writer.close()
+        self.assertTrue(self.writer.closed)
+        with self.assertRaises(RuntimeError):
+            self.writer.write_dataframe(
+                pd.DataFrame([[1, 2], [3, 4]]), self.table, "error"
+            )
 
 
 class SparkWriterTestCase(unittest.TestCase):
@@ -126,3 +136,10 @@ class SparkWriterTestCase(unittest.TestCase):
     def test_close(self):
         self.writer.close()
         self.assertTrue(self.writer.td_spark.stop.called)
+
+        self.writer.td_spark._jsc.sc().isStopped.return_value = True
+        self.assertTrue(self.writer.closed)
+        with self.assertRaises(RuntimeError):
+            self.writer.write_dataframe(
+                pd.DataFrame([[1, 2], [3, 4]]), self.table, "error"
+            )

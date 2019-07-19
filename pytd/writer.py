@@ -13,12 +13,15 @@ logger = logging.getLogger(__name__)
 
 
 class Writer(metaclass=abc.ABCMeta):
+    def __init__(self):
+        self.closed = False
+
     @abc.abstractmethod
     def write_dataframe(self, dataframe, table, if_exists):
         pass
 
     def close(self):
-        pass
+        self.closed = True
 
     @staticmethod
     def from_string(writer, **kwargs):
@@ -59,6 +62,9 @@ class InsertIntoWriter(Writer):
             - append: insert data. Create if does not exist.
             - ignore: do nothing.
         """
+        if self.closed:
+            raise RuntimeError("this writer is already closed and no longer available")
+
         column_names, column_types = [], []
         for c, t in zip(dataframe.columns, dataframe.dtypes):
             if t == "int64":
@@ -174,6 +180,9 @@ class BulkImportWriter(Writer):
             - overwrite: drop it, recreate it, and insert data.
             - ignore: do nothing.
         """
+        if self.closed:
+            raise RuntimeError("this writer is already closed and no longer available")
+
         if "time" not in dataframe.columns:  # need time column for bulk import
             dataframe["time"] = int(time.time())
 
@@ -269,6 +278,10 @@ class SparkWriter(Writer):
         self.td_spark = None
         self.fetched_apikey, self.fetched_endpoint = "", ""
 
+    @property
+    def closed(self):
+        return self.td_spark is not None and self.td_spark._jsc.sc().isStopped()
+
     def write_dataframe(self, dataframe, table, if_exists):
         """Write a given DataFrame to a Treasure Data table.
 
@@ -291,10 +304,13 @@ class SparkWriter(Writer):
             - append: insert data. Create if does not exist.
             - ignore: do nothing.
         """
+        if self.closed:
+            raise RuntimeError("this writer is already closed and no longer available")
+
         if if_exists not in ("error", "overwrite", "append", "ignore"):
             raise ValueError("invalid valud for if_exists: {}".format(if_exists))
 
-        if self.td_spark is None or self.td_spark._jsc.sc().isStopped():
+        if self.td_spark is None:
             self.td_spark = self._fetch_td_spark(
                 table.client.apikey,
                 table.client.endpoint,
