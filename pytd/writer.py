@@ -8,7 +8,7 @@ from urllib.error import HTTPError
 from urllib.request import urlopen
 
 TD_SPARK_BASE_URL = "https://s3.amazonaws.com/td-spark/{}"
-TD_SPARK_JAR_NAME = "td-spark-assembly_2.11-1.1.0.jar"
+TD_SPARK_JAR_NAME = "td-spark-assembly_2.11-19.7.0.jar"
 logger = logging.getLogger(__name__)
 
 
