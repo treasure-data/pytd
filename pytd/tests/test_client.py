@@ -4,20 +4,10 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 
 from pytd.client import Client
+from pytd.table import Table
 
 
-class ClientTestCase(unittest.TestCase):
-    def close(self):
-        self.client.close()
-        self.assertTrue(self.client.default_engine.close.called)
-
-    def query(self):
-        d = self.client.query("select * from tbl")
-        self.assertListEqual(d["columns"], ["col1", "col2"])
-        self.assertListEqual(d["data"], [[1, "a"], [2, "b"]])
-
-
-class ClientTest(ClientTestCase):
+class ClientTest(unittest.TestCase):
     @patch.object(Client, "_fetch_query_engine", return_value=MagicMock())
     def setUp(self, fetch_query_engine):
         self.client = Client(
@@ -29,16 +19,26 @@ class ClientTest(ClientTestCase):
 
         self.assertTrue(fetch_query_engine.called)
         self.client.default_engine = MagicMock()
+        self.client.api_client = MagicMock()
 
         res = {"columns": ["col1", "col2"], "data": [[1, "a"], [2, "b"]]}
         self.client.default_engine.execute = MagicMock(return_value=res)
 
     def test_close(self):
-        self.close()
+        self.client.close()
         self.assertTrue(self.client.default_engine.close.called)
+        self.assertTrue(self.client.api_client.close.called)
 
     def test_query(self):
-        self.query()
+        d = self.client.query("select * from tbl")
+        self.assertListEqual(d["columns"], ["col1", "col2"])
+        self.assertListEqual(d["data"], [[1, "a"], [2, "b"]])
+
+    def test_get_table(self):
+        tbl = self.client.get_table("a", "b")
+        self.assertTrue(isinstance(tbl, Table))
+        self.assertEqual(tbl.database, "a")
+        self.assertEqual(tbl.table, "b")
 
     def test_load_table_from_dataframe(self):
         df = pd.DataFrame([[1, 2], [3, 4]])
