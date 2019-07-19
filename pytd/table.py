@@ -98,6 +98,10 @@ class Table(object):
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}, default: 'error'
             What happens when a target table already exists.
+            - error: raise an exception.
+            - overwrite: drop it, recreate it, and insert data.
+            - append: insert data. Create if does not exist.
+            - ignore: do nothing.
         """
         # normalize column names so it contains only alphanumeric and `_`
         dataframe = dataframe.rename(

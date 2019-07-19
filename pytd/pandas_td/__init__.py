@@ -338,10 +338,12 @@ def to_td(
     if_exists : {'error' ('fail'), 'overwrite' ('replace'), 'append', 'ignore'}, \
                     default: 'error'
         What happens when a target table already exists. For pandas-td
-        compatibility, 'error', 'overwrite', and 'append' can respectively be:
-            - fail: If table exists, do nothing.
+        compatibility, 'error', 'overwrite', 'append', 'ignore' can
+        respectively be:
+            - fail: If table exists, raise an exception.
             - replace: If table exists, drop it, recreate it, and insert data.
             - append: If table exists, insert data. Create if does not exist.
+            - ignore: If table exists, do nothing.
 
     time_col : string, optional
         Column name to use as "time" column for the table. Column type must be

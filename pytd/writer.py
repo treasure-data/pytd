@@ -54,6 +54,10 @@ class InsertIntoWriter(Writer):
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}
             What happens when a target table already exists.
+            - error: raise an exception.
+            - overwrite: drop it, recreate it, and insert data.
+            - append: insert data. Create if does not exist.
+            - ignore: do nothing.
         """
         column_names, column_types = [], []
         for c, t in zip(dataframe.columns, dataframe.dtypes):
@@ -101,6 +105,10 @@ class InsertIntoWriter(Writer):
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}
             What happens when a target table already exists.
+            - error: raise an exception.
+            - overwrite: drop it, recreate it, and insert data.
+            - append: insert data. Create if does not exist.
+            - ignore: do nothing.
         """
 
         if table.exist:
@@ -162,6 +170,9 @@ class BulkImportWriter(Writer):
 
         if_exists : {'error', 'overwrite', 'ignore'}
             What happens when a target table already exists.
+            - error: raise an exception.
+            - overwrite: drop it, recreate it, and insert data.
+            - ignore: do nothing.
         """
         if "time" not in dataframe.columns:  # need time column for bulk import
             dataframe["time"] = int(time.time())
@@ -188,6 +199,9 @@ class BulkImportWriter(Writer):
 
         if_exists : {'error', 'overwrite', 'ignore'}
             What happens when a target table already exists.
+            - error: raise an exception.
+            - overwrite: drop it, recreate it, and insert data.
+            - ignore: do nothing.
         """
         if table.exist:
             if if_exists == "error":
@@ -272,6 +286,10 @@ class SparkWriter(Writer):
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}
             What happens when a target table already exists.
+            - error: raise an exception.
+            - overwrite: drop it, recreate it, and insert data.
+            - append: insert data. Create if does not exist.
+            - ignore: do nothing.
         """
         if if_exists not in ("error", "overwrite", "append", "ignore"):
             raise ValueError("invalid valud for if_exists: {}".format(if_exists))

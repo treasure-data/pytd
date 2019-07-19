@@ -220,6 +220,10 @@ class Client(object):
         if_exists : {'error', 'overwrite', 'append', 'ignore'}, default: 'error'
             What happens when a target table already exists. 'append' is not
             supported in `bulk_import`.
+            - error: raise an exception.
+            - overwrite: drop it, recreate it, and insert data.
+            - append: insert data. Create if does not exist.
+            - ignore: do nothing.
         """
         if isinstance(destination, str):
             if "." in destination:
