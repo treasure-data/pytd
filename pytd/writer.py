@@ -119,7 +119,11 @@ class InsertIntoWriter(Writer):
 
         if table.exist:
             if if_exists == "error":
-                raise RuntimeError("target table already exists")
+                raise RuntimeError(
+                    "target table '{}.{}' already exists".format(
+                        table.database, table.table
+                    )
+                )
             elif if_exists == "ignore":
                 return
             elif if_exists == "append":
@@ -214,7 +218,11 @@ class BulkImportWriter(Writer):
         """
         if table.exist:
             if if_exists == "error":
-                raise RuntimeError("target table already exists")
+                raise RuntimeError(
+                    "target table '{}.{}' already exists".format(
+                        table.database, table.table
+                    )
+                )
             elif if_exists == "ignore":
                 return
             elif if_exists == "append":
