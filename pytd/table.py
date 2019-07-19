@@ -1,14 +1,8 @@
-import logging
 import re
 
 import tdclient
 
 from .writer import Writer
-
-logger = logging.getLogger(__name__)
-
-TD_SPARK_BASE_URL = "https://s3.amazonaws.com/td-spark/{}"
-TD_SPARK_JAR_NAME = "td-spark-assembly_2.11-1.1.0.jar"
 
 
 class Table(object):
