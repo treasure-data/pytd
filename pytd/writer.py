@@ -363,9 +363,18 @@ class SparkWriter(Writer):
 
     def _fetch_td_spark(self, apikey, endpoint, td_spark_path, download_if_missing):
         try:
+            from pyspark.conf import SparkConf
             from pyspark.sql import SparkSession
         except ImportError:
             raise RuntimeError("PySpark is not installed")
+
+        conf = (
+            SparkConf()
+            .setMaster("local[*]")
+            .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+            .set("spark.sql.execution.arrow.enabled", "true")
+        )
+        conf.set("spark.td.apikey", apikey)
 
         if td_spark_path is None:
             td_spark_path = os.path.join(
@@ -379,43 +388,26 @@ class SparkWriter(Writer):
         elif not available:
             raise IOError("td-spark is not found and `download_if_missing` is False")
 
+        conf.set("spark.jars", td_spark_path)
+
         plazma_api = os.getenv("TD_PLAZMA_API")
         presto_api = os.getenv("TD_PRESTO_API")
 
-        api_conf = ""
         if plazma_api and presto_api:
             api_regex = re.compile(r"(?:https?://)?(api(?:-.+?)?)\.")
-            api_host = api_regex.sub("\\1.", endpoint).strip("/")
-            api_conf = """\
-            --conf spark.td.api.host={}
-            --conf spark.td.plazma_api.host={}
-            --conf spark.td.presto_api.host={}
-            """.format(
-                api_host, plazma_api, presto_api
-            )
+            conf.set("spark.td.api.host", api_regex.sub("\\1.", endpoint).strip("/"))
+            conf.set("spark.td.plazma_api.host", plazma_api)
+            conf.set("spark.td.presto_api.host", presto_api)
 
         site = "us"
         if ".co.jp" in endpoint:
             site = "jp"
         if "eu01" in endpoint:
             site = "eu01"
-
-        os.environ[
-            "PYSPARK_SUBMIT_ARGS"
-        ] = """\
-        --jars {}
-        --conf spark.td.apikey={}
-        --conf spark.td.site={}
-        {}
-        --conf spark.serializer=org.apache.spark.serializer.KryoSerializer
-        --conf spark.sql.execution.arrow.enabled=true
-        pyspark-shell
-        """.format(
-            td_spark_path, apikey, site, api_conf
-        )
+        conf.set("spark.td.site", site)
 
         try:
-            return SparkSession.builder.master("local[*]").getOrCreate()
+            return SparkSession.builder.config(conf=conf).getOrCreate()
         except Exception as e:
             raise RuntimeError("failed to connect to td-spark: " + str(e))
 
