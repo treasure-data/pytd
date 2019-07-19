@@ -72,13 +72,11 @@ class InsertIntoWriter(Writer):
             column_names.append(c)
             column_types.append(presto_type)
 
-        self.insert_into(
+        self._insert_into(
             table, dataframe.values.tolist(), column_names, column_types, if_exists
         )
 
-    def insert_into(
-        self, table, list_of_list, column_names, column_types, if_exists="error"
-    ):
+    def _insert_into(self, table, list_of_list, column_names, column_types, if_exists):
         """Write a given lists to a Treasure Data table.
 
         This method translates the given data into an ``INSERT INTO ...  VALUES
@@ -101,7 +99,7 @@ class InsertIntoWriter(Writer):
             supports limited amount of types as documented in:
             https://support.treasuredata.com/hc/en-us/articles/360001266468-Schema-Management
 
-        if_exists : {'error', 'overwrite', 'append', 'ignore'}, default: 'error'
+        if_exists : {'error', 'overwrite', 'append', 'ignore'}
             What happens when a target table already exists.
         """
 
@@ -169,13 +167,13 @@ class BulkImportWriter(Writer):
             dataframe["time"] = int(time.time())
 
         fp = tempfile.NamedTemporaryFile(suffix=".csv")
-        dataframe.to_csv(fp.name)  # XXX: split into multiple CSV files?
+        dataframe.to_csv(fp.name)
 
-        self.bulk_import(table, fp, if_exists)
+        self._bulk_import(table, fp, if_exists)
 
         fp.close()
 
-    def bulk_import(self, table, csv, if_exists="error"):
+    def _bulk_import(self, table, csv, if_exists):
         """Write a specified CSV file to a Treasure Data table.
 
         This method uploads the file to Treasure Data via bulk import API.
@@ -188,7 +186,7 @@ class BulkImportWriter(Writer):
         csv : File pointer of a CSV file
             Data in this file will be loaded to a target table.
 
-        if_exists : {'error', 'overwrite', 'ignore'}, default: 'error'
+        if_exists : {'error', 'overwrite', 'ignore'}
             What happens when a target table already exists.
         """
         if table.exist:
