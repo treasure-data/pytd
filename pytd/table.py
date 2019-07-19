@@ -12,7 +12,7 @@ TD_SPARK_JAR_NAME = "td-spark-assembly_2.11-1.1.0.jar"
 
 
 class Table(object):
-    """A table writer module that imports Python data to a table.
+    """A table controller module.
 
     Parameters
     ----------

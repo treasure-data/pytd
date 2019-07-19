@@ -9,9 +9,9 @@ from .table import Table
 class Client(object):
     """Treasure Data client interface.
 
-    A client instance establishes a connection to Presto or Hive query engine
-    and Plazma primary storage. It allows us to easily and quickly read/write
-    our data from/to Treasure Data.
+    A client instance establishes a connection to Treasure Data. This interface
+    gives easy and efficient access to Presto/Hive query engine and Plazma
+    primary storage.
 
     Parameters
     ----------
@@ -179,7 +179,7 @@ class Client(object):
         return engine.execute(header + query)
 
     def get_table(self, database, table):
-        """Create a table control instance.
+        """Create a pytd table control instance.
 
         Parameters
         ----------
@@ -200,9 +200,9 @@ class Client(object):
     ):
         """Write a given DataFrame to a Treasure Data table.
 
-        This function initializes a Writer interface at the first time. As a
-        part of the initialization process for SparkWriter, the latest version
-        of td-spark will be downloaded.
+        This function may initialize a Writer instance. Note that, as a part of
+        the initialization process for SparkWriter, the latest version of
+        td-spark will be downloaded.
 
         Parameters
         ----------
@@ -215,7 +215,7 @@ class Client(object):
         writer : string, {'bulk_import', 'insert_into', 'spark'}, or \
                     pytd.writer.Writer, default: 'bulk_import'
             A Writer to choose writing method to Treasure Data. If not given or
-            string value, an ad-hoc Writer instance will be created.
+            string value, a temporal Writer instance will be created.
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}, default: 'error'
             What happens when a target table already exists. 'append' is not
