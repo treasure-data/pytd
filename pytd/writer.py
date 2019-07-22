@@ -12,6 +12,43 @@ TD_SPARK_JAR_NAME = "td-spark-assembly_2.11-19.7.0.jar"
 logger = logging.getLogger(__name__)
 
 
+def _cast_dtypes(dataframe):
+    """Convert dtypes into one of {int, float, str} type.
+
+    A character code (one of ‘biufcmMOSUV’) identifying the general kind of data.
+
+    b  boolean
+    i  signed integer
+    u  unsigned integer
+    f  floating-point
+    c  complex floating-point
+    m  timedelta
+    M  datetime
+    O  object
+    S  (byte-)string
+    U  Unicode
+    V  void
+    """
+    df = dataframe.copy()
+
+    for column, kind in dataframe.dtypes.apply(lambda dtype: dtype.kind).iteritems():
+        if kind == "i" or kind == "u":
+            t = int
+        elif kind == "f":
+            t = float
+        else:
+            t = str
+        df[column] = df[column].astype(t)
+
+        # Bulk Import API internally handles boolean string as a boolean type,
+        # and hence "True" ("False") will be stored as "true" ("false"). Align
+        # to lower case here.
+        if kind == "b":
+            df[column] = df[column].apply(lambda s: s.lower())
+
+    return df
+
+
 class Writer(metaclass=abc.ABCMeta):
     def __init__(self):
         self.closed = False
@@ -65,6 +102,8 @@ class InsertIntoWriter(Writer):
         if self.closed:
             raise RuntimeError("this writer is already closed and no longer available")
 
+        dataframe = _cast_dtypes(dataframe)
+
         column_names, column_types = [], []
         for c, t in zip(dataframe.columns, dataframe.dtypes):
             if t == "int64":
@@ -73,11 +112,9 @@ class InsertIntoWriter(Writer):
                 presto_type = "double"
             else:
                 presto_type = "varchar"
-                dataframe[c] = dataframe[c].astype(str)
                 logger.info(
-                    "column '{}' has non-numeric numpy.dtype '{}', and be "
-                    "converted into and stored as 'varchar' type on Treasure "
-                    "Data.".format(c, t)
+                    "column '{}' has non-numeric. The values are stored as "
+                    "'varchar' type on Treasure Data.".format(c)
                 )
             column_names.append(c)
             column_types.append(presto_type)
@@ -186,6 +223,8 @@ class BulkImportWriter(Writer):
             dataframe["time"] = int(time.time())
 
         fp = tempfile.NamedTemporaryFile(suffix=".csv")
+
+        dataframe = _cast_dtypes(dataframe)
         dataframe.to_csv(fp.name)
 
         self._bulk_import(table, fp, if_exists)
@@ -335,6 +374,7 @@ class SparkWriter(Writer):
 
         from py4j.protocol import Py4JJavaError
 
+        dataframe = _cast_dtypes(dataframe)
         sdf = self.td_spark.createDataFrame(dataframe)
         try:
             sdf.write.mode(if_exists).format("com.treasuredata.spark").option(

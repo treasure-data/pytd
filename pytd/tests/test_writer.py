@@ -1,9 +1,33 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
+import numpy as np
 import pandas as pd
 
-from pytd.writer import BulkImportWriter, InsertIntoWriter, SparkWriter
+from pytd.writer import BulkImportWriter, InsertIntoWriter, SparkWriter, _cast_dtypes
+
+
+class WriterTestCase(unittest.TestCase):
+    def test_cast_dtypes(self):
+        dft = pd.DataFrame(
+            {
+                "A": np.random.rand(3),
+                "B": 1,
+                "C": "foo",
+                "D": pd.Timestamp("20010102"),
+                "E": pd.Series([1.0] * 3).astype("float32"),
+                "F": False,
+                "G": pd.Series([1] * 3, dtype="int8"),
+                "H": [[0, 1, 2], [1, 2, 3], [2, 3, 4]],
+            }
+        )
+        dft_ = _cast_dtypes(dft)
+        dtypes = set(dft_.dtypes)
+        self.assertEqual(len(dtypes), 3)
+        self.assertEqual(
+            dtypes, set([np.dtype("int"), np.dtype("float"), np.dtype("O")])
+        )
+        self.assertEqual(dft_["F"][0], "false")
 
 
 class InsertIntoWriterTestCase(unittest.TestCase):
