@@ -312,11 +312,17 @@ class SparkWriter(Writer):
 
     download_if_missing : boolean, default: True
         Download td-spark if it does not exist at the time of initialization.
+
+    spark_configs : dict, optional
+        Additional Spark configurations to be set via ``SparkConf``'s ``set`` method.
     """
 
-    def __init__(self, td_spark_path=None, download_if_missing=True):
+    def __init__(
+        self, td_spark_path=None, download_if_missing=True, spark_configs=None
+    ):
         self.td_spark_path = td_spark_path
         self.download_if_missing = download_if_missing
+        self.spark_configs = spark_configs
 
         self.td_spark = None
         self.fetched_apikey, self.fetched_endpoint = "", ""
@@ -359,6 +365,7 @@ class SparkWriter(Writer):
                 table.client.endpoint,
                 self.td_spark_path,
                 self.download_if_missing,
+                self.spark_configs,
             )
             self.fetched_apikey, self.fetched_endpoint = (
                 table.client.apikey,
@@ -397,7 +404,9 @@ class SparkWriter(Writer):
         if self.td_spark is not None:
             self.td_spark.stop()
 
-    def _fetch_td_spark(self, apikey, endpoint, td_spark_path, download_if_missing):
+    def _fetch_td_spark(
+        self, apikey, endpoint, td_spark_path, download_if_missing, spark_configs
+    ):
         try:
             from pyspark.conf import SparkConf
             from pyspark.sql import SparkSession
@@ -441,6 +450,11 @@ class SparkWriter(Writer):
         if "eu01" in endpoint:
             site = "eu01"
         conf.set("spark.td.site", site)
+
+        if spark_configs is None:
+            spark_configs = {}
+        for k, v in spark_configs.items():
+            conf.set(k, v)
 
         try:
             return SparkSession.builder.config(conf=conf).getOrCreate()
