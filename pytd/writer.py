@@ -451,10 +451,9 @@ class SparkWriter(Writer):
             site = "eu01"
         conf.set("spark.td.site", site)
 
-        if spark_configs is None:
-            spark_configs = {}
-        for k, v in spark_configs.items():
-            conf.set(k, v)
+        if isinstance(spark_configs, dict):
+            for k, v in spark_configs.items():
+                conf.set(k, v)
 
         try:
             return SparkSession.builder.config(conf=conf).getOrCreate()
