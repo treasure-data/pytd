@@ -338,10 +338,12 @@ def to_td(
     if_exists : {'error' ('fail'), 'overwrite' ('replace'), 'append', 'ignore'}, \
                     default: 'error'
         What happens when a target table already exists. For pandas-td
-        compatibility, 'error', 'overwrite', and 'append' can respectively be:
-            - fail: If table exists, do nothing.
+        compatibility, 'error', 'overwrite', 'append', 'ignore' can
+        respectively be:
+            - fail: If table exists, raise an exception.
             - replace: If table exists, drop it, recreate it, and insert data.
             - append: If table exists, insert data. Create if does not exist.
+            - ignore: If table exists, do nothing.
 
     time_col : string, optional
         Column name to use as "time" column for the table. Column type must be
@@ -376,7 +378,7 @@ def to_td(
     elif if_exists == "ignore":
         mode = "ignore"
     else:
-        raise ValueError("invalid value for if_exists: %s" % if_exists)
+        raise ValueError("invalid value for if_exists: {}".format(if_exists))
 
     # convert
     frame = frame.copy()
@@ -384,7 +386,8 @@ def to_td(
     frame = _convert_index_column(frame, index, index_label)
     frame = _convert_date_format(frame, date_format)
 
-    con.load_table_from_dataframe(frame, name, mode)
+    database, table = name.split(".")
+    con.get_table(database, table).import_dataframe(frame, mode)
 
 
 def _convert_time_column(frame, time_col=None, time_index=None):
@@ -431,7 +434,8 @@ def _convert_index_column(frame, index=None, index_label=None):
         if isinstance(frame.index, pd.MultiIndex):
             if index_label is None:
                 index_label = [
-                    v if v else "level_%d" % i for i, v in enumerate(frame.index.names)
+                    v if v else "level_{}".format(i)
+                    for i, v in enumerate(frame.index.names)
                 ]
             for i, name in zip(frame.index.levels, index_label):
                 frame[name] = i.astype("object")

@@ -3,15 +3,15 @@ import os
 import tdclient
 
 from .query_engine import HiveQueryEngine, PrestoQueryEngine, QueryEngine
-from .writer import SparkWriter
+from .table import Table
 
 
 class Client(object):
     """Treasure Data client interface.
 
-    A client instance establishes a connection to Presto or Hive query engine
-    and Plazma primary storage. It allows us to easily and quickly read/write
-    our data from/to Treasure Data.
+    A client instance establishes a connection to Treasure Data. This interface
+    gives easy and efficient access to Presto/Hive query engine and Plazma
+    primary storage.
 
     Parameters
     ----------
@@ -27,7 +27,7 @@ class Client(object):
     database : string, default: 'sample_datasets'
         Name of connected database.
 
-    engine : string, {'presto', 'hive'}, or pytd.query_engine.QueryEngine, \
+    default_engine : string, {'presto', 'hive'}, or pytd.query_engine.QueryEngine, \
                 default: 'presto'
         Query engine. If a QueryEngine instance is given, ``apikey``,
         ``endpoint``, and ``database`` are overwritten by the values configured
@@ -36,11 +36,6 @@ class Client(object):
     header : string or boolean, default: True
         Prepend comment strings, in the form "-- comment", as a header of queries.
         Set False to disable header.
-
-    writer : pytd.writer.Writer or child class of Writer class, optional
-        A Writer to choose writing method to Treasure Data. If not given, default Writer
-        will be created with executing :func:`~pytd.Client.load_table_from_dataframe`
-        at the first time.
     """
 
     def __init__(
@@ -48,15 +43,14 @@ class Client(object):
         apikey=None,
         endpoint=None,
         database="sample_datasets",
-        engine="presto",
+        default_engine="presto",
         header=True,
-        writer=None,
         **kwargs
     ):
-        if isinstance(engine, QueryEngine):
-            apikey = engine.apikey
-            endpoint = engine.endpoint
-            database = engine.database
+        if isinstance(default_engine, QueryEngine):
+            apikey = default_engine.apikey
+            endpoint = default_engine.endpoint
+            database = default_engine.database
         else:
             apikey = apikey or os.environ.get("TD_API_KEY")
             if apikey is None:
@@ -67,22 +61,22 @@ class Client(object):
             endpoint = endpoint or os.getenv(
                 "TD_API_SERVER", "https://api.treasuredata.com"
             )
-            engine = self._fetch_query_engine(
-                engine, apikey, endpoint, database, header
+            default_engine = self._fetch_query_engine(
+                default_engine, apikey, endpoint, database, header
             )
 
         self.apikey = apikey
         self.endpoint = endpoint
         self.database = database
 
-        self.engine = engine
+        self.default_engine = default_engine
 
         self.api_client = tdclient.Client(
-            apikey=apikey, endpoint=endpoint, user_agent=engine.user_agent, **kwargs
+            apikey=apikey,
+            endpoint=endpoint,
+            user_agent=default_engine.user_agent,
+            **kwargs
         )
-
-        self.managed_writer = writer is None
-        self.writer = writer
 
     def list_databases(self):
         """Get a list of td-client-python Database objects.
@@ -107,7 +101,7 @@ class Client(object):
         list of tdclient.models.Table
         """
         if database is None:
-            return self.api_client.tables(self.database)
+            database = self.database
         return self.api_client.tables(database)
 
     def list_jobs(self):
@@ -136,18 +130,21 @@ class Client(object):
     def close(self):
         """Close a client I/O session to Treasure Data.
         """
-        self.engine.close()
+        self.default_engine.close()
         self.api_client.close()
-        if self.managed_writer and self.writer is not None:
-            self.writer.close()
 
-    def query(self, query):
+    def query(self, query, engine=None):
         """Run query and get results.
 
         Parameters
         ----------
         query : string
             Query issued on a specified query engine.
+
+        engine : string, {'presto', 'hive'}, or pytd.query_engine.QueryEngine, \
+                optional
+            Query engine. If not given, default query engine created in the
+            constructor will be used.
 
         Returns
         -------
@@ -158,31 +155,84 @@ class Client(object):
             'columns'
                 List of column names.
         """
-        header = self.engine.create_header("Client#query")
-        return self.engine.execute(header + query)
+        if isinstance(engine, QueryEngine):
+            pass  # use the given QueryEngine instance
+        elif isinstance(engine, str):
+            if (
+                engine == "presto"
+                and isinstance(self.default_engine, PrestoQueryEngine)
+            ) or (
+                engine == "hive" and isinstance(self.default_engine, HiveQueryEngine)
+            ):
+                engine = self.default_engine
+            else:
+                engine = self._fetch_query_engine(
+                    engine,
+                    self.apikey,
+                    self.endpoint,
+                    self.database,
+                    self.default_engine.header,
+                )
+        else:
+            engine = self.default_engine
+        header = engine.create_header("Client#query")
+        return engine.execute(header + query)
 
-    def load_table_from_dataframe(self, dataframe, table, if_exists="error"):
+    def get_table(self, database, table):
+        """Create a pytd table control instance.
+
+        Parameters
+        ----------
+        database : string
+            Database name.
+
+        table : string
+            Table name.
+
+        Returns
+        -------
+        pytd.table.Table
+        """
+        return Table(self, database, table)
+
+    def load_table_from_dataframe(
+        self, dataframe, destination, writer="bulk_import", if_exists="error", **kwargs
+    ):
         """Write a given DataFrame to a Treasure Data table.
 
-        This function initializes a Writer interface at the first time. As a
-        part of the initialization process, the latest version of td-spark will
-        be downloaded.
+        This function may initialize a Writer instance. Note that, as a part of
+        the initialization process for SparkWriter, the latest version of
+        td-spark will be downloaded.
 
         Parameters
         ----------
         dataframe : pandas.DataFrame
             Data loaded to a target table.
 
-        table : string
-            Name of target table.
+        destination : string, or pytd.table.Table
+            Target table.
+
+        writer : string, {'bulk_import', 'insert_into', 'spark'}, or \
+                    pytd.writer.Writer, default: 'bulk_import'
+            A Writer to choose writing method to Treasure Data. If not given or
+            string value, a temporal Writer instance will be created.
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}, default: 'error'
-            What happens when a target table already exists.
+            What happens when a target table already exists. 'append' is not
+            supported in `bulk_import`.
+            - error: raise an exception.
+            - overwrite: drop it, recreate it, and insert data.
+            - append: insert data. Create if does not exist.
+            - ignore: do nothing.
         """
-        if self.writer is None:
-            self.writer = SparkWriter(self.apikey, self.endpoint)
+        if isinstance(destination, str):
+            if "." in destination:
+                database, table = destination.split(".")
+            else:
+                database, table = self.database, destination
+            destination = self.get_table(database, table)
 
-        self.writer.write_dataframe(dataframe, self.database, table, if_exists)
+        destination.import_dataframe(dataframe, writer, if_exists, **kwargs)
 
     def __enter__(self):
         return self
