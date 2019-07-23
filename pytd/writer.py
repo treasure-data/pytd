@@ -12,7 +12,7 @@ TD_SPARK_JAR_NAME = "td-spark-assembly_2.11-19.7.0.jar"
 logger = logging.getLogger(__name__)
 
 
-def _cast_dtypes(dataframe):
+def _cast_dtypes(dataframe, inplace=True):
     """Convert dtypes into one of {int, float, str} type.
 
     A character code (one of ‘biufcmMOSUV’) identifying the general kind of data.
@@ -29,7 +29,7 @@ def _cast_dtypes(dataframe):
     U  Unicode
     V  void
     """
-    df = dataframe.copy()
+    df = dataframe if inplace else dataframe.copy()
 
     for column, kind in dataframe.dtypes.apply(lambda dtype: dtype.kind).iteritems():
         if kind == "i" or kind == "u":
@@ -46,7 +46,8 @@ def _cast_dtypes(dataframe):
         if kind == "b":
             df[column] = df[column].apply(lambda s: s.lower())
 
-    return df
+    if not inplace:
+        return df
 
 
 class Writer(metaclass=abc.ABCMeta):
@@ -102,7 +103,7 @@ class InsertIntoWriter(Writer):
         if self.closed:
             raise RuntimeError("this writer is already closed and no longer available")
 
-        dataframe = _cast_dtypes(dataframe)
+        _cast_dtypes(dataframe)
 
         column_names, column_types = [], []
         for c, t in zip(dataframe.columns, dataframe.dtypes):
@@ -224,7 +225,7 @@ class BulkImportWriter(Writer):
 
         fp = tempfile.NamedTemporaryFile(suffix=".csv")
 
-        dataframe = _cast_dtypes(dataframe)
+        _cast_dtypes(dataframe)
         dataframe.to_csv(fp.name)
 
         self._bulk_import(table, fp, if_exists)
@@ -374,7 +375,7 @@ class SparkWriter(Writer):
 
         from py4j.protocol import Py4JJavaError
 
-        dataframe = _cast_dtypes(dataframe)
+        _cast_dtypes(dataframe)
         sdf = self.td_spark.createDataFrame(dataframe)
         try:
             sdf.write.mode(if_exists).format("com.treasuredata.spark").option(

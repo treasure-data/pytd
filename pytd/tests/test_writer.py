@@ -8,8 +8,8 @@ from pytd.writer import BulkImportWriter, InsertIntoWriter, SparkWriter, _cast_d
 
 
 class WriterTestCase(unittest.TestCase):
-    def test_cast_dtypes(self):
-        dft = pd.DataFrame(
+    def setUp(self):
+        self.dft = pd.DataFrame(
             {
                 "A": np.random.rand(3),
                 "B": 1,
@@ -21,13 +21,22 @@ class WriterTestCase(unittest.TestCase):
                 "H": [[0, 1, 2], [1, 2, 3], [2, 3, 4]],
             }
         )
-        dft_ = _cast_dtypes(dft)
-        dtypes = set(dft_.dtypes)
-        self.assertEqual(len(dtypes), 3)
+
+    def test_cast_dtypes(self):
+        dft = _cast_dtypes(self.dft, inplace=False)
+        dtypes = set(dft.dtypes)
         self.assertEqual(
             dtypes, set([np.dtype("int"), np.dtype("float"), np.dtype("O")])
         )
-        self.assertEqual(dft_["F"][0], "false")
+        self.assertEqual(dft["F"][0], "false")
+
+    def test_cast_dtypes_inplace(self):
+        _cast_dtypes(self.dft)
+        dtypes = set(self.dft.dtypes)
+        self.assertEqual(
+            dtypes, set([np.dtype("int"), np.dtype("float"), np.dtype("O")])
+        )
+        self.assertEqual(self.dft["F"][0], "false")
 
 
 class InsertIntoWriterTestCase(unittest.TestCase):
