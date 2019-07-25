@@ -3,13 +3,9 @@ pytd
 
 [![Build Status](https://travis-ci.org/treasure-data/pytd.svg?branch=master)](https://travis-ci.org/treasure-data/pytd) [![Build status](https://ci.appveyor.com/api/projects/status/h1os6uvl598o7cau?svg=true)](https://ci.appveyor.com/project/takuti/pytd) [![PyPI version](https://badge.fury.io/py/pytd.svg)](https://badge.fury.io/py/pytd)
 
-> _Quickly ***read**/**write*** your data directly **from**/**to** the **[Presto query engine](https://support.treasuredata.com/hc/en-us/articles/360001457427-Presto-Query-Engine-Introduction)** and **[Plazma primary storage](https://www.slideshare.net/treasure-data/td-techplazma)**_
+**pytd** provides user-friendly interfaces to Treasure Data's [REST APIs](https://github.com/treasure-data/td-client-python), [Presto query engine](https://support.treasuredata.com/hc/en-us/articles/360001457427-Presto-Query-Engine-Introduction), and [Plazma primary storage](https://www.slideshare.net/treasure-data/td-techplazma).
 
-Unlike the other official Treasure Data API libraries for Python, [td-client-python](https://github.com/treasure-data/td-client-python) and [pandas-td](https://github.com/treasure-data/pandas-td/), **pytd** gives a direct access to their back-end query and storage engines. The seamless connection allows your Python code to read and write a large volume of data in a shorter time. It eventually makes your day-to-day data analytics work more efficient and productive.
-
-## Project milestones
-
-This project has been actively developed based on the **[milestones](https://github.com/treasure-data/pytd/milestones)**.
+The seamless connection allows your Python code to efficiently read/write a large volume of data from/to Treasure Data. Eventually, pytd makes your day-to-day data analytics work more productive.
 
 ## Installation
 
@@ -28,8 +24,10 @@ import pytd
 
 client = pytd.Client(database='sample_datasets')
 # or, hard-code your API key, endpoint, and/or query engine:
-# >>> pytd.Client(apikey='1/XXX', endpoint='https://api.treasuredata.com/', database='sample_datasets', engine='presto')
+# >>> pytd.Client(apikey='1/XXX', endpoint='https://api.treasuredata.com/', database='sample_datasets', default_engine='presto')
 ```
+
+### Query in Treasure Data
 
 Issue Presto query and retrieve the result:
 
@@ -41,35 +39,61 @@ client.query('select symbol, count(1) as cnt from nasdaq group by 1 order by 1')
 In case of Hive:
 
 ```py
-client = pytd.Client(database='sample_datasets', engine='hive')
-client.query('select hivemall_version()')
+client.query('select hivemall_version()', engine='hive')
 # {'columns': ['_c0'], 'data': [['0.6.0-SNAPSHOT-201901-r01']]} (as of Feb, 2019)
 ```
 
-Once you install the package with PySpark dependencies, any data represented as `pandas.DataFrame` can directly be written to TD via [td-spark](https://support.treasuredata.com/hc/en-us/articles/360001487167-Apache-Spark-Driver-td-spark-FAQs):
+It is also possible to explicitly initialize `pytd.Client` for Hive:
 
-```sh
-pip install pytd[spark]
+```py
+client_hive = pytd.Client(database='sample_datasets', default_engine='hive')
+client_hive.query('select hivemall_version()')
 ```
+
+### Write data to Treasure Data
+
+Data represented as `pandas.DataFrame` can be written to Treasure Data as follows:
 
 ```py
 import pandas as pd
 
 df = pd.DataFrame(data={'col1': [1, 2], 'col2': [3, 10]})
-client.load_table_from_dataframe(df, 'takuti.foo', if_exists='overwrite')
+client.load_table_from_dataframe(df, 'takuti.foo', writer='bulk_import', if_exists='overwrite')
 ```
+
+For the `writer` option, pytd supports three different ways to ingest data to Treasure Data:
+
+1. **Bulk Import API**: `bulk_import` (default)
+    - Convert data into a CSV file and upload in the batch fashion.
+2. **Presto INSERT INTO query**: `insert_into`
+    - Insert every single row in `DataFrame` by issuing an INSERT INTO query through the Presto query engine.
+    - Recommended only for a small volume of data.
+3. **[td-spark](https://support.treasuredata.com/hc/en-us/articles/360001487167-Apache-Spark-Driver-td-spark-FAQs)**: `spark`
+    - Local customized Spark instance directly writes `DataFrame` to Treasure Data's primary storage system.
+
+#### Enabling Spark Writer
+
+Since td-spark gives special access to the main storage system via [PySpark](https://spark.apache.org/docs/latest/api/python/index.html), follow the instructions below:
+
+1. Contact support@treasuredata.com to activate the permission to your Treasure Data account.
+2. Install pytd with `[spark]` option if you use the third option:
+    ```sh
+    pip install pytd[spark]
+    ```
+
 
 If you want to use existing td-spark JAR file, creating `SparkWriter` with `td_spark_path` option would be helpful.
 
 ```py
-writer = pytd.writer.SparkWriter(apikey='1/XXX', endpoint='https://api.treasuredata.com/', td_spark_path='/path/to/td-spark-assembly.jar')
-client = pytd.Client(database='sample_datasets', writer=writer)
-client.load_table_from_dataframe(df, 'mydb.bar', if_exists='overwrite')
+from pytd.writer import SparkWriter
+
+writer = SparkWriter(apikey='1/XXX', endpoint='https://api.treasuredata.com/', td_spark_path='/path/to/td-spark-assembly.jar')
+client.load_table_from_dataframe(df, 'mydb.bar', writer=writer, if_exists='overwrite')
 ```
 
 ### DB-API
 
-`pytd` implements [Python Database API Specification v2.0](https://www.python.org/dev/peps/pep-0249/) with the help of [prestodb/presto-python-client](https://github.com/prestodb/presto-python-client).
+pytd implements [Python Database API Specification v2.0](https://www.python.org/dev/peps/pep-0249/) with the help of [prestodb/presto-python-client](https://github.com/prestodb/presto-python-client).
 
 Connect to the API first:
 
@@ -78,7 +102,7 @@ from pytd.dbapi import connect
 
 conn = connect(pytd.Client(database='sample_datasets'))
 # or, connect with Hive:
-# >>> conn = connect(pytd.Client(database='sample_datasets', engine='hive'))
+# >>> conn = connect(pytd.Client(database='sample_datasets', default_engine='hive'))
 ```
 
 `Cursor` defined by the specification allows us to flexibly fetch query results from a custom function:
@@ -123,7 +147,7 @@ for index, row in iterrows('select symbol, count(1) as cnt from nasdaq group by 
 
 ## How to replace pandas-td
 
-**pytd** offers [pandas-td](https://github.com/treasure-data/pandas-td)-compatible functions that provide the same functionalities in a more efficient way. If you are still using pandas-td, we recommend you to switch to **pytd** as follows.
+**pytd** offers [pandas-td](https://github.com/treasure-data/pandas-td)-compatible functions that provide the same functionalities more efficiently. If you are still using pandas-td, we recommend you to switch to **pytd** as follows.
 
 First, install the package from PyPI:
 
