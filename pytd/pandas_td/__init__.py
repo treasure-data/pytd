@@ -312,6 +312,7 @@ def to_td(
     index_label=None,
     chunksize=10000,
     date_format=None,
+    writer="bulk_import",
 ):
     """Write a DataFrame to a Treasure Data table.
 
@@ -368,6 +369,11 @@ def to_td(
 
     date_format : string, default: None
         Format string for datetime objects
+
+    writer : string, {'bulk_import', 'insert_into', 'spark'}, or \
+                pytd.writer.Writer, default: 'bulk_import'
+        A Writer to choose writing method to Treasure Data. If not given or
+        string value, a temporal Writer instance will be created.
     """
     if if_exists == "fail" or if_exists == "error":
         mode = "error"
@@ -387,7 +393,7 @@ def to_td(
     frame = _convert_date_format(frame, date_format)
 
     database, table = name.split(".")
-    con.get_table(database, table).import_dataframe(frame, mode)
+    con.get_table(database, table).import_dataframe(frame, writer, mode)
 
 
 def _convert_time_column(frame, time_col=None, time_index=None):
