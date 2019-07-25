@@ -201,6 +201,12 @@ class HiveQueryEngine(QueryEngine):
         -------
         tdclient.cursor.Cursor
         """
+        logger.warning(
+            "returning `tdclient.cursor.Cursor`. This cursor, `Cursor#fetchone` "
+            "in particular, might behave different from your expectation, "
+            "because it actually executes a job on Treasure Data and fetches all "
+            "records at once from the job result."
+        )
         return self.engine.cursor()
 
     def close(self):
