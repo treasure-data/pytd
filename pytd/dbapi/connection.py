@@ -30,7 +30,7 @@ class Connection(object):
         raise NotSupportedError
 
     def cursor(self):
-        return self.client.engine.cursor()
+        return self.client.default_engine.cursor()
 
     def __enter__(self):
         return self
