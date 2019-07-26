@@ -65,6 +65,7 @@ For the `writer` option, pytd supports three different ways to ingest data to Tr
 
 1. **Bulk Import API**: `bulk_import` (default)
     - Convert data into a CSV file and upload in the batch fashion.
+    - Unable to append data into an existing table. Use other writers to append data.
 2. **Presto INSERT INTO query**: `insert_into`
     - Insert every single row in `DataFrame` by issuing an INSERT INTO query through the Presto query engine.
     - Recommended only for a small volume of data.
