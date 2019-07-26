@@ -121,10 +121,14 @@ class InsertIntoWriter(Writer):
             column_types.append(presto_type)
 
         self._insert_into(
-            table, dataframe.values.tolist(), column_names, column_types, if_exists
+            table,
+            list(dataframe.itertuples(index=False, name=None)),
+            column_names,
+            column_types,
+            if_exists,
         )
 
-    def _insert_into(self, table, list_of_list, column_names, column_types, if_exists):
+    def _insert_into(self, table, list_of_tuple, column_names, column_types, if_exists):
         """Write a given lists to a Treasure Data table.
 
         This method translates the given data into an ``INSERT INTO ...  VALUES
@@ -135,8 +139,8 @@ class InsertIntoWriter(Writer):
         table : pytd.table.Table
             Target table.
 
-        list_of_list : list of lists
-            Data loaded to a target table. Each element is a list that
+        list_of_tuple : list of tuples
+            Data loaded to a target table. Each element is a tuple that
             represents single table row.
 
         column_names : list of string
@@ -175,10 +179,10 @@ class InsertIntoWriter(Writer):
             table.create(column_names, column_types)
 
         rows = []
-        for lst in list_of_list:
+        for tpl in list_of_tuple:
             list_of_value_strings = [
                 "'{}'".format(e.replace("'", '"')) if isinstance(e, str) else str(e)
-                for e in lst
+                for e in tpl
             ]
             rows.append("({})".format(", ".join(list_of_value_strings)))
 
