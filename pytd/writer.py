@@ -7,6 +7,8 @@ import time
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
+import pandas as pd
+
 TD_SPARK_BASE_URL = "https://s3.amazonaws.com/td-spark/{}"
 TD_SPARK_JAR_NAME = "td-spark-assembly_2.11-19.7.0.jar"
 logger = logging.getLogger(__name__)
@@ -82,9 +84,6 @@ class InsertIntoWriter(Writer):
     def write_dataframe(self, dataframe, table, if_exists):
         """Write a given DataFrame to a Treasure Data table.
 
-        This method translates a given pandas.DataFrame into a `INSERT INTO ...
-        VALUES ...` Presto query.
-
         Parameters
         ----------
         dataframe : pandas.DataFrame
@@ -131,9 +130,6 @@ class InsertIntoWriter(Writer):
     def _insert_into(self, table, list_of_tuple, column_names, column_types, if_exists):
         """Write a given lists to a Treasure Data table.
 
-        This method translates the given data into an ``INSERT INTO ...  VALUES
-        ...`` Presto query.
-
         Parameters
         ----------
         table : pytd.table.Table
@@ -178,21 +174,45 @@ class InsertIntoWriter(Writer):
         else:
             table.create(column_names, column_types)
 
+        q_insert = self._build_query(
+            table.database, table.table, list_of_tuple, column_names
+        )
+        table.client.query(q_insert, engine="presto")
+
+    def _build_query(self, database, table, list_of_tuple, column_names):
+        """Translates the given data into an ``INSERT INTO ...  VALUES ...``
+        Presto query.
+
+        Parameters
+        ----------
+        database : string
+            Target database name.
+
+        table : string
+            Target table name.
+
+        list_of_tuple : list of tuples
+            Data loaded to a target table. Each element is a tuple that
+            represents single table row.
+
+        column_names : list of string
+            Column names.
+        """
         rows = []
         for tpl in list_of_tuple:
             list_of_value_strings = [
-                "'{}'".format(e.replace("'", '"')) if isinstance(e, str) else str(e)
+                (
+                    "'{}'".format(e.replace("'", '"'))
+                    if isinstance(e, str)
+                    else ("null" if pd.isnull(e) else str(e))
+                )
                 for e in tpl
             ]
             rows.append("({})".format(", ".join(list_of_value_strings)))
 
-        q_insert = "INSERT INTO {}.{} ({}) VALUES {}".format(
-            table.database,
-            table.table,
-            ", ".join(map(str, column_names)),
-            ", ".join(rows),
+        return "INSERT INTO {}.{} ({}) VALUES {}".format(
+            database, table, ", ".join(map(str, column_names)), ", ".join(rows)
         )
-        table.client.query(q_insert, engine="presto")
 
 
 class BulkImportWriter(Writer):
