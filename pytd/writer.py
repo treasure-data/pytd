@@ -55,7 +55,11 @@ def _cast_dtypes(dataframe, inplace=True):
 def _get_schema(dataframe):
     column_names, column_types = [], []
     for c, t in zip(dataframe.columns, dataframe.dtypes):
-        if t == "int64" or t == "Int64":
+        # Compare nullable integer type by using pandas function because `t ==
+        # "Int64"` causes a following warning for some reasons:
+        #     DeprecationWarning: Numeric-style type codes are deprecated and
+        #     will result in an error in the future.
+        if t == "int64" or pd.core.dtypes.common.is_dtype_equal(t, "Int64"):
             presto_type = "bigint"
         elif t == "float64":
             presto_type = "double"
