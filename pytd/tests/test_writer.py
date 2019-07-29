@@ -82,13 +82,17 @@ class InsertIntoWriterTestCase(unittest.TestCase):
             )
 
     def test_query_builder(self):
-        df = pd.DataFrame({"a": [1, 2], "b": [None, 3]})
+        df = pd.DataFrame(
+            {"a": [1, 2], "b": [None, 3], "c": pd.array([4, np.nan], dtype="Int64")}
+        )
         _cast_dtypes(df)
         q = self.writer._build_query(
-            "foo", "bar", list(df.itertuples(index=False, name=None)), ["a", "b"]
+            "foo", "bar", list(df.itertuples(index=False, name=None)), df.columns
         )
         # column 'b' is handled as float64 because of null
-        q_expected = "INSERT INTO foo.bar (a, b) VALUES (1, null), (2, 3.0)"
+        q_expected = (
+            "INSERT INTO foo.bar (a, b, c) VALUES (1, null, 4.0), (2, 3.0, null)"
+        )
         self.assertEqual(q, q_expected)
 
     def test_close(self):

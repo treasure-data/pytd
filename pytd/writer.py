@@ -35,7 +35,7 @@ def _cast_dtypes(dataframe, inplace=True):
 
     for column, kind in dataframe.dtypes.apply(lambda dtype: dtype.kind).iteritems():
         if kind == "i" or kind == "u":
-            t = int
+            t = float if df[column].isnull().any() else int
         elif kind == "f":
             t = float
         else:
