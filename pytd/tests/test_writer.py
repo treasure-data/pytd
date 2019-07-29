@@ -4,7 +4,13 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pandas as pd
 
-from pytd.writer import BulkImportWriter, InsertIntoWriter, SparkWriter, _cast_dtypes
+from pytd.writer import (
+    BulkImportWriter,
+    InsertIntoWriter,
+    SparkWriter,
+    _cast_dtypes,
+    _get_schema,
+)
 
 
 class WriterTestCase(unittest.TestCase):
@@ -80,6 +86,15 @@ class InsertIntoWriterTestCase(unittest.TestCase):
             self.writer.write_dataframe(
                 pd.DataFrame([[1, 2], [3, 4]]), self.table, if_exists="bar"
             )
+
+    def test_schema(self):
+        df = pd.DataFrame(
+            {"a": [1, 2], "b": [None, 3], "c": pd.array([4, np.nan], dtype="Int64")}
+        )
+        _cast_dtypes(df)
+        names, types = _get_schema(df)
+        self.assertListEqual(names, ["a", "b", "c"])
+        self.assertListEqual(types, ["bigint", "double", "bigint"])
 
     def test_query_builder(self):
         df = pd.DataFrame(

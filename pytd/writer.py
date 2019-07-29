@@ -52,6 +52,24 @@ def _cast_dtypes(dataframe, inplace=True):
         return df
 
 
+def _get_schema(dataframe):
+    column_names, column_types = [], []
+    for c, t in zip(dataframe.columns, dataframe.dtypes):
+        if t == "int64" or t == "Int64":
+            presto_type = "bigint"
+        elif t == "float64":
+            presto_type = "double"
+        else:
+            presto_type = "varchar"
+            logger.info(
+                "column '{}' has non-numeric. The values are stored as "
+                "'varchar' type on Treasure Data.".format(c)
+            )
+        column_names.append(c)
+        column_types.append(presto_type)
+    return column_names, column_types
+
+
 class Writer(metaclass=abc.ABCMeta):
     def __init__(self):
         self.closed = False
@@ -104,20 +122,7 @@ class InsertIntoWriter(Writer):
 
         _cast_dtypes(dataframe)
 
-        column_names, column_types = [], []
-        for c, t in zip(dataframe.columns, dataframe.dtypes):
-            if t == "int64" or t == "Int64":
-                presto_type = "bigint"
-            elif t == "float64":
-                presto_type = "double"
-            else:
-                presto_type = "varchar"
-                logger.info(
-                    "column '{}' has non-numeric. The values are stored as "
-                    "'varchar' type on Treasure Data.".format(c)
-                )
-            column_names.append(c)
-            column_types.append(presto_type)
+        column_names, column_types = _get_schema(dataframe)
 
         self._insert_into(
             table,
