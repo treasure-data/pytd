@@ -35,7 +35,7 @@ def _cast_dtypes(dataframe, inplace=True):
 
     for column, kind in dataframe.dtypes.apply(lambda dtype: dtype.kind).iteritems():
         if kind == "i" or kind == "u":
-            t = float if df[column].isnull().any() else int
+            t = "Int64" if df[column].isnull().any() else "int64"
         elif kind == "f":
             t = float
         else:
@@ -106,7 +106,7 @@ class InsertIntoWriter(Writer):
 
         column_names, column_types = [], []
         for c, t in zip(dataframe.columns, dataframe.dtypes):
-            if t == "int64":
+            if t == "int64" or t == "Int64":
                 presto_type = "bigint"
             elif t == "float64":
                 presto_type = "double"
