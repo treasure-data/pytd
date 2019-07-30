@@ -7,6 +7,8 @@ import time
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
+import pandas as pd
+
 TD_SPARK_BASE_URL = "https://s3.amazonaws.com/td-spark/{}"
 TD_SPARK_JAR_NAME = "td-spark-assembly_2.11-19.7.0.jar"
 logger = logging.getLogger(__name__)
@@ -33,7 +35,7 @@ def _cast_dtypes(dataframe, inplace=True):
 
     for column, kind in dataframe.dtypes.apply(lambda dtype: dtype.kind).iteritems():
         if kind == "i" or kind == "u":
-            t = int
+            t = "Int64" if df[column].isnull().any() else "int64"
         elif kind == "f":
             t = float
         else:
@@ -48,6 +50,28 @@ def _cast_dtypes(dataframe, inplace=True):
 
     if not inplace:
         return df
+
+
+def _get_schema(dataframe):
+    column_names, column_types = [], []
+    for c, t in zip(dataframe.columns, dataframe.dtypes):
+        # Compare nullable integer type by using pandas function because `t ==
+        # "Int64"` causes a following warning for some reasons:
+        #     DeprecationWarning: Numeric-style type codes are deprecated and
+        #     will result in an error in the future.
+        if t == "int64" or pd.core.dtypes.common.is_dtype_equal(t, "Int64"):
+            presto_type = "bigint"
+        elif t == "float64":
+            presto_type = "double"
+        else:
+            presto_type = "varchar"
+            logger.info(
+                "column '{}' has non-numeric. The values are stored as "
+                "'varchar' type on Treasure Data.".format(c)
+            )
+        column_names.append(c)
+        column_types.append(presto_type)
+    return column_names, column_types
 
 
 class Writer(metaclass=abc.ABCMeta):
@@ -82,9 +106,6 @@ class InsertIntoWriter(Writer):
     def write_dataframe(self, dataframe, table, if_exists):
         """Write a given DataFrame to a Treasure Data table.
 
-        This method translates a given pandas.DataFrame into a `INSERT INTO ...
-        VALUES ...` Presto query.
-
         Parameters
         ----------
         dataframe : pandas.DataFrame
@@ -105,38 +126,26 @@ class InsertIntoWriter(Writer):
 
         _cast_dtypes(dataframe)
 
-        column_names, column_types = [], []
-        for c, t in zip(dataframe.columns, dataframe.dtypes):
-            if t == "int64":
-                presto_type = "bigint"
-            elif t == "float64":
-                presto_type = "double"
-            else:
-                presto_type = "varchar"
-                logger.info(
-                    "column '{}' has non-numeric. The values are stored as "
-                    "'varchar' type on Treasure Data.".format(c)
-                )
-            column_names.append(c)
-            column_types.append(presto_type)
+        column_names, column_types = _get_schema(dataframe)
 
         self._insert_into(
-            table, dataframe.values.tolist(), column_names, column_types, if_exists
+            table,
+            list(dataframe.itertuples(index=False, name=None)),
+            column_names,
+            column_types,
+            if_exists,
         )
 
-    def _insert_into(self, table, list_of_list, column_names, column_types, if_exists):
+    def _insert_into(self, table, list_of_tuple, column_names, column_types, if_exists):
         """Write a given lists to a Treasure Data table.
-
-        This method translates the given data into an ``INSERT INTO ...  VALUES
-        ...`` Presto query.
 
         Parameters
         ----------
         table : pytd.table.Table
             Target table.
 
-        list_of_list : list of lists
-            Data loaded to a target table. Each element is a list that
+        list_of_tuple : list of tuples
+            Data loaded to a target table. Each element is a tuple that
             represents single table row.
 
         column_names : list of string
@@ -174,21 +183,45 @@ class InsertIntoWriter(Writer):
         else:
             table.create(column_names, column_types)
 
+        q_insert = self._build_query(
+            table.database, table.table, list_of_tuple, column_names
+        )
+        table.client.query(q_insert, engine="presto")
+
+    def _build_query(self, database, table, list_of_tuple, column_names):
+        """Translates the given data into an ``INSERT INTO ...  VALUES ...``
+        Presto query.
+
+        Parameters
+        ----------
+        database : string
+            Target database name.
+
+        table : string
+            Target table name.
+
+        list_of_tuple : list of tuples
+            Data loaded to a target table. Each element is a tuple that
+            represents single table row.
+
+        column_names : list of string
+            Column names.
+        """
         rows = []
-        for lst in list_of_list:
+        for tpl in list_of_tuple:
             list_of_value_strings = [
-                "'{}'".format(e.replace("'", '"')) if isinstance(e, str) else str(e)
-                for e in lst
+                (
+                    "'{}'".format(e.replace("'", '"'))
+                    if isinstance(e, str)
+                    else ("null" if pd.isnull(e) else str(e))
+                )
+                for e in tpl
             ]
             rows.append("({})".format(", ".join(list_of_value_strings)))
 
-        q_insert = "INSERT INTO {}.{} ({}) VALUES {}".format(
-            table.database,
-            table.table,
-            ", ".join(map(str, column_names)),
-            ", ".join(rows),
+        return "INSERT INTO {}.{} ({}) VALUES {}".format(
+            database, table, ", ".join(map(str, column_names)), ", ".join(rows)
         )
-        table.client.query(q_insert, engine="presto")
 
 
 class BulkImportWriter(Writer):
