@@ -218,8 +218,7 @@ class Client(object):
             string value, a temporal Writer instance will be created.
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}, default: 'error'
-            What happens when a target table already exists. 'append' is not
-            supported in `bulk_import`.
+            What happens when a target table already exists.
             - error: raise an exception.
             - overwrite: drop it, recreate it, and insert data.
             - append: insert data. Create if does not exist.

@@ -144,6 +144,14 @@ class BulkImportWriterTestCase(unittest.TestCase):
         )
         self.assertFalse(self.table.client.api_client.create_bulk_import.called)
 
+    def test_write_dataframe_append(self):
+        self.writer.write_dataframe(
+            pd.DataFrame([[1, 2], [3, 4]]), self.table, "append"
+        )
+        self.assertTrue(self.table.client.api_client.create_bulk_import.called)
+        args, kwargs = self.table.client.api_client.create_bulk_import.call_args
+        self.assertEqual(kwargs.get("params"), {"mode": "append"})
+
     def test_write_dataframe_overwrite(self):
         self.writer.write_dataframe(
             pd.DataFrame([[1, 2], [3, 4]]), self.table, "overwrite"
@@ -151,6 +159,8 @@ class BulkImportWriterTestCase(unittest.TestCase):
         self.assertTrue(self.table.delete.called)
         self.assertTrue(self.table.create.called)
         self.assertTrue(self.table.client.api_client.create_bulk_import.called)
+        args, kwargs = self.table.client.api_client.create_bulk_import.call_args
+        self.assertEqual(kwargs.get("params"), None)
 
     def test_write_dataframe_invalid_if_exists(self):
         with self.assertRaises(ValueError):

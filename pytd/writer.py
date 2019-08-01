@@ -244,10 +244,11 @@ class BulkImportWriter(Writer):
         table : pytd.table.Table
             Target table.
 
-        if_exists : {'error', 'overwrite', 'ignore'}
+        if_exists : {'error', 'overwrite', 'append', 'ignore'}
             What happens when a target table already exists.
             - error: raise an exception.
             - overwrite: drop it, recreate it, and insert data.
+            - append: insert data. Create if does not exist.
             - ignore: do nothing.
         """
         if self.closed:
@@ -278,12 +279,14 @@ class BulkImportWriter(Writer):
         csv : File pointer of a CSV file
             Data in this file will be loaded to a target table.
 
-        if_exists : {'error', 'overwrite', 'ignore'}
+        if_exists : {'error', 'overwrite', 'append', 'ignore'}
             What happens when a target table already exists.
             - error: raise an exception.
             - overwrite: drop it, recreate it, and insert data.
+            - append: insert data. Create if does not exist.
             - ignore: do nothing.
         """
+        params = None
         if table.exist:
             if if_exists == "error":
                 raise RuntimeError(
@@ -294,7 +297,7 @@ class BulkImportWriter(Writer):
             elif if_exists == "ignore":
                 return
             elif if_exists == "append":
-                raise ValueError("Bulk import API does not support `append`")
+                params = {"mode": "append"}
             elif if_exists == "overwrite":
                 table.delete()
                 table.create()
@@ -306,7 +309,7 @@ class BulkImportWriter(Writer):
         session_name = "session-{}".format(int(time.time()))
 
         bulk_import = table.client.api_client.create_bulk_import(
-            session_name, table.database, table.table
+            session_name, table.database, table.table, params=params
         )
         try:
             logger.info("uploading data converted into a CSV file")
@@ -317,18 +320,26 @@ class BulkImportWriter(Writer):
             raise RuntimeError("failed to upload file: {}".format(e))
 
         logger.info("performing a bulk import job")
-        bulk_import.perform(wait=True)
+        job = bulk_import.perform(wait=True)
 
         if 0 < bulk_import.error_records:
             logger.warning(
-                "detected {} error records.".format(bulk_import.error_records)
+                "[job id {}] detected {} error records.".format(
+                    job.id, bulk_import.error_records
+                )
             )
 
         if 0 < bulk_import.valid_records:
-            logger.info("imported {} records.".format(bulk_import.valid_records))
+            logger.info(
+                "[job id {}] imported {} records.".format(
+                    job.id, bulk_import.valid_records
+                )
+            )
         else:
             raise RuntimeError(
-                "no records have been imported: {}".format(bulk_import.name)
+                "[job id {}] no records have been imported: {}".format(
+                    job.id, bulk_import.name
+                )
             )
         bulk_import.commit(wait=True)
         bulk_import.delete()
