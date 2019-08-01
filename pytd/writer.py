@@ -320,18 +320,26 @@ class BulkImportWriter(Writer):
             raise RuntimeError("failed to upload file: {}".format(e))
 
         logger.info("performing a bulk import job")
-        bulk_import.perform(wait=True)
+        job = bulk_import.perform(wait=True)
 
         if 0 < bulk_import.error_records:
             logger.warning(
-                "detected {} error records.".format(bulk_import.error_records)
+                "[job id {}] detected {} error records.".format(
+                    job.id, bulk_import.error_records
+                )
             )
 
         if 0 < bulk_import.valid_records:
-            logger.info("imported {} records.".format(bulk_import.valid_records))
+            logger.info(
+                "[job id {}] imported {} records.".format(
+                    job.id, bulk_import.valid_records
+                )
+            )
         else:
             raise RuntimeError(
-                "no records have been imported: {}".format(bulk_import.name)
+                "[job id {}] no records have been imported: {}".format(
+                    job.id, bulk_import.name
+                )
             )
         bulk_import.commit(wait=True)
         bulk_import.delete()
