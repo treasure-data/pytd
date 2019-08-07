@@ -1,7 +1,7 @@
 import abc
 import logging
 import os
-import re
+from urllib.parse import urlparse
 
 import prestodb
 import tdclient
@@ -139,10 +139,8 @@ class PrestoQueryEngine(QueryEngine):
         """Presto API host obtained from ``TD_PRESTO_API`` env variable or
         inferred from Treasure Data REST API endpoint.
         """
-        http = re.compile(r"https?://")
         return os.getenv(
-            "TD_PRESTO_API",
-            http.sub("", self.endpoint).strip("/").replace("api", "api-presto"),
+            "TD_PRESTO_API", urlparse(self.endpoint).netloc.replace("api", "api-presto")
         )
 
     def cursor(self):
