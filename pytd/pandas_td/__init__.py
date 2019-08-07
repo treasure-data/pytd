@@ -176,7 +176,7 @@ def read_td_job(job_id, engine, index_col=None, parse_dates=None):
     -------
     DataFrame
     """
-    con = connect(engine=engine)
+    con = connect(default_engine=engine)
 
     # get job
     job = con.get_job(job_id)
