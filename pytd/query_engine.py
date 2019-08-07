@@ -134,6 +134,17 @@ class PrestoQueryEngine(QueryEngine):
         """
         return "pytd/{0} (prestodb/{1})".format(__version__, prestodb.__version__)
 
+    @property
+    def api_host(self):
+        """Presto API host obtained from ``TD_PRESTO_API`` env variable or
+        inferred from Treasure Data REST API endpoint.
+        """
+        http = re.compile(r"https?://")
+        return os.getenv(
+            "TD_PRESTO_API",
+            http.sub("", self.endpoint).strip("/").replace("api", "api-presto"),
+        )
+
     def cursor(self):
         """Get cursor defined by DB-API.
 
@@ -149,14 +160,8 @@ class PrestoQueryEngine(QueryEngine):
         self.engine.close()
 
     def _connect(self):
-        http = re.compile(r"https?://")
-        api_presto = os.getenv(
-            "TD_PRESTO_API",
-            http.sub("", self.endpoint).strip("/").replace("api", "api-presto"),
-        )
-
         return prestodb.dbapi.connect(
-            host=api_presto,
+            host=self.api_host,
             port=443,
             http_scheme="https",
             user=self.apikey,

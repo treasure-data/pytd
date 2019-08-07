@@ -22,6 +22,10 @@ class PrestoQueryEngineTestCase(unittest.TestCase):
             ua, "pytd/{0} (prestodb/{1})".format(__version__, prestodb.__version__)
         )
 
+    def test_api_host(self):
+        host = self.presto.api_host
+        self.assertEqual(host, "api-presto.treasuredata.com")
+
     def test_create_header(self):
         presto_no_header = PrestoQueryEngine(
             "1/XXX", "https://api.treasuredata.com/", "sample_datasets", False
