@@ -41,7 +41,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
         """
         return "pytd/{0}".format(__version__)
 
-    def execute(self, query):
+    def execute(self, query, **kwargs):
         """Execute a given SQL statement and return results.
 
         Parameters
@@ -58,7 +58,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
             'columns'
                 List of column names.
         """
-        cur = self.cursor()
+        cur = self.cursor(**kwargs)
         cur.execute(query)
         rows = cur.fetchall()
         columns = [desc[0] for desc in cur.description]
@@ -94,7 +94,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
         return header
 
     @abc.abstractmethod
-    def cursor(self):
+    def cursor(self, **kwargs):
         pass
 
     @abc.abstractmethod
@@ -115,7 +115,14 @@ class PrestoQueryEngine(QueryEngine):
         Treasure Data API key.
 
     endpoint : string
-        Treasure Data API server.
+        Treasure Data API server (e.g.,
+        'https://api.treasuredata.com/') or
+        Presto API host (e.g.,
+        'api-presto.treasuredata.com'). If the
+        latter is given, connect directly to the
+        Presto engine and disable Treasure
+        Data-specific query parameters like
+        ``priority``.
 
     database : string
         Name of connected database.
@@ -134,23 +141,44 @@ class PrestoQueryEngine(QueryEngine):
         """
         return "pytd/{0} (prestodb/{1})".format(__version__, prestodb.__version__)
 
-    @property
-    def api_host(self):
-        """Presto API host obtained from ``TD_PRESTO_API`` env variable or
-        inferred from Treasure Data REST API endpoint.
-        """
-        return os.getenv(
-            "TD_PRESTO_API", urlparse(self.endpoint).netloc.replace("api", "api-presto")
-        )
-
-    def cursor(self):
+    def cursor(self, **kwargs):
         """Get cursor defined by DB-API.
 
         Returns
         -------
-        prestodb.dbapi.Cursor
+        prestodb.dbapi.Cursor, or tdclient.cursor.Cursor
         """
-        return self.engine.cursor()
+        if isinstance(self.engine, prestodb.dbapi.Connection):
+            return self.engine.cursor()
+
+        logger.warning(
+            "returning `tdclient.cursor.Cursor`. This cursor, `Cursor#fetchone` "
+            "in particular, might behave different from your expectation, "
+            "because it actually executes a job on Treasure Data and fetches all "
+            "records at once from the job result."
+        )
+
+        original_cursor_kwargs = self.engine._cursor_kwargs.copy()
+
+        params = self.engine._cursor_kwargs
+        if "type" in kwargs:
+            params["type"] = kwargs["type"]
+        if "db" in kwargs:
+            params["db"] = kwargs["db"]
+        if "result_url" in kwargs:
+            params["result_url"] = kwargs["result_url"]
+        if "priority" in kwargs:
+            params["priority"] = kwargs["priority"]
+        if "retry_limit" in kwargs:
+            params["retry_limit"] = kwargs["retry_limit"]
+        if "wait_interval" in kwargs:
+            params["wait_interval"] = kwargs["wait_interval"]
+        if "wait_callback" in kwargs:
+            params["wait_callback"] = kwargs["wait_callback"]
+        cursor = self.engine.cursor()
+
+        self.engine._cursor_kwargs = original_cursor_kwargs
+        return cursor
 
     def close(self):
         """Close a connection to Presto.
@@ -158,14 +186,41 @@ class PrestoQueryEngine(QueryEngine):
         self.engine.close()
 
     def _connect(self):
-        return prestodb.dbapi.connect(
-            host=self.api_host,
-            port=443,
-            http_scheme="https",
-            user=self.apikey,
-            catalog="td-presto",
-            schema=self.database,
-            http_headers={"user-agent": self.user_agent},
+        if "api-presto" in self.endpoint:
+            return prestodb.dbapi.connect(
+                host=self.endpoint,
+                port=443,
+                http_scheme="https",
+                user=self.apikey,
+                catalog="td-presto",
+                schema=self.database,
+                http_headers={"user-agent": self.user_agent},
+            )
+
+        return tdclient.connect(
+            apikey=self.apikey,
+            endpoint=self.endpoint,
+            db=self.database,
+            user_agent=self.user_agent,
+            type="presto",
+        )
+
+    @staticmethod
+    def get_api_host(endpoint="https://api.treasuredata.com/"):
+        """Presto API host obtained from ``TD_PRESTO_API`` env variable or
+        inferred from Treasure Data REST API endpoint.
+
+        Parameters
+        ----------
+        endpoint : string, default: 'https://api.treasuredata.com/'
+            Treasure Data API server.
+
+        Returns
+        -------
+        Presto API host.
+        """
+        return os.getenv(
+            "TD_PRESTO_API", urlparse(endpoint).netloc.replace("api", "api-presto")
         )
 
 
@@ -197,7 +252,7 @@ class HiveQueryEngine(QueryEngine):
         """
         return "pytd/{0} (tdclient/{1})".format(__version__, tdclient.__version__)
 
-    def cursor(self):
+    def cursor(self, **kwargs):
         """Get cursor defined by DB-API.
 
         Returns
@@ -210,7 +265,27 @@ class HiveQueryEngine(QueryEngine):
             "because it actually executes a job on Treasure Data and fetches all "
             "records at once from the job result."
         )
-        return self.engine.cursor()
+        original_cursor_kwargs = self.engine._cursor_kwargs.copy()
+
+        params = self.engine._cursor_kwargs
+        if "type" in kwargs:
+            params["type"] = kwargs["type"]
+        if "db" in kwargs:
+            params["db"] = kwargs["db"]
+        if "result_url" in kwargs:
+            params["result_url"] = kwargs["result_url"]
+        if "priority" in kwargs:
+            params["priority"] = kwargs["priority"]
+        if "retry_limit" in kwargs:
+            params["retry_limit"] = kwargs["retry_limit"]
+        if "wait_interval" in kwargs:
+            params["wait_interval"] = kwargs["wait_interval"]
+        if "wait_callback" in kwargs:
+            params["wait_callback"] = kwargs["wait_callback"]
+        cursor = self.engine.cursor()
+
+        self.engine._cursor_kwargs = original_cursor_kwargs
+        return cursor
 
     def close(self):
         """Close a connection to Hive.

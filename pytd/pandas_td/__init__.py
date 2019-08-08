@@ -80,9 +80,10 @@ def create_engine(url, con=None, header=True, show_progress=5.0, clear_progress=
         else:
             raise ValueError("invalid engine descriptor format")
 
-    if con is None:
-        con = connect(apikey=apikey, endpoint=endpoint)
-    apikey, endpoint = con.apikey, con.endpoint
+        endpoint = "https://api.treasuredata.com"
+
+    if con is not None:
+        apikey, endpoint = con.apikey, con.endpoint
 
     if engine_type == "presto":
         return PrestoQueryEngine(apikey, endpoint, database, header=header)
@@ -132,6 +133,9 @@ def read_td_query(
     -------
     DataFrame
     """
+    if params is None:
+        params = {}
+
     if isinstance(engine, PrestoQueryEngine) and distributed_join is not None:
         header = engine.create_header(
             [
@@ -144,7 +148,9 @@ def read_td_query(
     else:
         header = engine.create_header("read_td_query")
 
-    return _to_dataframe(engine.execute(header + query), index_col, parse_dates)
+    return _to_dataframe(
+        engine.execute(header + query, **params), index_col, parse_dates
+    )
 
 
 def read_td_job(job_id, engine, index_col=None, parse_dates=None):

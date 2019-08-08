@@ -23,7 +23,7 @@ class PrestoQueryEngineTestCase(unittest.TestCase):
         )
 
     def test_api_host(self):
-        host = self.presto.api_host
+        host = PrestoQueryEngine.get_api_host(self.presto.endpoint)
         self.assertEqual(host, "api-presto.treasuredata.com")
 
     def test_create_header(self):
