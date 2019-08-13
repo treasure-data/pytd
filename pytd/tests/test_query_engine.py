@@ -9,7 +9,9 @@ from pytd.version import __version__
 
 
 class PrestoQueryEngineTestCase(unittest.TestCase):
-    @patch.object(PrestoQueryEngine, "_connect", return_value=MagicMock())
+    @patch.object(
+        PrestoQueryEngine, "_connect", return_value=(MagicMock(), MagicMock())
+    )
     def setUp(self, connect):
         self.presto = PrestoQueryEngine(
             "1/XXX", "https://api.treasuredata.com/", "sample_datasets", True
@@ -19,11 +21,14 @@ class PrestoQueryEngineTestCase(unittest.TestCase):
     def test_user_agent(self):
         ua = self.presto.user_agent
         self.assertEqual(
-            ua, "pytd/{0} (prestodb/{1})".format(__version__, prestodb.__version__)
+            ua,
+            "pytd/{0} (prestodb/{1}; tdclient/{2})".format(
+                __version__, prestodb.__version__, tdclient.__version__
+            ),
         )
 
-    def test_api_host(self):
-        host = PrestoQueryEngine.get_api_host(self.presto.endpoint)
+    def test_presto_api_host(self):
+        host = self.presto.presto_api_host
         self.assertEqual(host, "api-presto.treasuredata.com")
 
     def test_create_header(self):
@@ -45,11 +50,16 @@ class PrestoQueryEngineTestCase(unittest.TestCase):
 
     def test_cursor(self):
         self.presto.cursor()
-        self.assertTrue(self.presto.engine.cursor.called)
+        self.assertTrue(self.presto.prestodb_connection.cursor.called)
+
+    def test_cursor_with_params(self):
+        self.presto.cursor(priority="LOW")
+        self.assertTrue(self.presto.tdclient_connection.cursor.called)
 
     def test_close(self):
         self.presto.close()
-        self.assertTrue(self.presto.engine.close.called)
+        self.assertTrue(self.presto.prestodb_connection.close.called)
+        self.assertTrue(self.presto.tdclient_connection.close.called)
 
 
 class HiveQueryEngineTestCase(unittest.TestCase):

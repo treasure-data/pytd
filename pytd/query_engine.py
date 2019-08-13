@@ -115,14 +115,7 @@ class PrestoQueryEngine(QueryEngine):
         Treasure Data API key.
 
     endpoint : string
-        Treasure Data API server (e.g.,
-        'https://api.treasuredata.com/') or
-        Presto API host (e.g.,
-        'api-presto.treasuredata.com'). If the
-        latter is given, connect directly to the
-        Presto engine and disable Treasure
-        Data-specific query parameters like
-        ``priority``.
+        Treasure Data API server.
 
     database : string
         Name of connected database.
@@ -133,13 +126,24 @@ class PrestoQueryEngine(QueryEngine):
 
     def __init__(self, apikey, endpoint, database, header):
         super(PrestoQueryEngine, self).__init__(apikey, endpoint, database, header)
-        self.engine = self._connect()
+        self.prestodb_connection, self.tdclient_connection = self._connect()
 
     @property
     def user_agent(self):
         """User agent passed to a Presto connection.
         """
-        return "pytd/{0} (prestodb/{1})".format(__version__, prestodb.__version__)
+        return "pytd/{0} (prestodb/{1}; tdclient/{2})".format(
+            __version__, prestodb.__version__, tdclient.__version__
+        )
+
+    @property
+    def presto_api_host(self):
+        """Presto API host obtained from ``TD_PRESTO_API`` env variable or
+        inferred from Treasure Data REST API endpoint.
+        """
+        return os.getenv(
+            "TD_PRESTO_API", urlparse(self.endpoint).netloc.replace("api", "api-presto")
+        )
 
     def cursor(self, **kwargs):
         """Get cursor defined by DB-API.
@@ -148,8 +152,8 @@ class PrestoQueryEngine(QueryEngine):
         -------
         prestodb.dbapi.Cursor, or tdclient.cursor.Cursor
         """
-        if isinstance(self.engine, prestodb.dbapi.Connection):
-            return self.engine.cursor()
+        if len(kwargs) == 0:
+            return self.prestodb_connection.cursor()
 
         logger.warning(
             "returning `tdclient.cursor.Cursor`. This cursor, `Cursor#fetchone` "
@@ -158,9 +162,9 @@ class PrestoQueryEngine(QueryEngine):
             "records at once from the job result."
         )
 
-        original_cursor_kwargs = self.engine._cursor_kwargs.copy()
+        original_cursor_kwargs = self.tdclient_connection._cursor_kwargs.copy()
 
-        params = self.engine._cursor_kwargs
+        params = self.tdclient_connection._cursor_kwargs
         if "type" in kwargs:
             params["type"] = kwargs["type"]
         if "db" in kwargs:
@@ -175,52 +179,35 @@ class PrestoQueryEngine(QueryEngine):
             params["wait_interval"] = kwargs["wait_interval"]
         if "wait_callback" in kwargs:
             params["wait_callback"] = kwargs["wait_callback"]
-        cursor = self.engine.cursor()
+        cursor = self.tdclient_connection.cursor()
 
-        self.engine._cursor_kwargs = original_cursor_kwargs
+        self.tdclient_connection._cursor_kwargs = original_cursor_kwargs
         return cursor
 
     def close(self):
         """Close a connection to Presto.
         """
-        self.engine.close()
+        self.prestodb_connection.close()
+        self.tdclient_connection.close()
 
     def _connect(self):
-        if "api-presto" in self.endpoint:
-            return prestodb.dbapi.connect(
-                host=self.endpoint,
+        return (
+            prestodb.dbapi.connect(
+                host=self.presto_api_host,
                 port=443,
                 http_scheme="https",
                 user=self.apikey,
                 catalog="td-presto",
                 schema=self.database,
                 http_headers={"user-agent": self.user_agent},
-            )
-
-        return tdclient.connect(
-            apikey=self.apikey,
-            endpoint=self.endpoint,
-            db=self.database,
-            user_agent=self.user_agent,
-            type="presto",
-        )
-
-    @staticmethod
-    def get_api_host(endpoint="https://api.treasuredata.com/"):
-        """Presto API host obtained from ``TD_PRESTO_API`` env variable or
-        inferred from Treasure Data REST API endpoint.
-
-        Parameters
-        ----------
-        endpoint : string, default: 'https://api.treasuredata.com/'
-            Treasure Data API server.
-
-        Returns
-        -------
-        Presto API host.
-        """
-        return os.getenv(
-            "TD_PRESTO_API", urlparse(endpoint).netloc.replace("api", "api-presto")
+            ),
+            tdclient.connect(
+                apikey=self.apikey,
+                endpoint=self.endpoint,
+                db=self.database,
+                user_agent=self.user_agent,
+                type="presto",
+            ),
         )
 
 

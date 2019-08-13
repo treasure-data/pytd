@@ -241,8 +241,7 @@ class Client(object):
 
     def _fetch_query_engine(self, engine, apikey, endpoint, database, header):
         if engine == "presto":
-            host = PrestoQueryEngine.get_api_host(endpoint)
-            return PrestoQueryEngine(apikey, host, database, header)
+            return PrestoQueryEngine(apikey, endpoint, database, header)
         elif engine == "hive":
             return HiveQueryEngine(apikey, endpoint, database, header)
         else:
