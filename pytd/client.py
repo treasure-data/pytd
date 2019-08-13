@@ -133,7 +133,7 @@ class Client(object):
         self.default_engine.close()
         self.api_client.close()
 
-    def query(self, query, engine=None):
+    def query(self, query, engine=None, **kwargs):
         """Run query and get results.
 
         Parameters
@@ -176,7 +176,7 @@ class Client(object):
         else:
             engine = self.default_engine
         header = engine.create_header("Client#query")
-        return engine.execute(header + query)
+        return engine.execute(header + query, **kwargs)
 
     def get_table(self, database, table):
         """Create a pytd table control instance.
