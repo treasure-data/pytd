@@ -129,24 +129,33 @@ class QueryEngine(metaclass=abc.ABCMeta):
         -------
         tdclient.cursor.Cursor
         """
+        api_param_names = set(
+            [
+                "type",
+                "db",
+                "result_url",
+                "priority",
+                "retry_limit",
+                "wait_interval",
+                "wait_callback",
+            ]
+        )
+
+        # update a clone of the original params
+        cursor_kwargs = con._cursor_kwargs.copy()
+        for k, v in kwargs.items():
+            if k not in api_param_names:
+                raise RuntimeError(
+                    "unknown parameter for Treasure Data query execution API; "
+                    "'{}' is not in [{}].".format(k, ", ".join(api_param_names))
+                )
+            cursor_kwargs[k] = v
+
         # keep the original `_cursor_kwargs`
         original_cursor_kwargs = con._cursor_kwargs.copy()
 
         # overwrite the original params
-        if "type" in kwargs:
-            con._cursor_kwargs["type"] = kwargs["type"]
-        if "db" in kwargs:
-            con._cursor_kwargs["db"] = kwargs["db"]
-        if "result_url" in kwargs:
-            con._cursor_kwargs["result_url"] = kwargs["result_url"]
-        if "priority" in kwargs:
-            con._cursor_kwargs["priority"] = kwargs["priority"]
-        if "retry_limit" in kwargs:
-            con._cursor_kwargs["retry_limit"] = kwargs["retry_limit"]
-        if "wait_interval" in kwargs:
-            con._cursor_kwargs["wait_interval"] = kwargs["wait_interval"]
-        if "wait_callback" in kwargs:
-            con._cursor_kwargs["wait_callback"] = kwargs["wait_callback"]
+        con._cursor_kwargs = cursor_kwargs
 
         # `Connection#cursor` internally refers the customized
         # ``_cursor_kwargs``

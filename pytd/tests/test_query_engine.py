@@ -56,6 +56,10 @@ class PrestoQueryEngineTestCase(unittest.TestCase):
         self.presto.cursor(priority="LOW")
         self.assertTrue(self.presto.tdclient_connection.cursor.called)
 
+    def test_cursor_with_unknown_params(self):
+        with self.assertRaises(RuntimeError):
+            self.presto.cursor(foo="LOW")
+
     def test_close(self):
         self.presto.close()
         self.assertTrue(self.presto.prestodb_connection.close.called)
