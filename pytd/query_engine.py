@@ -105,6 +105,64 @@ class QueryEngine(metaclass=abc.ABCMeta):
     def _connect(self):
         pass
 
+    def _get_tdclient_cursor(self, con, **kwargs):
+        """Get DB-API cursor from tdclient Connection instance.
+
+        ``kwargs`` are for setting specific parameters to Treasure Data REST
+        API requests. For that purpose, this method runs workaround to
+        dynamically configure custom parameters for ``tdclient.cursor.Cursor``
+        such as "priority"; because the only way to set the custom parameters
+        is using an instance attribute
+        ``tdclient.connection.Connection._cursor_kwargs``, this method
+        temporarily overwrites the attribute before calling
+        ``Connection#cursor``.
+
+        See implementation of the Connection interface:
+        https://github.com/treasure-data/td-client-python/blob/78e1e187c3e15d009fa2ce697dc938fc0ab02ada/tdclient/connection.py
+
+        Parameters
+        ----------
+        con : tdclient.connection.Connection
+            Handler created by ``tdclient#connect``.
+
+        Returns
+        -------
+        tdclient.cursor.Cursor
+        """
+        # keep the original `_cursor_kwargs`
+        original_cursor_kwargs = con._cursor_kwargs.copy()
+
+        # overwrite the original params
+        if "type" in kwargs:
+            con._cursor_kwargs["type"] = kwargs["type"]
+        if "db" in kwargs:
+            con._cursor_kwargs["db"] = kwargs["db"]
+        if "result_url" in kwargs:
+            con._cursor_kwargs["result_url"] = kwargs["result_url"]
+        if "priority" in kwargs:
+            con._cursor_kwargs["priority"] = kwargs["priority"]
+        if "retry_limit" in kwargs:
+            con._cursor_kwargs["retry_limit"] = kwargs["retry_limit"]
+        if "wait_interval" in kwargs:
+            con._cursor_kwargs["wait_interval"] = kwargs["wait_interval"]
+        if "wait_callback" in kwargs:
+            con._cursor_kwargs["wait_callback"] = kwargs["wait_callback"]
+
+        # `Connection#cursor` internally refers the customized
+        # ``_cursor_kwargs``
+        cursor = con.cursor()
+
+        # write the original params back to `_cursor_kwargs`
+        con._cursor_kwargs = original_cursor_kwargs
+
+        logger.warning(
+            "returning `tdclient.cursor.Cursor`. This cursor, `Cursor#fetchone` "
+            "in particular, might behave different from your expectation, "
+            "because it actually executes a job on Treasure Data and fetches all "
+            "records at once from the job result."
+        )
+        return cursor
+
 
 class PrestoQueryEngine(QueryEngine):
     """An interface to Treasure Data Presto query engine.
@@ -155,34 +213,7 @@ class PrestoQueryEngine(QueryEngine):
         if len(kwargs) == 0:
             return self.prestodb_connection.cursor()
 
-        logger.warning(
-            "returning `tdclient.cursor.Cursor`. This cursor, `Cursor#fetchone` "
-            "in particular, might behave different from your expectation, "
-            "because it actually executes a job on Treasure Data and fetches all "
-            "records at once from the job result."
-        )
-
-        original_cursor_kwargs = self.tdclient_connection._cursor_kwargs.copy()
-
-        params = self.tdclient_connection._cursor_kwargs
-        if "type" in kwargs:
-            params["type"] = kwargs["type"]
-        if "db" in kwargs:
-            params["db"] = kwargs["db"]
-        if "result_url" in kwargs:
-            params["result_url"] = kwargs["result_url"]
-        if "priority" in kwargs:
-            params["priority"] = kwargs["priority"]
-        if "retry_limit" in kwargs:
-            params["retry_limit"] = kwargs["retry_limit"]
-        if "wait_interval" in kwargs:
-            params["wait_interval"] = kwargs["wait_interval"]
-        if "wait_callback" in kwargs:
-            params["wait_callback"] = kwargs["wait_callback"]
-        cursor = self.tdclient_connection.cursor()
-
-        self.tdclient_connection._cursor_kwargs = original_cursor_kwargs
-        return cursor
+        return self._get_tdclient_cursor(self.tdclient_connection, **kwargs)
 
     def close(self):
         """Close a connection to Presto.
@@ -246,33 +277,7 @@ class HiveQueryEngine(QueryEngine):
         -------
         tdclient.cursor.Cursor
         """
-        logger.warning(
-            "returning `tdclient.cursor.Cursor`. This cursor, `Cursor#fetchone` "
-            "in particular, might behave different from your expectation, "
-            "because it actually executes a job on Treasure Data and fetches all "
-            "records at once from the job result."
-        )
-        original_cursor_kwargs = self.engine._cursor_kwargs.copy()
-
-        params = self.engine._cursor_kwargs
-        if "type" in kwargs:
-            params["type"] = kwargs["type"]
-        if "db" in kwargs:
-            params["db"] = kwargs["db"]
-        if "result_url" in kwargs:
-            params["result_url"] = kwargs["result_url"]
-        if "priority" in kwargs:
-            params["priority"] = kwargs["priority"]
-        if "retry_limit" in kwargs:
-            params["retry_limit"] = kwargs["retry_limit"]
-        if "wait_interval" in kwargs:
-            params["wait_interval"] = kwargs["wait_interval"]
-        if "wait_callback" in kwargs:
-            params["wait_callback"] = kwargs["wait_callback"]
-        cursor = self.engine.cursor()
-
-        self.engine._cursor_kwargs = original_cursor_kwargs
-        return cursor
+        return self._get_tdclient_cursor(self.engine, **kwargs)
 
     def close(self):
         """Close a connection to Hive.
