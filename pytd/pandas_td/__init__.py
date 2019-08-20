@@ -132,6 +132,9 @@ def read_td_query(
     -------
     DataFrame
     """
+    if params is None:
+        params = {}
+
     if isinstance(engine, PrestoQueryEngine) and distributed_join is not None:
         header = engine.create_header(
             [
@@ -144,7 +147,9 @@ def read_td_query(
     else:
         header = engine.create_header("read_td_query")
 
-    return _to_dataframe(engine.execute(header + query), index_col, parse_dates)
+    return _to_dataframe(
+        engine.execute(header + query, **params), index_col, parse_dates
+    )
 
 
 def read_td_job(job_id, engine, index_col=None, parse_dates=None):
@@ -176,7 +181,7 @@ def read_td_job(job_id, engine, index_col=None, parse_dates=None):
     -------
     DataFrame
     """
-    con = connect(engine=engine)
+    con = connect(default_engine=engine)
 
     # get job
     job = con.get_job(job_id)

@@ -1,7 +1,7 @@
 import abc
 import logging
 import os
-import re
+from urllib.parse import urlparse
 
 import prestodb
 import tdclient
@@ -41,7 +41,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
         """
         return "pytd/{0}".format(__version__)
 
-    def execute(self, query):
+    def execute(self, query, **kwargs):
         """Execute a given SQL statement and return results.
 
         Parameters
@@ -58,7 +58,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
             'columns'
                 List of column names.
         """
-        cur = self.cursor()
+        cur = self.cursor(**kwargs)
         cur.execute(query)
         rows = cur.fetchall()
         columns = [desc[0] for desc in cur.description]
@@ -94,7 +94,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
         return header
 
     @abc.abstractmethod
-    def cursor(self):
+    def cursor(self, **kwargs):
         pass
 
     @abc.abstractmethod
@@ -104,6 +104,73 @@ class QueryEngine(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def _connect(self):
         pass
+
+    def _get_tdclient_cursor(self, con, **kwargs):
+        """Get DB-API cursor from tdclient Connection instance.
+
+        ``kwargs`` are for setting specific parameters to Treasure Data REST
+        API requests. For that purpose, this method runs workaround to
+        dynamically configure custom parameters for ``tdclient.cursor.Cursor``
+        such as "priority"; because the only way to set the custom parameters
+        is using an instance attribute
+        ``tdclient.connection.Connection._cursor_kwargs``, this method
+        temporarily overwrites the attribute before calling
+        ``Connection#cursor``.
+
+        See implementation of the Connection interface:
+        https://github.com/treasure-data/td-client-python/blob/78e1e187c3e15d009fa2ce697dc938fc0ab02ada/tdclient/connection.py
+
+        Parameters
+        ----------
+        con : tdclient.connection.Connection
+            Handler created by ``tdclient#connect``.
+
+        Returns
+        -------
+        tdclient.cursor.Cursor
+        """
+        api_param_names = set(
+            [
+                "type",
+                "db",
+                "result_url",
+                "priority",
+                "retry_limit",
+                "wait_interval",
+                "wait_callback",
+            ]
+        )
+
+        # update a clone of the original params
+        cursor_kwargs = con._cursor_kwargs.copy()
+        for k, v in kwargs.items():
+            if k not in api_param_names:
+                raise RuntimeError(
+                    "unknown parameter for Treasure Data query execution API; "
+                    "'{}' is not in [{}].".format(k, ", ".join(api_param_names))
+                )
+            cursor_kwargs[k] = v
+
+        # keep the original `_cursor_kwargs`
+        original_cursor_kwargs = con._cursor_kwargs.copy()
+
+        # overwrite the original params
+        con._cursor_kwargs = cursor_kwargs
+
+        # `Connection#cursor` internally refers the customized
+        # ``_cursor_kwargs``
+        cursor = con.cursor()
+
+        # write the original params back to `_cursor_kwargs`
+        con._cursor_kwargs = original_cursor_kwargs
+
+        logger.warning(
+            "returning `tdclient.cursor.Cursor`. This cursor, `Cursor#fetchone` "
+            "in particular, might behave different from your expectation, "
+            "because it actually executes a job on Treasure Data and fetches all "
+            "records at once from the job result."
+        )
+        return cursor
 
 
 class PrestoQueryEngine(QueryEngine):
@@ -126,43 +193,61 @@ class PrestoQueryEngine(QueryEngine):
 
     def __init__(self, apikey, endpoint, database, header):
         super(PrestoQueryEngine, self).__init__(apikey, endpoint, database, header)
-        self.engine = self._connect()
+        self.prestodb_connection, self.tdclient_connection = self._connect()
 
     @property
     def user_agent(self):
         """User agent passed to a Presto connection.
         """
-        return "pytd/{0} (prestodb/{1})".format(__version__, prestodb.__version__)
+        return "pytd/{0} (prestodb/{1}; tdclient/{2})".format(
+            __version__, prestodb.__version__, tdclient.__version__
+        )
 
-    def cursor(self):
+    @property
+    def presto_api_host(self):
+        """Presto API host obtained from ``TD_PRESTO_API`` env variable or
+        inferred from Treasure Data REST API endpoint.
+        """
+        return os.getenv(
+            "TD_PRESTO_API", urlparse(self.endpoint).netloc.replace("api", "api-presto")
+        )
+
+    def cursor(self, **kwargs):
         """Get cursor defined by DB-API.
 
         Returns
         -------
-        prestodb.dbapi.Cursor
+        prestodb.dbapi.Cursor, or tdclient.cursor.Cursor
         """
-        return self.engine.cursor()
+        if len(kwargs) == 0:
+            return self.prestodb_connection.cursor()
+
+        return self._get_tdclient_cursor(self.tdclient_connection, **kwargs)
 
     def close(self):
         """Close a connection to Presto.
         """
-        self.engine.close()
+        self.prestodb_connection.close()
+        self.tdclient_connection.close()
 
     def _connect(self):
-        http = re.compile(r"https?://")
-        api_presto = os.getenv(
-            "TD_PRESTO_API",
-            http.sub("", self.endpoint).strip("/").replace("api", "api-presto"),
-        )
-
-        return prestodb.dbapi.connect(
-            host=api_presto,
-            port=443,
-            http_scheme="https",
-            user=self.apikey,
-            catalog="td-presto",
-            schema=self.database,
-            http_headers={"user-agent": self.user_agent},
+        return (
+            prestodb.dbapi.connect(
+                host=self.presto_api_host,
+                port=443,
+                http_scheme="https",
+                user=self.apikey,
+                catalog="td-presto",
+                schema=self.database,
+                http_headers={"user-agent": self.user_agent},
+            ),
+            tdclient.connect(
+                apikey=self.apikey,
+                endpoint=self.endpoint,
+                db=self.database,
+                user_agent=self.user_agent,
+                type="presto",
+            ),
         )
 
 
@@ -194,20 +279,14 @@ class HiveQueryEngine(QueryEngine):
         """
         return "pytd/{0} (tdclient/{1})".format(__version__, tdclient.__version__)
 
-    def cursor(self):
+    def cursor(self, **kwargs):
         """Get cursor defined by DB-API.
 
         Returns
         -------
         tdclient.cursor.Cursor
         """
-        logger.warning(
-            "returning `tdclient.cursor.Cursor`. This cursor, `Cursor#fetchone` "
-            "in particular, might behave different from your expectation, "
-            "because it actually executes a job on Treasure Data and fetches all "
-            "records at once from the job result."
-        )
-        return self.engine.cursor()
+        return self._get_tdclient_cursor(self.engine, **kwargs)
 
     def close(self):
         """Close a connection to Hive.
