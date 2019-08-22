@@ -14,6 +14,16 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
+import ast
+import re
+
+
+with open("../pytd/version.py", "rb") as f:
+    version_re = re.compile(r"__version__\s+=\s+(.*)")
+    VERSION = str(
+        ast.literal_eval(version_re.search(f.read().decode("utf-8")).group(1))
+    )
+
 
 # -- Project information -----------------------------------------------------
 
@@ -22,7 +32,7 @@ copyright = '2019, Arm Treasure Data'
 author = 'Arm Treasure Data'
 
 # The full version, including alpha/beta/rc tags
-release = '0.7.0'
+release = VERSION
 
 
 # -- General configuration ---------------------------------------------------
