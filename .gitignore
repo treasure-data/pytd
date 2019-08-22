@@ -48,7 +48,7 @@ coverage.xml
 *.pot
 
 # Sphinx documentation
-docs/_build/
+doc/_build/
 
 # Jupyter Notebook
 .ipynb_checkpoints
