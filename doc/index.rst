@@ -5,6 +5,14 @@
 
 .. include:: ../README.rst
 
+More Examples
+-------------
+
+.. toctree::
+   :maxdepth: 2
+
+   usage
+
 API Reference
 -------------
 
@@ -22,3 +30,11 @@ Changelog
   :maxdepth: 2
 
   changelog
+
+Development
+-----------
+
+.. toctree::
+   :maxdepth: 2
+
+   contributing
