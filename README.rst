@@ -24,6 +24,7 @@ Installation
 Usage
 -----
 
+-  `Documentation <https://treasure-data.github.io/pytd/>`__
 -  `Sample usage on Google
    Colaboratory <https://colab.research.google.com/drive/1ps_ChU-H2FvkeNlj1e1fcOebCt4ryN11>`__
 
