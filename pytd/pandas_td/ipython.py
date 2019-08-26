@@ -3,6 +3,7 @@
     IPython magics to access to Treasure Data. Load the magics first of all:
 
     .. code-block:: none
+
         In [1]: %load_ext pytd.pandas_td.ipython
 """
 
@@ -69,6 +70,7 @@ class DatabasesMagics(TDMagics):
         """List databases in the form of pandas.DataFrame.
 
         .. code-block:: python
+
             %td_databases [<database_name_pattern>]
 
         Parameters
@@ -81,9 +83,10 @@ class DatabasesMagics(TDMagics):
         -------
         pandas.DataFrame
 
-        Example
-        -------
+        Examples
+        --------
         .. code-block:: none
+
             In [1]: %load_ext pytd.pandas_td.ipython
 
             In [2]: %td_databases sample
@@ -119,6 +122,7 @@ class TablesMagics(TDMagics):
         """List tables in databases.
 
         .. code-block:: python
+
             %td_tables [<table_identifier_pattern>]
 
         Parameters
@@ -132,9 +136,10 @@ class TablesMagics(TDMagics):
         -------
         pandas.DataFrame
 
-        Example
-        -------
+        Examples
+        --------
         .. code-block:: none
+
             In [1]: %load_ext pytd.pandas_td.ipython
 
             In [2]: %td_tables
@@ -178,23 +183,25 @@ class JobsMagics(TDMagics):
         """List job activities in an account.
 
         .. code-block:: python
+
             %td_jobs
 
         Returns
         -------
         pandas.DataFrame
 
-        Example
-        -------
+        Examples
+        --------
         .. code-block:: none
+
             In [1]: %load_ext pytd.pandas_td.ipython
 
             In [2]: %td_jobs
             Out[2]:
                  status     job_id    type                  start_at                                              query
-            0     error  448650806    hive 2019-04-12 05:33:36+00:00  with null_samples as (\n  select\n    id,\n   ...
-            1   success  448646994  presto 2019-04-12 05:23:29+00:00  -- read_td_query\n-- set session distributed_j...
-            2   success  448646986  presto 2019-04-12 05:23:27+00:00  -- read_td_query\n-- set session distributed_j...
+            0     error  448650806    hive 2019-04-12 05:33:36+00:00  with null_samples as (\\n  select\\n    id,\\n   ...
+            1   success  448646994  presto 2019-04-12 05:23:29+00:00  -- read_td_query\\n-- set session distributed_j...
+            2   success  448646986  presto 2019-04-12 05:23:27+00:00  -- read_td_query\\n-- set session distributed_j...
             ...
         """
         con = self.context.connect()
@@ -216,6 +223,7 @@ class UseMagics(TDMagics):
         current namespace.
 
         .. code-block:: python
+
             %td_use [<database_name>]
 
         Parameters
@@ -223,9 +231,10 @@ class UseMagics(TDMagics):
         ``<database_name>`` : string
             Database name.
 
-        Example
-        -------
+        Examples
+        --------
         .. code-block:: none
+
             In [1]: %load_ext pytd.pandas_td.ipython
 
             In [2]: %td_use sample_datasets
@@ -531,6 +540,7 @@ class QueryMagics(TDMagics):
         """Get job result.
 
         .. code-block:: python
+
             %td_job [--pivot] [--plot] [--dry-run] [--verbose]
                     [--connection <connection>] [--dropna] [--out <out>]
                     [--out-file <out_file>] [--quiet] [--timezone <timezone>]
@@ -576,9 +586,10 @@ class QueryMagics(TDMagics):
         -------
         pandas.DataFrame
 
-        Example
-        -------
+        Examples
+        --------
         .. code-block:: none
+
             In [1]: %load_ext pytd.pandas_td.ipython
 
             In [2]: %td_job 451709460  # select * from sample_datasets.nasdaq limit 5
@@ -598,6 +609,7 @@ class QueryMagics(TDMagics):
         """Run a Hive query.
 
         .. code-block:: python
+
             %%td_hive [<database>] [--pivot] [--plot] [--dry-run] [--verbose]
                       [--connection <connection>] [--dropna] [--out <out>]
                       [--out-file <out_file>] [--quiet] [--timezone <timezone>]
@@ -647,9 +659,10 @@ class QueryMagics(TDMagics):
         -------
         pandas.DataFrame
 
-        Example
-        -------
+        Examples
+        --------
         .. code-block:: none
+
             In [1]: %load_ext pytd.pandas_td.ipython
 
             In [2]: %%td_hive
@@ -666,6 +679,7 @@ class QueryMagics(TDMagics):
         """Run a Presto query.
 
         .. code-block:: python
+
             %%td_presto [<database>] [--pivot] [--plot] [--dry-run] [--verbose]
                         [--connection <connection>] [--dropna] [--out <out>]
                         [--out-file <out_file>] [--quiet] [--timezone <timezone>]
@@ -715,9 +729,10 @@ class QueryMagics(TDMagics):
         -------
         pandas.DataFrame
 
-        Example
-        -------
+        Examples
+        --------
         .. code-block:: none
+
             In [1]: %load_ext pytd.pandas_td.ipython
 
             In [2]: %%td_presto
