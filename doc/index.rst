@@ -5,9 +5,15 @@
 
 .. include:: ../README.rst
 
+API Reference
+-------------
+
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+
+   reference
+   pandas_td
+   dbapi
 
 Changelog
 ---------

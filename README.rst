@@ -295,7 +295,7 @@ Documenting
 
 .. code:: sh
 
-   pip install sphinx ghp-import
+   pip install sphinx numpydoc ghp-import
 
 Edit contents in ``doc/``:
 

@@ -41,10 +41,20 @@ release = VERSION
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.doctest",
     "sphinx.ext.githubpages",
+    "numpydoc",
     "sphinx.ext.viewcode",
 ]
+
+autodoc_default_options = {
+    "members": None,
+    "member-order": "bysource",
+    "special-members": "__init__",
+    "undoc-members": True,
+    "exclude-members": None,
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
