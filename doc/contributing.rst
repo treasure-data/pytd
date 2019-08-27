@@ -53,7 +53,7 @@ Documenting
 
 .. code:: sh
 
-   pip install sphinx numpydoc
+   pip install -r doc/requirements.txt
 
 Edit contents in ``doc/``:
 
