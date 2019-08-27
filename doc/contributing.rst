@@ -53,7 +53,7 @@ Documenting
 
 .. code:: sh
 
-   pip install sphinx numpydoc ghp-import
+   pip install -r doc/requirements.txt
 
 Edit contents in ``doc/``:
 
@@ -61,10 +61,10 @@ Edit contents in ``doc/``:
 
    cd doc
 
-Build HTML files and push them to the ``gh-pages`` branch:
+Build HTML files to render Sphinx documentation:
 
 .. code:: sh
 
-   git checkout master  # make sure doc is built under the latest version
    make html
-   ghp-import _build/html -p
+
+The ``doc/`` folder is monitored and automatically published by `Read the Docs <https://readthedocs.org/projects/pytd-doc/>`__.

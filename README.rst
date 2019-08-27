@@ -1,7 +1,7 @@
 pytd
 ====
 
-|Build Status| |Build status| |PyPI version|
+|Build Status| |Build status| |PyPI version| |docs status|
 
 **pytd** provides user-friendly interfaces to Treasure Data’s `REST
 APIs <https://github.com/treasure-data/td-client-python>`__, `Presto
@@ -24,7 +24,7 @@ Installation
 Usage
 -----
 
--  `Documentation <https://treasure-data.github.io/pytd/>`__
+-  `Documentation <https://pytd-doc.readthedocs.io/>`__
 -  `Sample usage on Google
    Colaboratory <https://colab.research.google.com/drive/1ps_ChU-H2FvkeNlj1e1fcOebCt4ryN11>`__
 
@@ -170,3 +170,5 @@ noticed any incompatible behaviors.
    :target: https://ci.appveyor.com/project/takuti/pytd
 .. |PyPI version| image:: https://badge.fury.io/py/pytd.svg
    :target: https://badge.fury.io/py/pytd
+.. |docs status| image:: https://readthedocs.org/projects/pytd-doc/badge/?version=latest
+   :target: https://pytd-doc.readthedocs.io/en/latest/?badge=latest
