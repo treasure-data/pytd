@@ -14,16 +14,76 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
+import inspect
+import os
+import subprocess
+import sys
+
 import pkg_resources
+
+GH_ORGANIZATION = "treasure-data"
+GH_PROJECT = "pytd"
+PACKAGE = "pytd"
+
+
+def linkcode_resolve(domain, info):
+    """Generate link to GitHub.
+
+    References:
+    - https://github.com/scikit-learn/scikit-learn/blob/f0faaee45762d0a5c75dcf3d487c118b10e1a5a8/doc/conf.py
+    - https://github.com/chainer/chainer/pull/2758/
+    """
+    if domain != "py" or not info["module"]:
+        return None
+
+    # tag
+    try:
+        revision = subprocess.check_output(["git", "rev-parse", "HEAD"]).strip()
+    except (subprocess.CalledProcessError, OSError):
+        print("Failed to execute git to get revision")
+        return None
+    revision = revision.decode("utf-8")
+
+    obj = sys.modules.get(info["module"])
+    if obj is None:
+        return None
+    for comp in info["fullname"].split("."):
+        obj = getattr(obj, comp)
+
+    # filename
+    try:
+        filename = inspect.getsourcefile(obj)
+    except Exception:
+        return None
+    if filename is None:
+        return None
+
+    # relpath
+    pkg_root_dir = os.path.dirname(__import__(PACKAGE).__file__)
+    filename = os.path.realpath(filename)
+    if not filename.startswith(pkg_root_dir):
+        return None
+    relpath = os.path.relpath(filename, pkg_root_dir)
+
+    # line number
+    try:
+        linenum = inspect.getsourcelines(obj)[1]
+    except Exception:
+        linenum = ""
+
+    return "https://github.com/{}/{}/blob/{}/{}/{}#L{}".format(
+        GH_ORGANIZATION, GH_PROJECT, revision, PACKAGE, relpath, linenum
+    )
+
 
 # -- Project information -----------------------------------------------------
 
-project = "pytd"
+project = GH_PROJECT
 copyright = "2019, Arm Treasure Data"
 author = "Arm Treasure Data"
 
 # The full version, including alpha/beta/rc tags
-release = pkg_resources.get_distribution(project).version
+release = pkg_resources.get_distribution(PACKAGE).version
 
 
 # -- General configuration ---------------------------------------------------
@@ -37,7 +97,7 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx.ext.githubpages",
     "numpydoc",
-    "sphinx.ext.viewcode",
+    "sphinx.ext.linkcode",
 ]
 
 autodoc_default_options = {
@@ -65,8 +125,8 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_theme = "alabaster"
 html_theme_options = {
     "description": "Treasure Data Driver for Python",
-    "github_user": "treasure-data",
-    "github_repo": project,
+    "github_user": GH_ORGANIZATION,
+    "github_repo": GH_PROJECT,
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,

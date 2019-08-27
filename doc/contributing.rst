@@ -65,5 +65,6 @@ Build HTML files and push them to the ``gh-pages`` branch:
 
 .. code:: sh
 
+   git checkout master  # make sure doc is built under the latest version
    make html
    ghp-import _build/html -p
