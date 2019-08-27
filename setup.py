@@ -18,7 +18,7 @@ with open("pytd/version.py", "rb") as f:
     )
 
 with open(
-    path.join(path.abspath(path.dirname(__file__)), "README.md"), encoding="utf-8"
+    path.join(path.abspath(path.dirname(__file__)), "README.rst"), encoding="utf-8"
 ) as f:
     long_description = f.read()
 
@@ -41,7 +41,7 @@ def setup_package():
         version=VERSION,
         description=DESCRIPTION,
         long_description=LONG_DESCRIPTION,
-        long_description_content_type="text/markdown",
+        long_description_content_type="text/x-rst",
         author=AUTHOR,
         author_email=AUTHOR_EMAIL,
         maintainer=MAINTAINER,

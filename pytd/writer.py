@@ -116,6 +116,7 @@ class InsertIntoWriter(Writer):
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}
             What happens when a target table already exists.
+
             - error: raise an exception.
             - overwrite: drop it, recreate it, and insert data.
             - append: insert data. Create if does not exist.
@@ -158,6 +159,7 @@ class InsertIntoWriter(Writer):
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}
             What happens when a target table already exists.
+
             - error: raise an exception.
             - overwrite: drop it, recreate it, and insert data.
             - append: insert data. Create if does not exist.
@@ -246,6 +248,7 @@ class BulkImportWriter(Writer):
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}
             What happens when a target table already exists.
+
             - error: raise an exception.
             - overwrite: drop it, recreate it, and insert data.
             - append: insert data. Create if does not exist.
@@ -281,6 +284,7 @@ class BulkImportWriter(Writer):
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}
             What happens when a target table already exists.
+
             - error: raise an exception.
             - overwrite: drop it, recreate it, and insert data.
             - append: insert data. Create if does not exist.
@@ -392,6 +396,7 @@ class SparkWriter(Writer):
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}
             What happens when a target table already exists.
+
             - error: raise an exception.
             - overwrite: drop it, recreate it, and insert data.
             - append: insert data. Create if does not exist.
