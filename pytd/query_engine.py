@@ -131,7 +131,6 @@ class QueryEngine(metaclass=abc.ABCMeta):
         """
         api_param_names = set(
             [
-                "type",
                 "db",
                 "result_url",
                 "priority",
@@ -140,6 +139,13 @@ class QueryEngine(metaclass=abc.ABCMeta):
                 "wait_callback",
             ]
         )
+
+        if "type" in kwargs:
+            raise RuntimeError(
+                "optional query parameter 'type' is unsupported. Issue query "
+                "from a proper QueryEngine instance: "
+                "{PrestoQueryEngine, HiveQueryEngine}."
+            )
 
         # update a clone of the original params
         cursor_kwargs = con._cursor_kwargs.copy()
