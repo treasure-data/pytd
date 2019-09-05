@@ -146,6 +146,25 @@ class Client(object):
             Query engine. If not given, default query engine created in the
             constructor will be used.
 
+        **kwargs
+            Treasure Data-specific optional query parameters. Giving these
+            keyword arguments forces query engine to issue a query via Treasure
+            Data REST API provided by ``tdclient``; that is, if ``engine`` is
+            Presto, you cannot enjoy efficient direct access to the query
+            engine provided by ``prestodb``.
+
+            - ``db`` (str): use the database
+            - ``result_url`` (str): result output URL
+            - ``priority`` (int or str): priority
+                - -2: "VERY LOW"
+                - -1: "LOW"
+                -  0: "NORMAL"
+                -  1: "HIGH"
+                -  2: "VERY HIGH"
+            - ``retry_limit`` (int): max number of automatic retries
+            - ``wait_interval`` (int): sleep interval until job finish
+            - ``wait_callback`` (function): called every interval against job itself
+
         Returns
         -------
         dict : keys ('data', 'columns')

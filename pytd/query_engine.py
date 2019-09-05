@@ -49,6 +49,24 @@ class QueryEngine(metaclass=abc.ABCMeta):
         query : string
             Query.
 
+        **kwargs
+            Treasure Data-specific optional query parameters. Giving these
+            keyword arguments forces query engine to issue a query via Treasure
+            Data REST API provided by ``tdclient``, rather than using a direct
+            connection established by the ``prestodb`` package.
+
+            - ``db`` (str): use the database
+            - ``result_url`` (str): result output URL
+            - ``priority`` (int or str): priority
+                - -2: "VERY LOW"
+                - -1: "LOW"
+                -  0: "NORMAL"
+                -  1: "HIGH"
+                -  2: "VERY HIGH"
+            - ``retry_limit`` (int): max number of automatic retries
+            - ``wait_interval`` (int): sleep interval until job finish
+            - ``wait_callback`` (function): called every interval against job itself
+
         Returns
         -------
         dict : keys ('data', 'columns')
@@ -124,6 +142,24 @@ class QueryEngine(metaclass=abc.ABCMeta):
         ----------
         con : tdclient.connection.Connection
             Handler created by ``tdclient#connect``.
+
+        **kwargs
+            Treasure Data-specific optional query parameters. Giving these
+            keyword arguments forces query engine to issue a query via Treasure
+            Data REST API provided by ``tdclient``, rather than using a direct
+            connection established by the ``prestodb`` package.
+
+            - ``db`` (str): use the database
+            - ``result_url`` (str): result output URL
+            - ``priority`` (int or str): priority
+                - -2: "VERY LOW"
+                - -1: "LOW"
+                -  0: "NORMAL"
+                -  1: "HIGH"
+                -  2: "VERY HIGH"
+            - ``retry_limit`` (int): max number of automatic retries
+            - ``wait_interval`` (int): sleep interval until job finish
+            - ``wait_callback`` (function): called every interval against job itself
 
         Returns
         -------
@@ -221,6 +257,26 @@ class PrestoQueryEngine(QueryEngine):
     def cursor(self, **kwargs):
         """Get cursor defined by DB-API.
 
+        Parameters
+        ----------
+        **kwargs
+            Treasure Data-specific optional query parameters. Giving these
+            keyword arguments forces query engine to issue a query via Treasure
+            Data REST API provided by ``tdclient``, rather than using a direct
+            connection established by the ``prestodb`` package.
+
+            - ``db`` (str): use the database
+            - ``result_url`` (str): result output URL
+            - ``priority`` (int or str): priority
+                - -2: "VERY LOW"
+                - -1: "LOW"
+                -  0: "NORMAL"
+                -  1: "HIGH"
+                -  2: "VERY HIGH"
+            - ``retry_limit`` (int): max number of automatic retries
+            - ``wait_interval`` (int): sleep interval until job finish
+            - ``wait_callback`` (function): called every interval against job itself
+
         Returns
         -------
         prestodb.dbapi.Cursor, or tdclient.cursor.Cursor
@@ -287,6 +343,25 @@ class HiveQueryEngine(QueryEngine):
 
     def cursor(self, **kwargs):
         """Get cursor defined by DB-API.
+
+        Parameters
+        ----------
+        **kwargs
+            Treasure Data-specific optional query parameters. Giving these
+            keyword arguments forces query engine to issue a query via Treasure
+            Data REST API provided by ``tdclient``.
+
+            - ``db`` (str): use the database
+            - ``result_url`` (str): result output URL
+            - ``priority`` (int or str): priority
+                - -2: "VERY LOW"
+                - -1: "LOW"
+                -  0: "NORMAL"
+                -  1: "HIGH"
+                -  2: "VERY HIGH"
+            - ``retry_limit`` (int): max number of automatic retries
+            - ``wait_interval`` (int): sleep interval until job finish
+            - ``wait_callback`` (function): called every interval against job itself
 
         Returns
         -------
