@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pandas as pd
@@ -178,8 +178,7 @@ class BulkImportWriterTestCase(unittest.TestCase):
 
 
 class SparkWriterTestCase(unittest.TestCase):
-    @patch.object(SparkWriter, "_fetch_td_spark", return_value=MagicMock())
-    def setUp(self, _fetch_td_spark):
+    def setUp(self):
         self.writer = SparkWriter()
 
         td_spark = MagicMock()
