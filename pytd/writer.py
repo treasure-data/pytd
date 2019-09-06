@@ -5,7 +5,7 @@ import time
 
 import pandas as pd
 
-from .spark import fetch_td_spark
+from .spark import fetch_td_spark_context
 
 logger = logging.getLogger(__name__)
 
@@ -373,7 +373,7 @@ class SparkWriter(Writer):
 
     @property
     def closed(self):
-        return self.td_spark is not None and self.td_spark._jsc.sc().isStopped()
+        return self.td_spark is not None and self.td_spark.spark._jsc.sc().isStopped()
 
     def write_dataframe(self, dataframe, table, if_exists):
         """Write a given DataFrame to a Treasure Data table.
@@ -401,17 +401,28 @@ class SparkWriter(Writer):
         if self.closed:
             raise RuntimeError("this writer is already closed and no longer available")
 
-        if if_exists not in ("error", "overwrite", "append", "ignore"):
+        if if_exists == "error":
+            raise RuntimeError(
+                "target table '{}.{}' already exists".format(
+                    table.database, table.table
+                )
+            )
+        elif if_exists == "ignore":
+            return
+        elif if_exists == "append" or if_exists == "overwrite":
+            pass
+        else:
             raise ValueError("invalid valud for if_exists: {}".format(if_exists))
 
         if self.td_spark is None:
-            self.td_spark = fetch_td_spark(
+            self.td_spark = fetch_td_spark_context(
                 table.client.apikey,
                 table.client.endpoint,
                 self.td_spark_path,
                 self.download_if_missing,
                 self.spark_configs,
             )
+
             self.fetched_apikey, self.fetched_endpoint = (
                 table.client.apikey,
                 table.client.endpoint,
@@ -428,11 +439,13 @@ class SparkWriter(Writer):
         from py4j.protocol import Py4JJavaError
 
         _cast_dtypes(dataframe)
-        sdf = self.td_spark.createDataFrame(dataframe)
+        sdf = self.td_spark.spark.createDataFrame(dataframe)
         try:
-            sdf.write.mode(if_exists).format("com.treasuredata.spark").option(
-                "table", "{}.{}".format(table.database, table.table)
-            ).save()
+            destination = "{}.{}".format(table.database, table.table)
+            if if_exists == "append":
+                self.td_spark.insert_into(sdf, destination)
+            else:  # overwrite
+                self.td_spark.create_or_replace(sdf, destination)
         except Py4JJavaError as e:
             if "API_ACCESS_FAILURE" in str(e.java_exception):
                 raise PermissionError(
@@ -447,4 +460,4 @@ class SparkWriter(Writer):
         """Close a PySpark session connected to Treasure Data.
         """
         if self.td_spark is not None:
-            self.td_spark.stop()
+            self.td_spark.spark.stop()

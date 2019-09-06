@@ -1,6 +1,7 @@
 presto-python-client>=0.6.0
 pandas
 td-client
+td-pyspark
 pyspark
 pyarrow
 pytest

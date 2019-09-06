@@ -68,7 +68,7 @@ def setup_package():
             "pytz>=2018.5",
         ],
         extras_require={
-            "spark": ["pyspark>=2.4.0", "pyarrow>=0.11.0"],
+            "spark": ["td-pyspark>=19.7.0", "pyspark>=2.4.0", "pyarrow>=0.11.0"],
             "test": ["pytest"],
         },
     )
