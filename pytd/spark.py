@@ -51,17 +51,24 @@ def download_td_spark(spark_binary_version="2.11", version="latest", destination
 
 
 def fetch_td_spark_context(
-    apikey, endpoint, td_spark_path=None, download_if_missing=True, spark_configs=None
+    apikey=None,
+    endpoint=None,
+    td_spark_path=None,
+    download_if_missing=True,
+    spark_configs=None,
 ):
     """Build TDSparkContext via td-pyspark.
 
     Parameters
     ----------
-    apikey : string
-        Treasure Data API key.
+    apikey : string, optional
+        Treasure Data API key. If not given, a value of environment variable
+        ``TD_API_KEY`` is used by default.
 
-    endpoint : string
-        Treasure Data API server.
+    endpoint : string, optional
+        Treasure Data API server. If not given, https://api.treasuredata.com is
+        used by default. List of available endpoints is:
+        https://support.treasuredata.com/hc/en-us/articles/360001474288-Sites-and-Endpoints
 
     td_spark_path : string, optional
         Path to td-spark-assembly_x.xx-x.x.x.jar. If not given, seek a path
@@ -84,6 +91,14 @@ def fetch_td_spark_context(
         from td_pyspark import TDSparkContextBuilder
     except ImportError:
         raise RuntimeError("td_pyspark is not installed")
+
+    apikey = apikey or os.environ.get("TD_API_KEY")
+    if apikey is None:
+        raise ValueError(
+            "either argument 'apikey' or environment variable"
+            "'TD_API_KEY' should be set"
+        )
+    endpoint = endpoint or os.getenv("TD_API_SERVER", "https://api.treasuredata.com")
 
     conf = (
         SparkConf()
