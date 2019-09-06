@@ -10,6 +10,19 @@ logger = logging.getLogger(__name__)
 
 
 def download_td_spark(spark_binary_version="2.11", version="latest", destination=None):
+    """Download a td-spark jar file from S3.
+
+    Parameters
+    ----------
+    spark_binary_version : string, default: '2.11'
+        Apache Spark binary version.
+
+    version : string, default: 'latest'
+        td-spark version.
+
+    destionation : string, optional
+        Where a downloaded jar file to be stored.
+    """
     td_spark_jar_name = "td-spark-assembly_{}-{}.jar".format(
         spark_binary_version, version
     )
@@ -38,8 +51,32 @@ def download_td_spark(spark_binary_version="2.11", version="latest", destination
 
 
 def fetch_td_spark_context(
-    apikey, endpoint, td_spark_path, download_if_missing, spark_configs
+    apikey, endpoint, td_spark_path=None, download_if_missing=True, spark_configs=None
 ):
+    """Build TDSparkContext via td-pyspark.
+
+    Parameters
+    ----------
+    apikey : string
+        Treasure Data API key.
+
+    endpoint : string
+        Treasure Data API server.
+
+    td_spark_path : string, optional
+        Path to td-spark-assembly_x.xx-x.x.x.jar. If not given, seek a path
+        ``TDSparkContextBuilder.default_jar_path()`` by default.
+
+    download_if_missing : boolean, default: True
+        Download td-spark if it does not exist at the time of initialization.
+
+    spark_configs : dict, optional
+        Additional Spark configurations to be set via ``SparkConf``'s ``set`` method.
+
+    Returns
+    -------
+    td_pyspark.TDSparkContext
+    """
     try:
         from pyspark.conf import SparkConf
         from pyspark.sql import SparkSession

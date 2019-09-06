@@ -352,7 +352,7 @@ class SparkWriter(Writer):
     ----------
     td_spark_path : string, optional
         Path to td-spark-assembly_x.xx-x.x.x.jar. If not given, seek a path
-        ``__file__ + TD_SPARK_JAR_NAME`` by default.
+        ``TDSparkContextBuilder.default_jar_path()`` by default.
 
     download_if_missing : boolean, default: True
         Download td-spark if it does not exist at the time of initialization.

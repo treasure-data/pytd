@@ -21,6 +21,7 @@ API Reference
 
    reference
    pandas_td
+   pyspark
    dbapi
 
 Changelog
