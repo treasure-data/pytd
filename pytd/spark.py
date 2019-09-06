@@ -9,7 +9,7 @@ TD_SPARK_BASE_URL = "https://s3.amazonaws.com/td-spark/"
 logger = logging.getLogger(__name__)
 
 
-def download_td_spark(spark_binary_version="2.11", version="19.7.0", destination=None):
+def download_td_spark(spark_binary_version="2.11", version="latest", destination=None):
     td_spark_jar_name = "td-spark-assembly_{}-{}.jar".format(
         spark_binary_version, version
     )
