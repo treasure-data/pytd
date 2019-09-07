@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pandas as pd
@@ -178,12 +178,11 @@ class BulkImportWriterTestCase(unittest.TestCase):
 
 
 class SparkWriterTestCase(unittest.TestCase):
-    @patch.object(SparkWriter, "_fetch_td_spark", return_value=MagicMock())
-    def setUp(self, _fetch_td_spark):
+    def setUp(self):
         self.writer = SparkWriter()
 
         td_spark = MagicMock()
-        td_spark._jsc.sc().isStopped.return_value = False
+        td_spark.spark._jsc.sc().isStopped.return_value = False
         self.writer.td_spark = td_spark
         self.writer.fetched_apikey = "1/XXX"
         self.writer.fetched_endpoint = "ENDPOINT"
@@ -194,8 +193,8 @@ class SparkWriterTestCase(unittest.TestCase):
 
     def test_write_dataframe(self):
         df = pd.DataFrame([[1, 2], [3, 4]])
-        self.writer.write_dataframe(df, self.table, "error")
-        self.assertTrue(self.writer.td_spark.createDataFrame.called)
+        self.writer.write_dataframe(df, self.table, "overwrite")
+        self.assertTrue(self.writer.td_spark.spark.createDataFrame.called)
 
     def test_write_dataframe_invalid_if_exists(self):
         with self.assertRaises(ValueError):
@@ -205,9 +204,9 @@ class SparkWriterTestCase(unittest.TestCase):
 
     def test_close(self):
         self.writer.close()
-        self.assertTrue(self.writer.td_spark.stop.called)
+        self.assertTrue(self.writer.td_spark.spark.stop.called)
 
-        self.writer.td_spark._jsc.sc().isStopped.return_value = True
+        self.writer.td_spark.spark._jsc.sc().isStopped.return_value = True
         self.assertTrue(self.writer.closed)
         with self.assertRaises(RuntimeError):
             self.writer.write_dataframe(
