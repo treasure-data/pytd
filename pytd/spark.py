@@ -98,7 +98,8 @@ def fetch_td_spark_context(
             "either argument 'apikey' or environment variable"
             "'TD_API_KEY' should be set"
         )
-    endpoint = endpoint or os.getenv("TD_API_SERVER", "https://api.treasuredata.com")
+    if endpoint is None:
+        endpoint = os.getenv("TD_API_SERVER", "https://api.treasuredata.com")
 
     conf = (
         SparkConf()
