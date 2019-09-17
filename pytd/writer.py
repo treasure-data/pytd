@@ -401,17 +401,7 @@ class SparkWriter(Writer):
         if self.closed:
             raise RuntimeError("this writer is already closed and no longer available")
 
-        if if_exists == "error":
-            raise RuntimeError(
-                "target table '{}.{}' already exists".format(
-                    table.database, table.table
-                )
-            )
-        elif if_exists == "ignore":
-            return
-        elif if_exists == "append" or if_exists == "overwrite":
-            pass
-        else:
+        if if_exists not in ("error", "overwrite", "append", "ignore"):
             raise ValueError("invalid valud for if_exists: {}".format(if_exists))
 
         if self.td_spark is None:
@@ -442,10 +432,7 @@ class SparkWriter(Writer):
         sdf = self.td_spark.spark.createDataFrame(dataframe)
         try:
             destination = "{}.{}".format(table.database, table.table)
-            if if_exists == "append":
-                self.td_spark.insert_into(sdf, destination)
-            else:  # overwrite
-                self.td_spark.create_or_replace(sdf, destination)
+            self.td_spark.write(sdf, destination, if_exists)
         except Py4JJavaError as e:
             if "API_ACCESS_FAILURE" in str(e.java_exception):
                 raise PermissionError(
