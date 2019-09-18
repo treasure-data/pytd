@@ -1,3 +1,5 @@
 sphinx>=2.2.0
 numpydoc
 ipython
+td-pyspark>=19.9.0
+pyspark>=2.4.0
