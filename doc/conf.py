@@ -94,8 +94,6 @@ release = pkg_resources.get_distribution(PACKAGE).version
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
-    "sphinx.ext.doctest",
-    "sphinx.ext.githubpages",
     "numpydoc",
     "sphinx_rtd_theme",
     "sphinx.ext.linkcode",
