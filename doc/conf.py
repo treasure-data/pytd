@@ -97,6 +97,7 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx.ext.githubpages",
     "numpydoc",
+    "sphinx_rtd_theme",
     "sphinx.ext.linkcode",
 ]
 
@@ -124,12 +125,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "alabaster"
-html_theme_options = {
-    "description": "Treasure Data Driver for Python",
-    "github_user": GH_ORGANIZATION,
-    "github_repo": GH_PROJECT,
-}
+html_theme = "sphinx_rtd_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
