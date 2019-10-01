@@ -1,8 +1,8 @@
 Changelog
 =========
 
-0.8.0 (2019-09-17)
-------------------
+v0.8.0 (2019-09-17)
+-------------------
 
 -  Clean up docstrings and launch documentation site.
    (`#43 <https://github.com/treasure-data/pytd/pull/43>`__, `#44 <https://github.com/treasure-data/pytd/pull/44>`__)
@@ -11,8 +11,8 @@ Changelog
 -  Add `td-pyspark <https://pypi.org/project/td-pyspark/>`__ dependency for easily accessing to the `td-spark <https://support.treasuredata.com/hc/en-us/articles/360001487167-Apache-Spark-Driver-td-spark-FAQs>`__ functionalities.
    (`#46 <https://github.com/treasure-data/pytd/pull/46>`__, `#47 <https://github.com/treasure-data/pytd/pull/47>`__)
 
-0.7.0 (2019-08-23)
-------------------
+v0.7.0 (2019-08-23)
+-------------------
 
 -  Support ``if_exists="append"`` option in ``BulkImportWriter``.
    (`#38 <https://github.com/treasure-data/pytd/pull/38>`__)
