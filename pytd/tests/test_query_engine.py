@@ -20,6 +20,11 @@ class QueryEngineEndpointSchemeTestCase(unittest.TestCase):
         )
         self.assertEqual(presto.endpoint, "http://api.treasuredata.com")
 
+        presto = PrestoQueryEngine(
+            "1/XXX", "https://api.treasuredata.com", "sample_datasets", True
+        )
+        self.assertEqual(presto.endpoint, "https://api.treasuredata.com")
+
     def test_hive_invalid_endpoint(self):
         hive = HiveQueryEngine("1/XXX", "api.treasuredata.com", "sample_datasets", True)
         self.assertEqual(hive.endpoint, "https://api.treasuredata.com")
@@ -28,6 +33,11 @@ class QueryEngineEndpointSchemeTestCase(unittest.TestCase):
             "1/XXX", "http://api.treasuredata.com", "sample_datasets", True
         )
         self.assertEqual(hive.endpoint, "http://api.treasuredata.com")
+
+        hive = HiveQueryEngine(
+            "1/XXX", "https://api.treasuredata.com", "sample_datasets", True
+        )
+        self.assertEqual(hive.endpoint, "https://api.treasuredata.com")
 
 
 class PrestoQueryEngineTestCase(unittest.TestCase):
