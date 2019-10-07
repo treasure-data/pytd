@@ -30,6 +30,8 @@ class QueryEngine(metaclass=abc.ABCMeta):
     """
 
     def __init__(self, apikey, endpoint, database, header):
+        if len(urlparse(endpoint).scheme) == 0:
+            endpoint = "https://{}".format(endpoint)
         self.apikey = apikey
         self.endpoint = endpoint
         self.database = database

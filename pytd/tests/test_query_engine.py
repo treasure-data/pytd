@@ -8,6 +8,38 @@ from pytd.query_engine import HiveQueryEngine, PrestoQueryEngine
 from pytd.version import __version__
 
 
+class QueryEngineEndpointSchemeTestCase(unittest.TestCase):
+    def test_presto_endpoint(self):
+        presto = PrestoQueryEngine(
+            "1/XXX", "api.treasuredata.com", "sample_datasets", True
+        )
+        self.assertEqual(presto.endpoint, "https://api.treasuredata.com")
+
+        presto = PrestoQueryEngine(
+            "1/XXX", "http://api.treasuredata.com", "sample_datasets", True
+        )
+        self.assertEqual(presto.endpoint, "http://api.treasuredata.com")
+
+        presto = PrestoQueryEngine(
+            "1/XXX", "https://api.treasuredata.com", "sample_datasets", True
+        )
+        self.assertEqual(presto.endpoint, "https://api.treasuredata.com")
+
+    def test_hive_endpoint(self):
+        hive = HiveQueryEngine("1/XXX", "api.treasuredata.com", "sample_datasets", True)
+        self.assertEqual(hive.endpoint, "https://api.treasuredata.com")
+
+        hive = HiveQueryEngine(
+            "1/XXX", "http://api.treasuredata.com", "sample_datasets", True
+        )
+        self.assertEqual(hive.endpoint, "http://api.treasuredata.com")
+
+        hive = HiveQueryEngine(
+            "1/XXX", "https://api.treasuredata.com", "sample_datasets", True
+        )
+        self.assertEqual(hive.endpoint, "https://api.treasuredata.com")
+
+
 class PrestoQueryEngineTestCase(unittest.TestCase):
     @patch.object(
         PrestoQueryEngine, "_connect", return_value=(MagicMock(), MagicMock())
