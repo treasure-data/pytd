@@ -8,6 +8,26 @@ from pytd.query_engine import HiveQueryEngine, PrestoQueryEngine
 from pytd.version import __version__
 
 
+class QueryEngineInitializationFailureTestCase(unittest.TestCase):
+    def test_presto_invalid_endpoint(self):
+        with self.assertRaises(ValueError):
+            PrestoQueryEngine("1/XXX", "api.treasuredata.com", "sample_datasets", True)
+
+        with self.assertRaises(ValueError):
+            PrestoQueryEngine(
+                "1/XXX", "http://api.treasuredata.com", "sample_datasets", True
+            )
+
+    def test_hive_invalid_endpoint(self):
+        with self.assertRaises(ValueError):
+            HiveQueryEngine("1/XXX", "api.treasuredata.com", "sample_datasets", True)
+
+        with self.assertRaises(ValueError):
+            HiveQueryEngine(
+                "1/XXX", "http://api.treasuredata.com", "sample_datasets", True
+            )
+
+
 class PrestoQueryEngineTestCase(unittest.TestCase):
     @patch.object(
         PrestoQueryEngine, "_connect", return_value=(MagicMock(), MagicMock())

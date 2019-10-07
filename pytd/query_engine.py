@@ -30,6 +30,10 @@ class QueryEngine(metaclass=abc.ABCMeta):
     """
 
     def __init__(self, apikey, endpoint, database, header):
+        if not endpoint.startswith("https://"):
+            raise ValueError(
+                "Treasure Data API server `endpoint` must start with 'https://' scheme"
+            )
         self.apikey = apikey
         self.endpoint = endpoint
         self.database = database
