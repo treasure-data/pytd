@@ -9,7 +9,7 @@ from pytd.version import __version__
 
 
 class QueryEngineEndpointSchemeTestCase(unittest.TestCase):
-    def test_presto_invalid_endpoint(self):
+    def test_presto_endpoint(self):
         presto = PrestoQueryEngine(
             "1/XXX", "api.treasuredata.com", "sample_datasets", True
         )
@@ -25,7 +25,7 @@ class QueryEngineEndpointSchemeTestCase(unittest.TestCase):
         )
         self.assertEqual(presto.endpoint, "https://api.treasuredata.com")
 
-    def test_hive_invalid_endpoint(self):
+    def test_hive_endpoint(self):
         hive = HiveQueryEngine("1/XXX", "api.treasuredata.com", "sample_datasets", True)
         self.assertEqual(hive.endpoint, "https://api.treasuredata.com")
 
