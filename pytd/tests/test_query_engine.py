@@ -8,24 +8,26 @@ from pytd.query_engine import HiveQueryEngine, PrestoQueryEngine
 from pytd.version import __version__
 
 
-class QueryEngineInitializationFailureTestCase(unittest.TestCase):
+class QueryEngineEndpointSchemeTestCase(unittest.TestCase):
     def test_presto_invalid_endpoint(self):
-        with self.assertRaises(ValueError):
-            PrestoQueryEngine("1/XXX", "api.treasuredata.com", "sample_datasets", True)
+        presto = PrestoQueryEngine(
+            "1/XXX", "api.treasuredata.com", "sample_datasets", True
+        )
+        self.assertEqual(presto.endpoint, "https://api.treasuredata.com")
 
-        with self.assertRaises(ValueError):
-            PrestoQueryEngine(
-                "1/XXX", "http://api.treasuredata.com", "sample_datasets", True
-            )
+        presto = PrestoQueryEngine(
+            "1/XXX", "http://api.treasuredata.com", "sample_datasets", True
+        )
+        self.assertEqual(presto.endpoint, "http://api.treasuredata.com")
 
     def test_hive_invalid_endpoint(self):
-        with self.assertRaises(ValueError):
-            HiveQueryEngine("1/XXX", "api.treasuredata.com", "sample_datasets", True)
+        hive = HiveQueryEngine("1/XXX", "api.treasuredata.com", "sample_datasets", True)
+        self.assertEqual(hive.endpoint, "https://api.treasuredata.com")
 
-        with self.assertRaises(ValueError):
-            HiveQueryEngine(
-                "1/XXX", "http://api.treasuredata.com", "sample_datasets", True
-            )
+        hive = HiveQueryEngine(
+            "1/XXX", "http://api.treasuredata.com", "sample_datasets", True
+        )
+        self.assertEqual(hive.endpoint, "http://api.treasuredata.com")
 
 
 class PrestoQueryEngineTestCase(unittest.TestCase):
