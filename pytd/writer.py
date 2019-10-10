@@ -1,6 +1,8 @@
 import abc
+import gzip
 import io
 import logging
+import os
 import tempfile
 import time
 
@@ -254,7 +256,7 @@ class BulkImportWriter(Writer):
             - ignore: do nothing.
 
         fmt : {'csv', 'msgpack'}, default: 'csv'
-            Format for bulk_import
+            Format for bulk_import.
 
         memory : bool, default: False
             If True, do not write temporary file.
@@ -281,7 +283,7 @@ class BulkImportWriter(Writer):
             if memory:
                 fp = io.BytesIO()
 
-            self._write_msgpack_stream(dataframe.to_dict(orient="records"), fp)
+            fp = self._write_msgpack_stream(dataframe.to_dict(orient="records"), fp)
 
         self._bulk_import(table, fp, if_exists, fmt)
 
@@ -307,6 +309,9 @@ class BulkImportWriter(Writer):
             - overwrite: drop it, recreate it, and insert data.
             - append: insert data. Create if does not exist.
             - ignore: do nothing.
+
+        fmt : {'csv', 'msgpack'}, default: 'csv'
+            File format for bulk import.
         """
         params = None
         if table.exist:
@@ -335,7 +340,17 @@ class BulkImportWriter(Writer):
         )
         try:
             logger.info("uploading data converted into a {} file".format(fmt))
-            bulk_import.upload_file("part", fmt, file_like)
+            if fmt == "msgpack":
+                # Without writing temporary file
+                if isinstance(file_like, io.BytesIO):
+                    size = file_like.getbuffer().nbytes
+                # Writing temporary file
+                else:
+                    size = os.fstat(file_like.fileno()).st_size
+                # To skip API._prepare_file(), which recreate msgpack again.
+                bulk_import.upload_part("part", file_like, size)
+            else:
+                bulk_import.upload_file("part", fmt, file_like)
             bulk_import.freeze()
         except Exception as e:
             bulk_import.delete()
@@ -379,16 +394,19 @@ class BulkImportWriter(Writer):
             Target file like object which has `write()` function. This object will be
             updated in this function.
         """
-        packer = msgpack.Packer()
-        for item in items:
-            try:
-                mp = packer.pack(item)
-            except (OverflowError, ValueError):
-                packer.reset()
-                mp = packer.pack(normalized_msgpack(item))
-            stream.write(mp)
+
+        with gzip.GzipFile(mode="wb", fileobj=stream) as gz:
+            packer = msgpack.Packer()
+            for item in items:
+                try:
+                    mp = packer.pack(item)
+                except (OverflowError, ValueError):
+                    packer.reset()
+                    mp = packer.pack(normalized_msgpack(item))
+                gz.write(mp)
 
         stream.seek(0)
+        return stream
 
 
 class SparkWriter(Writer):
