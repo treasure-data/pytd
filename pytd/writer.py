@@ -1,6 +1,5 @@
 import abc
 import gzip
-import io
 import logging
 import os
 import tempfile
@@ -232,7 +231,7 @@ class BulkImportWriter(Writer):
     td-client-python's bulk importer.
     """
 
-    def write_dataframe(self, dataframe, table, if_exists, fmt="csv", memory=False):
+    def write_dataframe(self, dataframe, table, if_exists, fmt="csv"):
         """Write a given DataFrame to a Treasure Data table.
 
         This method internally converts a given pandas.DataFrame into a
@@ -257,9 +256,6 @@ class BulkImportWriter(Writer):
 
         fmt : {'csv', 'msgpack'}, default: 'csv'
             Format for bulk_import.
-
-        memory : bool, default: False
-            If True, do not write temporary file.
         """
         if self.closed:
             raise RuntimeError("this writer is already closed and no longer available")
@@ -269,20 +265,11 @@ class BulkImportWriter(Writer):
 
         _cast_dtypes(dataframe)
 
-        if not memory:
-            fp = tempfile.NamedTemporaryFile(suffix=".{}".format(fmt))
+        fp = tempfile.NamedTemporaryFile(suffix=".{}".format(fmt))
 
         if fmt == "csv":
-            if memory:
-                stream = io.StringIO()
-                dataframe.to_csv(stream)
-                fp = io.BytesIO(stream.getvalue().encode("utf-8"))
-            else:
-                dataframe.to_csv(fp.name)
+            dataframe.to_csv(fp.name)
         elif fmt == "msgpack":
-            if memory:
-                fp = io.BytesIO()
-
             fp = self._write_msgpack_stream(dataframe.to_dict(orient="records"), fp)
 
         self._bulk_import(table, fp, if_exists, fmt)
@@ -341,12 +328,7 @@ class BulkImportWriter(Writer):
         try:
             logger.info("uploading data converted into a {} file".format(fmt))
             if fmt == "msgpack":
-                # Without writing temporary file
-                if isinstance(file_like, io.BytesIO):
-                    size = file_like.getbuffer().nbytes
-                # Writing temporary file
-                else:
-                    size = os.fstat(file_like.fileno()).st_size
+                size = os.fstat(file_like.fileno()).st_size
                 # To skip API._prepare_file(), which recreate msgpack again.
                 bulk_import.upload_part("part", file_like, size)
             else:
