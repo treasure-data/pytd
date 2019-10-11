@@ -256,6 +256,12 @@ class BulkImportWriter(Writer):
 
         fmt : {'csv', 'msgpack'}, default: 'csv'
             Format for bulk_import.
+
+            - csv: Convert dataframe to temporary CSV file. Stable option but slower
+                than msgpack option because pytd saves dataframe as temporary CSV file,
+                then td-client converts it to msgpack.
+            - msgpack: Convert to temporary msgpack.gz file. Fast option but might be
+                unstable because of skipping ``tdclient.API._prepare_file()``
         """
         if self.closed:
             raise RuntimeError("this writer is already closed and no longer available")
@@ -298,7 +304,7 @@ class BulkImportWriter(Writer):
             - ignore: do nothing.
 
         fmt : {'csv', 'msgpack'}, default: 'csv'
-            File format for bulk import.
+            File format for bulk import. See also :func:`write_dataframe`
         """
         params = None
         if table.exist:
