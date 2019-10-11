@@ -277,6 +277,11 @@ class BulkImportWriter(Writer):
             dataframe.to_csv(fp.name)
         elif fmt == "msgpack":
             fp = self._write_msgpack_stream(dataframe.to_dict(orient="records"), fp)
+        else:
+            raise ValueError(
+                "unsupported format '{}' for bulk import. "
+                "should be 'csv' or 'msgpack'".format(fmt)
+            )
 
         self._bulk_import(table, fp, if_exists, fmt)
 
