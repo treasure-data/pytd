@@ -1,3 +1,4 @@
+import io
 import unittest
 from unittest.mock import ANY, MagicMock
 
@@ -165,13 +166,18 @@ class BulkImportWriterTestCase(unittest.TestCase):
         self.assertEqual(kwargs.get("params"), None)
 
     def test_write_dataframe_msgpack(self):
-        self.writer.write_dataframe(
-            pd.DataFrame([[1, 2], [3, 4]]), self.table, "overwrite", fmt="msgpack"
-        )
+        df = pd.DataFrame([[1, 2], [3, 4]])
+        self.writer.write_dataframe(df, self.table, "overwrite", fmt="msgpack")
         api_client = self.table.client.api_client
         self.assertTrue(api_client.create_bulk_import.called)
         self.assertTrue(api_client.create_bulk_import().upload_part.called)
-        api_client.create_bulk_import().upload_part.assert_called_with("part", ANY, 62)
+        _bytes = BulkImportWriter()._write_msgpack_stream(
+            df.to_dict(orient="records"), io.BytesIO()
+        )
+        size = _bytes.getbuffer().nbytes
+        api_client.create_bulk_import().upload_part.assert_called_with(
+            "part", ANY, size
+        )
         self.assertFalse(api_client.create_bulk_import().upload_file.called)
 
     def test_write_dataframe_invalid_if_exists(self):

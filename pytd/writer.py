@@ -1,7 +1,7 @@
 import abc
 import gzip
+import io
 import logging
-import os
 import tempfile
 import time
 
@@ -271,11 +271,11 @@ class BulkImportWriter(Writer):
 
         _cast_dtypes(dataframe)
 
-        fp = tempfile.NamedTemporaryFile(suffix=".{}".format(fmt))
-
         if fmt == "csv":
+            fp = tempfile.NamedTemporaryFile(suffix=".csv")
             dataframe.to_csv(fp.name)
         elif fmt == "msgpack":
+            fp = io.BytesIO()
             fp = self._write_msgpack_stream(dataframe.to_dict(orient="records"), fp)
         else:
             raise ValueError(
@@ -339,7 +339,7 @@ class BulkImportWriter(Writer):
         try:
             logger.info("uploading data converted into a {} file".format(fmt))
             if fmt == "msgpack":
-                size = os.fstat(file_like.fileno()).st_size
+                size = file_like.getbuffer().nbytes
                 # To skip API._prepare_file(), which recreate msgpack again.
                 bulk_import.upload_part("part", file_like, size)
             else:
