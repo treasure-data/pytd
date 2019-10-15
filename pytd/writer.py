@@ -4,6 +4,7 @@ import io
 import logging
 import tempfile
 import time
+import uuid
 
 import msgpack
 import pandas as pd
@@ -331,7 +332,7 @@ class BulkImportWriter(Writer):
         else:
             table.create()
 
-        session_name = "session-{}".format(int(time.time()))
+        session_name = "session-{}".format(uuid.uuid1())
 
         bulk_import = table.client.api_client.create_bulk_import(
             session_name, table.database, table.table, params=params
