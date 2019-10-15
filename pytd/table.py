@@ -114,7 +114,7 @@ class Table(object):
         if writer_from_string:
             writer = Writer.from_string(writer, **kwargs)
 
-        writer.write_dataframe(dataframe, self, if_exists)
+        writer.write_dataframe(dataframe, self, if_exists, **kwargs)
 
         if writer_from_string:
             writer.close()

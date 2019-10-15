@@ -1,5 +1,6 @@
+import io
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import ANY, MagicMock
 
 import numpy as np
 import pandas as pd
@@ -124,6 +125,8 @@ class BulkImportWriterTestCase(unittest.TestCase):
         mock_bulk_import = MagicMock()
         mock_bulk_import.error_records = 1
         mock_bulk_import.valid_records = 2
+        mock_bulk_import.upload_part.return_value = MagicMock()
+        mock_bulk_import.upload_file.return_value = MagicMock()
 
         mock_api_client = MagicMock()
         mock_api_client.create_bulk_import.return_value = mock_bulk_import
@@ -161,6 +164,21 @@ class BulkImportWriterTestCase(unittest.TestCase):
         self.assertTrue(self.table.client.api_client.create_bulk_import.called)
         args, kwargs = self.table.client.api_client.create_bulk_import.call_args
         self.assertEqual(kwargs.get("params"), None)
+
+    def test_write_dataframe_msgpack(self):
+        df = pd.DataFrame([[1, 2], [3, 4]])
+        self.writer.write_dataframe(df, self.table, "overwrite", fmt="msgpack")
+        api_client = self.table.client.api_client
+        self.assertTrue(api_client.create_bulk_import.called)
+        self.assertTrue(api_client.create_bulk_import().upload_part.called)
+        _bytes = BulkImportWriter()._write_msgpack_stream(
+            df.to_dict(orient="records"), io.BytesIO()
+        )
+        size = _bytes.getbuffer().nbytes
+        api_client.create_bulk_import().upload_part.assert_called_with(
+            "part", ANY, size
+        )
+        self.assertFalse(api_client.create_bulk_import().upload_file.called)
 
     def test_write_dataframe_invalid_if_exists(self):
         with self.assertRaises(ValueError):

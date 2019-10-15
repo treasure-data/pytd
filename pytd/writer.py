@@ -1,9 +1,13 @@
 import abc
+import gzip
+import io
 import logging
 import tempfile
 import time
 
+import msgpack
 import pandas as pd
+from tdclient.api import normalized_msgpack
 
 from .spark import fetch_td_spark_context
 
@@ -227,11 +231,11 @@ class BulkImportWriter(Writer):
     td-client-python's bulk importer.
     """
 
-    def write_dataframe(self, dataframe, table, if_exists):
+    def write_dataframe(self, dataframe, table, if_exists, fmt="csv"):
         """Write a given DataFrame to a Treasure Data table.
 
         This method internally converts a given pandas.DataFrame into a
-        temporary CSV file, and upload the file to Treasure Data via bulk
+        temporary CSV/msgpack file, and upload the file to Treasure Data via bulk
         import API.
 
         Parameters
@@ -249,6 +253,15 @@ class BulkImportWriter(Writer):
             - overwrite: drop it, recreate it, and insert data.
             - append: insert data. Create if does not exist.
             - ignore: do nothing.
+
+        fmt : {'csv', 'msgpack'}, default: 'csv'
+            Format for bulk_import.
+
+            - csv: Convert dataframe to temporary CSV file. Stable option but slower
+                than msgpack option because pytd saves dataframe as temporary CSV file,
+                then td-client converts it to msgpack.
+            - msgpack: Convert to temporary msgpack.gz file. Fast option but might be
+                unstable because of skipping ``tdclient.API._prepare_file()``
         """
         if self.closed:
             raise RuntimeError("this writer is already closed and no longer available")
@@ -256,16 +269,25 @@ class BulkImportWriter(Writer):
         if "time" not in dataframe.columns:  # need time column for bulk import
             dataframe["time"] = int(time.time())
 
-        fp = tempfile.NamedTemporaryFile(suffix=".csv")
-
         _cast_dtypes(dataframe)
-        dataframe.to_csv(fp.name)
 
-        self._bulk_import(table, fp, if_exists)
+        if fmt == "csv":
+            fp = tempfile.NamedTemporaryFile(suffix=".csv")
+            dataframe.to_csv(fp.name)
+        elif fmt == "msgpack":
+            fp = io.BytesIO()
+            fp = self._write_msgpack_stream(dataframe.to_dict(orient="records"), fp)
+        else:
+            raise ValueError(
+                "unsupported format '{}' for bulk import. "
+                "should be 'csv' or 'msgpack'".format(fmt)
+            )
+
+        self._bulk_import(table, fp, if_exists, fmt)
 
         fp.close()
 
-    def _bulk_import(self, table, csv, if_exists):
+    def _bulk_import(self, table, file_like, if_exists, fmt="csv"):
         """Write a specified CSV file to a Treasure Data table.
 
         This method uploads the file to Treasure Data via bulk import API.
@@ -275,7 +297,7 @@ class BulkImportWriter(Writer):
         table : pytd.table.Table
             Target table.
 
-        csv : File pointer of a CSV file
+        file_like : File like object
             Data in this file will be loaded to a target table.
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}
@@ -285,6 +307,9 @@ class BulkImportWriter(Writer):
             - overwrite: drop it, recreate it, and insert data.
             - append: insert data. Create if does not exist.
             - ignore: do nothing.
+
+        fmt : {'csv', 'msgpack'}, default: 'csv'
+            File format for bulk import. See also :func:`write_dataframe`
         """
         params = None
         if table.exist:
@@ -312,8 +337,13 @@ class BulkImportWriter(Writer):
             session_name, table.database, table.table, params=params
         )
         try:
-            logger.info("uploading data converted into a CSV file")
-            bulk_import.upload_file("part", "csv", csv.name)
+            logger.info("uploading data converted into a {} file".format(fmt))
+            if fmt == "msgpack":
+                size = file_like.getbuffer().nbytes
+                # To skip API._prepare_file(), which recreate msgpack again.
+                bulk_import.upload_part("part", file_like, size)
+            else:
+                bulk_import.upload_file("part", fmt, file_like)
             bulk_import.freeze()
         except Exception as e:
             bulk_import.delete()
@@ -343,6 +373,33 @@ class BulkImportWriter(Writer):
             )
         bulk_import.commit(wait=True)
         bulk_import.delete()
+
+    def _write_msgpack_stream(self, items, stream):
+        """Write MessagePack stream
+
+        Parameters
+        ----------
+        items : list of dict
+            Same format with dataframe.to_dict(orient="records")
+            Examples:
+                ``[{"time": 12345, "col1": "foo"}, {"time": 12345, "col1": "bar"}]``
+        stream : File like object
+            Target file like object which has `write()` function. This object will be
+            updated in this function.
+        """
+
+        with gzip.GzipFile(mode="wb", fileobj=stream) as gz:
+            packer = msgpack.Packer()
+            for item in items:
+                try:
+                    mp = packer.pack(item)
+                except (OverflowError, ValueError):
+                    packer.reset()
+                    mp = packer.pack(normalized_msgpack(item))
+                gz.write(mp)
+
+        stream.seek(0)
+        return stream
 
 
 class SparkWriter(Writer):
