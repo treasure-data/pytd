@@ -8,7 +8,7 @@ import uuid
 
 import msgpack
 import pandas as pd
-from tdclient.api import normalized_msgpack
+from tdclient.util import normalized_msgpack
 
 from .spark import fetch_td_spark_context
 
