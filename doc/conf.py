@@ -48,7 +48,7 @@ def linkcode_resolve(domain, info):
     if obj is None:
         return None
     for comp in info["fullname"].split("."):
-        obj = getattr(obj, comp)
+        obj = getattr(obj, comp, None)
 
     # filename
     try:
