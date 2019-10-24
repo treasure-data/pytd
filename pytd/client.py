@@ -15,27 +15,32 @@ class Client(object):
 
     Parameters
     ----------
-    apikey : string, optional
+    apikey : str, optional
         Treasure Data API key. If not given, a value of environment variable
         ``TD_API_KEY`` is used by default.
 
-    endpoint : string, optional
-        Treasure Data API server. If not given, https://api.treasuredata.com is
+    endpoint : str, optional
+        Treasure Data API server. If not given, ``https://api.treasuredata.com`` is
         used by default. List of available endpoints is:
         https://support.treasuredata.com/hc/en-us/articles/360001474288-Sites-and-Endpoints
 
-    database : string, default: 'sample_datasets'
+    database : str, default: 'sample_datasets'
         Name of connected database.
 
-    default_engine : string, {'presto', 'hive'}, or pytd.query_engine.QueryEngine, \
-                default: 'presto'
+    default_engine : str, {'presto', 'hive'}, or \
+                :class:`pytd.query_engine.QueryEngine`, default: 'presto'
         Query engine. If a QueryEngine instance is given, ``apikey``,
         ``endpoint``, and ``database`` are overwritten by the values configured
         in the instance.
 
-    header : string or boolean, default: True
+    header : str or bool, default: `True`
         Prepend comment strings, in the form "-- comment", as a header of queries.
         Set False to disable header.
+
+    Attributes
+    ----------
+    api_client : :class:`tdclient.Client`
+        Connection to Treasure Data.
     """
 
     def __init__(
@@ -82,7 +87,7 @@ class Client(object):
 
         Returns
         -------
-        list of tdclient.models.Database
+        list of :class:`tdclient.models.Database`
         """
         return self.api_client.databases()
 
@@ -93,11 +98,11 @@ class Client(object):
         ----------
         database : string, optional
             Database name. If not give, list tables in a table associated with
-            this pytd.Client instance.
+            this :class:`pytd.Client` instance.
 
         Returns
         -------
-        list of tdclient.models.Table
+        list of :class:`tdclient.models.Table`
         """
         if database is None:
             database = self.database
@@ -108,7 +113,7 @@ class Client(object):
 
         Returns
         -------
-        list of tdclient.models.Job
+        list of :class:`tdclient.models.Job`
         """
         return self.api_client.jobs()
 
@@ -122,7 +127,7 @@ class Client(object):
 
         Returns
         -------
-        tdclient.models.Job
+        :class:`tdclient.models.Job`
         """
         return self.api_client.job(job_id)
 
@@ -137,11 +142,11 @@ class Client(object):
 
         Parameters
         ----------
-        query : string
+        query : str
             Query issued on a specified query engine.
 
-        engine : string, {'presto', 'hive'}, or pytd.query_engine.QueryEngine, \
-                optional
+        engine : str, {'presto', 'hive'}, or \
+                :class:`pytd.query_engine.QueryEngine`, optional
             Query engine. If not given, default query engine created in the
             constructor will be used.
 
@@ -155,6 +160,7 @@ class Client(object):
             - ``db`` (str): use the database
             - ``result_url`` (str): result output URL
             - ``priority`` (int or str): priority
+
                 - -2: "VERY LOW"
                 - -1: "LOW"
                 -  0: "NORMAL"
@@ -201,15 +207,15 @@ class Client(object):
 
         Parameters
         ----------
-        database : string
+        database : str
             Database name.
 
-        table : string
+        table : str
             Table name.
 
         Returns
         -------
-        pytd.table.Table
+        :class:`pytd.table.Table`
         """
         return Table(self, database, table)
 
@@ -224,19 +230,20 @@ class Client(object):
 
         Parameters
         ----------
-        dataframe : pandas.DataFrame
+        dataframe : :class:`pandas.DataFrame`
             Data loaded to a target table.
 
-        destination : string, or pytd.table.Table
+        destination : str, or :class:`pytd.table.Table`
             Target table.
 
-        writer : string, {'bulk_import', 'insert_into', 'spark'}, or \
-                    pytd.writer.Writer, default: 'bulk_import'
+        writer : str, {'bulk_import', 'insert_into', 'spark'}, or \
+                    :class:`pytd.writer.Writer`, default: 'bulk_import'
             A Writer to choose writing method to Treasure Data. If not given or
             string value, a temporal Writer instance will be created.
 
-        if_exists : {'error', 'overwrite', 'append', 'ignore'}, default: 'error'
+        if_exists : str, {'error', 'overwrite', 'append', 'ignore'}, default: 'error'
             What happens when a target table already exists.
+
             - error: raise an exception.
             - overwrite: drop it, recreate it, and insert data.
             - append: insert data. Create if does not exist.

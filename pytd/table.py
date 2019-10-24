@@ -10,13 +10,24 @@ class Table(object):
 
     Parameters
     ----------
-    client : pytd.Client
+    client : :class:`pytd.Client`
         Treasure Data client.
 
-    database : string
+    database : str
         Database name.
 
-    table : string
+    table : str
+        Table name.
+
+    Attributes
+    ----------
+    client : :class:`pytd.Client`
+        Treasure Data client.
+
+    database : str
+        Database name.
+
+    table : str
         Table name.
     """
 
@@ -40,7 +51,7 @@ class Table(object):
 
         Returns
         -------
-        boolean
+        bool
         """
         try:
             self.client.api_client.table(self.database, self.table)
@@ -56,10 +67,10 @@ class Table(object):
 
         Parameters
         ----------
-        column_names : list of string, optional
+        column_names : list of str, optional
             Column names.
 
-        column_types : list of string, optional
+        column_types : list of str, optional
             Column types corresponding to the names. Note that Treasure Data
             supports limited amount of types as documented in:
             https://support.treasuredata.com/hc/en-us/articles/360001266468-Schema-Management
@@ -88,16 +99,17 @@ class Table(object):
 
         Parameters
         ----------
-        dataframe : pandas.DataFrame
+        dataframe : :class:`pandas.DataFrame`
             Data loaded to a target table.
 
         writer : string, {'bulk_import', 'insert_into', 'spark'}, or \
-                    pytd.writer.Writer
+                    :class:`pytd.writer.Writer`
             A Writer to choose writing method to Treasure Data. If string
             value, a temporal Writer instance will be created.
 
-        if_exists : {'error', 'overwrite', 'append', 'ignore'}, default: 'error'
+        if_exists : str, {'error', 'overwrite', 'append', 'ignore'}, default: 'error'
             What happens when a target table already exists.
+
             - error: raise an exception.
             - overwrite: drop it, recreate it, and insert data.
             - append: insert data. Create if does not exist.

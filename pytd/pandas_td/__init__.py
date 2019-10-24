@@ -12,6 +12,26 @@ logger = logging.getLogger(__name__)
 
 
 def connect(apikey=None, endpoint=None, **kwargs):
+    """Create a connection to Treasure Data
+
+    Parameters
+    ----------
+    apikey : str, optional
+        Treasure Data API key. If not given, a value of environment variable
+        ``TD_API_KEY`` is used by default.
+
+    endpoint : str, optional
+        Treasure Data API server. If not given, ``https://api.treasuredata.com`` is
+        used by default. List of available endpoints is:
+        https://support.treasuredata.com/hc/en-us/articles/360001474288-Sites-and-Endpoints
+
+    kwargs : dict, optional
+        Optional arguments
+
+    Returns
+    -------
+    :class:`pytd.Client`
+    """
     return Client(apikey=apikey, endpoint=endpoint, **kwargs)
 
 
@@ -30,36 +50,44 @@ def create_engine(url, con=None, header=True, show_progress=5.0, clear_progress=
     The following environment variables are used for default connection:
 
       TD_API_KEY     API key
-      TD_API_SERVER  API server (default: https://api.treasuredata.com)
+      TD_API_SERVER  API server (default: ``https://api.treasuredata.com``)
 
     Parameters
     ----------
-    url : string
+    url : str
         Engine descriptor in the form "type://apikey@host/database?params..."
         Use shorthand notation "type:database?params..." for the default connection.
         pytd: "params" will be ignored since pytd.QueryEngine does not have any
         extra parameters.
 
-    con : pytd.Client, optional
-        Handler returned by pytd.pandas_td.connect. If not given, default client is
-        used.
+    con : :class:`pytd.Client`, optional
+        Handler returned by :meth:`pytd.pandas_td.connect`. If not given, default client
+        is used.
 
-    header : string or boolean, default: True
+    header : str or bool, default: True
         Prepend comment strings, in the form "-- comment", as a header of queries.
         Set False to disable header.
 
-    show_progress : double or boolean, default: 5.0
+    show_progress : double or bool, default: 5.0
         Number of seconds to wait before printing progress.
         Set False to disable progress entirely.
         pytd: This argument will be ignored.
 
-    clear_progress : boolean, default: True
+    clear_progress : bool, default: True
         If True, clear progress when query completed.
         pytd: This argument will be ignored.
 
     Returns
     -------
-    QueryEngine
+    :class:`pytd.query_engine.QueryEngine`
+
+
+    Examples
+    --------
+
+    >>> import pytd.pandas_td as td
+    >>> con = td.connect(apikey=apikey, endpoint="https://api.treasuredata.com")
+    >>> engine = td.create_engine("presto:sample_datasets")
     """
 
     apikey, endpoint = None, None
@@ -100,13 +128,13 @@ def read_td_query(
 
     Parameters
     ----------
-    query : string
+    query : str
         Query string to be executed.
 
-    engine : QueryEngine
+    engine : :class:`pytd.query_engine.QueryEngine`
         Handler returned by create_engine.
 
-    index_col : string, optional
+    index_col : str, optional
         Column name to use as index for the returned DataFrame object.
 
     parse_dates : list or dict, optional
@@ -115,7 +143,7 @@ def read_td_query(
           compatible in case of parsing string times or is one of (D, s, ns, ms, us)
           in case of parsing integer timestamps
 
-    distributed_join : boolean, default: False
+    distributed_join : bool, default: `False`
         (Presto only) If True, distributed join is enabled. If False, broadcast join is
         used.
         See https://prestodb.io/docs/current/release/release-0.77.html
@@ -130,6 +158,7 @@ def read_td_query(
         - ``db`` (str): use the database
         - ``result_url`` (str): result output URL
         - ``priority`` (int or str): priority
+
             - -2: "VERY LOW"
             - -1: "LOW"
             -  0: "NORMAL"
@@ -141,7 +170,8 @@ def read_td_query(
 
     Returns
     -------
-    DataFrame
+    :class:`pandas.DataFrame`
+        Query result in a DataFrame
     """
     if params is None:
         params = {}
@@ -173,16 +203,17 @@ def read_td_job(job_id, engine, index_col=None, parse_dates=None):
 
     Parameters
     ----------
-    job_id : integer
+    job_id : int
         Job ID.
 
-    engine : QueryEngine
+    engine : :class:`pytd.query_engine.QueryEngine`
         Handler returned by create_engine.
 
-    index_col : string, optional
+    index_col : str, optional
         Column name to use as index for the returned DataFrame object.
 
     parse_dates : list or dict, optional
+
         - List of column names to parse as dates
         - Dict of {column_name: format string} where format string is strftime
           compatible in case of parsing string times or is one of (D, s, ns, ms, us)
@@ -190,7 +221,8 @@ def read_td_job(job_id, engine, index_col=None, parse_dates=None):
 
     Returns
     -------
-    DataFrame
+    :class:`pandas.DataFrame`
+        Job result in a dataframe
     """
     con = connect(default_engine=engine)
 
@@ -230,13 +262,13 @@ def read_td_table(
 
     Parameters
     ----------
-    table_name : string
+    table_name : str
         Name of Treasure Data table in database.
 
-    engine : QueryEngine
+    engine : :class:`pytd.query_engine.QueryEngine`
         Handler returned by create_engine.
 
-    index_col : string, optional
+    index_col : str, optional
         Column name to use as index for the returned DataFrame object.
 
     parse_dates : list or dict, optional
@@ -257,7 +289,7 @@ def read_td_table(
 
     Returns
     -------
-    DataFrame
+    :class:`pandas.DataFrame`
     """
     # header
     query = engine.create_header("read_td_table('{0}')".format(table_name))
@@ -343,16 +375,16 @@ def to_td(
 
     Parameters
     ----------
-    frame : DataFrame
+    frame : :class:`pandas.DataFrame`
         DataFrame to be written.
 
-    name : string
+    name : str
         Name of table to be written, in the form 'database.table'.
 
-    con : pytd.Client
-        A client for a Treasure Data account returned by pytd.pandas_td.connect.
+    con : :class:`pytd.Client`
+        A client for a Treasure Data account returned by :meth:`pytd.pandas_td.connect`.
 
-    if_exists : {'error' ('fail'), 'overwrite' ('replace'), 'append', 'ignore'}, \
+    if_exists : str, {'error' ('fail'), 'overwrite' ('replace'), 'append', 'ignore'}, \
                     default: 'error'
         What happens when a target table already exists. For pandas-td
         compatibility, 'error', 'overwrite', 'append', 'ignore' can
@@ -363,7 +395,7 @@ def to_td(
         - append: If table exists, insert data. Create if does not exist.
         - ignore: If table exists, do nothing.
 
-    time_col : string, optional
+    time_col : str, optional
         Column name to use as "time" column for the table. Column type must be
         integer (unixtime), datetime, or string. If None is given (default),
         then the current time is used as time values.
@@ -372,10 +404,10 @@ def to_td(
         Level of index to use as "time" column for the table. Set 0 for a single index.
         This parameter implies index=False.
 
-    index : boolean, default: True
+    index : bool, default: True
         Write DataFrame index as a column.
 
-    index_label : string or sequence, default: None
+    index_label : str or sequence, default: None
         Column label for index column(s). If None is given (default) and index is True,
         then the index names are used. A sequence should be given if the DataFrame uses
         MultiIndex.
@@ -384,11 +416,11 @@ def to_td(
         Number of rows to be inserted in each chunk from the dataframe.
         pytd: This argument will be ignored.
 
-    date_format : string, default: None
+    date_format : str, default: None
         Format string for datetime objects
 
-    writer : string, {'bulk_import', 'insert_into', 'spark'}, or \
-                pytd.writer.Writer, default: 'bulk_import'
+    writer : str, {'bulk_import', 'insert_into', 'spark'}, or \
+                :class:`pytd.writer.Writer`, default: 'bulk_import'
         A Writer to choose writing method to Treasure Data. If not given or
         string value, a temporal Writer instance will be created.
     """

@@ -109,10 +109,10 @@ class InsertIntoWriter(Writer):
 
         Parameters
         ----------
-        dataframe : pandas.DataFrame
+        dataframe : :class:`pandas.DataFrame`
             Data loaded to a target table.
 
-        table : pytd.table.Table
+        table : :class:`pytd.table.Table`
             Target table.
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}
@@ -143,17 +143,17 @@ class InsertIntoWriter(Writer):
 
         Parameters
         ----------
-        table : pytd.table.Table
+        table : :class:`pytd.table.Table`
             Target table.
 
         list_of_tuple : list of tuples
             Data loaded to a target table. Each element is a tuple that
             represents single table row.
 
-        column_names : list of string
+        column_names : list of str
             Column names.
 
-        column_types : list of string
+        column_types : list of str
             Column types corresponding to the names. Note that Treasure Data
             supports limited amount of types as documented in:
             https://support.treasuredata.com/hc/en-us/articles/360001266468-Schema-Management
@@ -197,17 +197,17 @@ class InsertIntoWriter(Writer):
 
         Parameters
         ----------
-        database : string
+        database : str
             Target database name.
 
-        table : string
+        table : str
             Target table name.
 
         list_of_tuple : list of tuples
             Data loaded to a target table. Each element is a tuple that
             represents single table row.
 
-        column_names : list of string
+        column_names : list of str
             Column names.
         """
         rows = []
@@ -235,16 +235,16 @@ class BulkImportWriter(Writer):
     def write_dataframe(self, dataframe, table, if_exists, fmt="csv"):
         """Write a given DataFrame to a Treasure Data table.
 
-        This method internally converts a given pandas.DataFrame into a
+        This method internally converts a given :class:`pandas.DataFrame` into a
         temporary CSV/msgpack file, and upload the file to Treasure Data via bulk
         import API.
 
         Parameters
         ----------
-        dataframe : pandas.DataFrame
+        dataframe : :class:`pandas.DataFrame`
             Data loaded to a target table.
 
-        table : pytd.table.Table
+        table : :class:`pytd.table.Table`
             Target table.
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}
@@ -258,10 +258,12 @@ class BulkImportWriter(Writer):
         fmt : {'csv', 'msgpack'}, default: 'csv'
             Format for bulk_import.
 
-            - csv: Convert dataframe to temporary CSV file. Stable option but slower
+            - csv
+                Convert dataframe to temporary CSV file. Stable option but slower
                 than msgpack option because pytd saves dataframe as temporary CSV file,
                 then td-client converts it to msgpack.
-            - msgpack: Convert to temporary msgpack.gz file. Fast option but might be
+            - msgpack
+                Convert to temporary msgpack.gz file. Fast option but might be
                 unstable because of skipping ``tdclient.API._prepare_file()``
         """
         if self.closed:
@@ -295,13 +297,13 @@ class BulkImportWriter(Writer):
 
         Parameters
         ----------
-        table : pytd.table.Table
+        table : :class:`pytd.table.Table`
             Target table.
 
         file_like : File like object
             Data in this file will be loaded to a target table.
 
-        if_exists : {'error', 'overwrite', 'append', 'ignore'}
+        if_exists : str, {'error', 'overwrite', 'append', 'ignore'}
             What happens when a target table already exists.
 
             - error: raise an exception.
@@ -309,7 +311,7 @@ class BulkImportWriter(Writer):
             - append: insert data. Create if does not exist.
             - ignore: do nothing.
 
-        fmt : {'csv', 'msgpack'}, default: 'csv'
+        fmt : str, optional, {'csv', 'msgpack'}, default: 'csv'
             File format for bulk import. See also :func:`write_dataframe`
         """
         params = None
@@ -408,15 +410,29 @@ class SparkWriter(Writer):
 
     Parameters
     ----------
-    td_spark_path : string, optional
+    td_spark_path : str, optional
         Path to td-spark-assembly_x.xx-x.x.x.jar. If not given, seek a path
         ``TDSparkContextBuilder.default_jar_path()`` by default.
 
-    download_if_missing : boolean, default: True
+    download_if_missing : bool, default: True
         Download td-spark if it does not exist at the time of initialization.
 
     spark_configs : dict, optional
         Additional Spark configurations to be set via ``SparkConf``'s ``set`` method.
+
+    Attributes
+    ----------
+    td_spark_path : str
+        Path to td-spark-assembly_x.xx-x.x.x.jar.
+
+    download_if_missing : bool
+        Download td-spark if it does not exist at the time of initialization.
+
+    spark_configs : dict
+        Additional Spark configurations to be set via ``SparkConf``'s ``set`` method.
+
+    td_spark : :class:`td_pyspark.TDSparkContext`
+        Connection of td-spark
     """
 
     def __init__(
@@ -436,16 +452,16 @@ class SparkWriter(Writer):
     def write_dataframe(self, dataframe, table, if_exists):
         """Write a given DataFrame to a Treasure Data table.
 
-        This method internally converts a given pandas.DataFrame into Spark
+        This method internally converts a given :class:`pandas.DataFrame` into Spark
         DataFrame, and directly writes to Treasure Data's main storage
         so-called Plazma through a PySpark session.
 
         Parameters
         ----------
-        dataframe : pandas.DataFrame
+        dataframe : :class:`pandas.DataFrame`
             Data loaded to a target table.
 
-        table : pytd.table.Table
+        table : :class:`pytd.table.Table`
             Target table.
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}

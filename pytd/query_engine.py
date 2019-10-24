@@ -16,16 +16,16 @@ class QueryEngine(metaclass=abc.ABCMeta):
 
     Parameters
     ----------
-    apikey : string
+    apikey : str
         Treasure Data API key.
 
-    endpoint : string
+    endpoint : str
         Treasure Data API server.
 
-    database : string
+    database : str
         Name of connected database.
 
-    header : string or boolean
+    header : str or bool
         Prepend comment strings, in the form "-- comment", as a header of queries.
     """
 
@@ -48,7 +48,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
 
         Parameters
         ----------
-        query : string
+        query : str
             Query.
 
         **kwargs
@@ -60,6 +60,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
             - ``db`` (str): use the database
             - ``result_url`` (str): result output URL
             - ``priority`` (int or str): priority
+
                 - -2: "VERY LOW"
                 - -1: "LOW"
                 -  0: "NORMAL"
@@ -96,7 +97,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
 
         Returns
         -------
-        string
+        str
         """
         if self.header is False:
             return ""
@@ -142,7 +143,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
 
         Parameters
         ----------
-        con : tdclient.connection.Connection
+        con : :class:`tdclient.connection.Connection`
             Handler created by ``tdclient#connect``.
 
         **kwargs
@@ -154,6 +155,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
             - ``db`` (str): use the database
             - ``result_url`` (str): result output URL
             - ``priority`` (int or str): priority
+
                 - -2: "VERY LOW"
                 - -1: "LOW"
                 -  0: "NORMAL"
@@ -165,7 +167,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
 
         Returns
         -------
-        tdclient.cursor.Cursor
+        :class:`tdclient.cursor.Cursor`
         """
         api_param_names = set(
             [
@@ -222,16 +224,16 @@ class PrestoQueryEngine(QueryEngine):
 
     Parameters
     ----------
-    apikey : string
+    apikey : str
         Treasure Data API key.
 
-    endpoint : string
+    endpoint : str
         Treasure Data API server.
 
-    database : string
+    database : str
         Name of connected database.
 
-    header : string or boolean
+    header : str or bool
         Prepend comment strings, in the form "-- comment", as a header of queries.
     """
 
@@ -270,6 +272,7 @@ class PrestoQueryEngine(QueryEngine):
             - ``db`` (str): use the database
             - ``result_url`` (str): result output URL
             - ``priority`` (int or str): priority
+
                 - -2: "VERY LOW"
                 - -1: "LOW"
                 -  0: "NORMAL"
@@ -320,16 +323,16 @@ class HiveQueryEngine(QueryEngine):
 
     Parameters
     ----------
-    apikey : string
+    apikey : str
         Treasure Data API key.
 
-    endpoint : string
+    endpoint : str
         Treasure Data API server.
 
-    database : string
+    database : str
         Name of connected database.
 
-    header : string or boolean
+    header : str or bool
         Prepend comment strings, in the form "-- comment", as a header of queries.
     """
 
@@ -356,6 +359,7 @@ class HiveQueryEngine(QueryEngine):
             - ``db`` (str): use the database
             - ``result_url`` (str): result output URL
             - ``priority`` (int or str): priority
+
                 - -2: "VERY LOW"
                 - -1: "LOW"
                 -  0: "NORMAL"
@@ -367,7 +371,7 @@ class HiveQueryEngine(QueryEngine):
 
         Returns
         -------
-        tdclient.cursor.Cursor
+        :class:`tdclient.cursor.Cursor`
         """
         return self._get_tdclient_cursor(self.engine, **kwargs)
 
