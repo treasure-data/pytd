@@ -14,13 +14,13 @@ def download_td_spark(spark_binary_version="2.11", version="latest", destination
 
     Parameters
     ----------
-    spark_binary_version : string, default: '2.11'
+    spark_binary_version : str, default: '2.11'
         Apache Spark binary version.
 
-    version : string, default: 'latest'
+    version : str, default: 'latest'
         td-spark version.
 
-    destionation : string, optional
+    destination : str, optional
         Where a downloaded jar file to be stored.
     """
     td_spark_jar_name = "td-spark-assembly_{}-{}.jar".format(
@@ -61,20 +61,20 @@ def fetch_td_spark_context(
 
     Parameters
     ----------
-    apikey : string, optional
+    apikey : str, optional
         Treasure Data API key. If not given, a value of environment variable
         ``TD_API_KEY`` is used by default.
 
-    endpoint : string, optional
-        Treasure Data API server. If not given, https://api.treasuredata.com is
+    endpoint : str, optional
+        Treasure Data API server. If not given, ``https://api.treasuredata.com`` is
         used by default. List of available endpoints is:
         https://support.treasuredata.com/hc/en-us/articles/360001474288-Sites-and-Endpoints
 
-    td_spark_path : string, optional
+    td_spark_path : str, optional
         Path to td-spark-assembly_x.xx-x.x.x.jar. If not given, seek a path
         ``TDSparkContextBuilder.default_jar_path()`` by default.
 
-    download_if_missing : boolean, default: True
+    download_if_missing : bool, default: True
         Download td-spark if it does not exist at the time of initialization.
 
     spark_configs : dict, optional
@@ -82,7 +82,8 @@ def fetch_td_spark_context(
 
     Returns
     -------
-    td_pyspark.TDSparkContext
+    :class:`td_pyspark.TDSparkContext`
+        Connection of td-spark
     """
     try:
         from pyspark.conf import SparkConf

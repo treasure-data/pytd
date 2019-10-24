@@ -2,7 +2,7 @@
 
     IPython magics to access to Treasure Data. Load the magics first of all:
 
-    .. code-block:: none
+    .. code-block:: ipython
 
         In [1]: %load_ext pytd.pandas_td.ipython
 """
@@ -81,11 +81,11 @@ class DatabasesMagics(TDMagics):
 
         Returns
         -------
-        pandas.DataFrame
+        :class:`pandas.DataFrame`
 
         Examples
         --------
-        .. code-block:: none
+        .. code-block:: ipython
 
             In [1]: %load_ext pytd.pandas_td.ipython
 
@@ -134,11 +134,11 @@ class TablesMagics(TDMagics):
 
         Returns
         -------
-        pandas.DataFrame
+        :class:`pandas.DataFrame`
 
         Examples
         --------
-        .. code-block:: none
+        .. code-block:: ipython
 
             In [1]: %load_ext pytd.pandas_td.ipython
 
@@ -188,11 +188,11 @@ class JobsMagics(TDMagics):
 
         Returns
         -------
-        pandas.DataFrame
+        :class:`pandas.DataFrame`
 
         Examples
         --------
-        .. code-block:: none
+        .. code-block:: ipython
 
             In [1]: %load_ext pytd.pandas_td.ipython
 
@@ -233,7 +233,7 @@ class UseMagics(TDMagics):
 
         Examples
         --------
-        .. code-block:: none
+        .. code-block:: ipython
 
             In [1]: %load_ext pytd.pandas_td.ipython
 
@@ -584,11 +584,11 @@ class QueryMagics(TDMagics):
 
         Returns
         -------
-        pandas.DataFrame
+        :class:`pandas.DataFrame`
 
         Examples
         --------
-        .. code-block:: none
+        .. code-block:: ipython
 
             In [1]: %load_ext pytd.pandas_td.ipython
 
@@ -657,11 +657,11 @@ class QueryMagics(TDMagics):
 
         Returns
         -------
-        pandas.DataFrame
+        :class:`pandas.DataFrame`
 
         Examples
         --------
-        .. code-block:: none
+        .. code-block:: ipython
 
             In [1]: %load_ext pytd.pandas_td.ipython
 
@@ -727,11 +727,11 @@ class QueryMagics(TDMagics):
 
         Returns
         -------
-        pandas.DataFrame
+        :class:`pandas.DataFrame`
 
         Examples
         --------
-        .. code-block:: none
+        .. code-block:: ipython
 
             In [1]: %load_ext pytd.pandas_td.ipython
 
