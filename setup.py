@@ -1,11 +1,11 @@
 """Treasure Data Driver for Python
 
 pytd is a Python interface to Treasure Data data management platform. Unlike
-the other official Treasure Data API libraries for Python, td-client-python and
-pandas-td, pytd gives a direct access to their back-end query and storage
-engines. The seamless connection allows your Python code to read and write a
-large volume of data in a shorter time. It eventually makes your day-to-day
-data analytics work more efficient and productive.
+td-client-python, the official Treasure Data API library for Python, pytd gives
+a direct access to their back-end query and storage engines. The seamless
+connection allows your Python code to read and write a large volume of data in
+a shorter time. It eventually makes your day-to-day data analytics work more
+efficient and productive.
 """
 import ast
 import re
@@ -49,7 +49,7 @@ def setup_package():
         license=LICENSE,
         url=URL,
         classifiers=[
-            "Development Status :: 3 - Alpha",
+            "Development Status :: 5 - Production/Stable",
             "Intended Audience :: Developers",
             "License :: OSI Approved :: Apache Software License",
             "Topic :: Database",
