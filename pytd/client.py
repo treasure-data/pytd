@@ -222,7 +222,7 @@ class Client(object):
         """
         return Table(self, database, table)
 
-    def exist(self, database, table=None):
+    def exists(self, database, table=None):
         """Check if a database and table exists.
 
         Parameters
@@ -243,7 +243,7 @@ class Client(object):
             return False
         if table is None:
             return True
-        return tbl.exist
+        return tbl.exists
 
     def create_database_if_not_exists(self, database):
         """Create a database on Treasure Data if it does not exist.
@@ -253,7 +253,7 @@ class Client(object):
         database : str
             Database name.
         """
-        if self.exist(database):
+        if self.exists(database):
             logger.info("database `{}` already exists".format(database))
         else:
             self.api_client.create_database(database)

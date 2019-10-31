@@ -50,7 +50,7 @@ class InsertIntoWriterTestCase(unittest.TestCase):
     def setUp(self):
         self.writer = InsertIntoWriter()
         self.table = MagicMock()
-        self.table.exist.return_value = True
+        self.table.exists.return_value = True
 
     def test_write_dataframe_error(self):
         with self.assertRaises(RuntimeError):
@@ -133,7 +133,7 @@ class BulkImportWriterTestCase(unittest.TestCase):
 
         self.table = MagicMock()
         self.table.client.api_client = mock_api_client
-        self.table.exist.return_value = True
+        self.table.exists.return_value = True
 
     def test_write_dataframe_error(self):
         with self.assertRaises(RuntimeError):

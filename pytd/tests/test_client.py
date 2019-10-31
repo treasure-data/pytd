@@ -41,24 +41,24 @@ class ClientTest(unittest.TestCase):
         self.assertEqual(tbl.database, "a")
         self.assertEqual(tbl.table, "b")
 
-    def test_exist(self):
+    def test_exists(self):
         # exist both DB and table
-        self.assertTrue(self.client.exist("a"))
-        self.assertTrue(self.client.exist("a", "b"))
+        self.assertTrue(self.client.exists("a"))
+        self.assertTrue(self.client.exists("a", "b"))
 
         # DB exists, but table doesn't
         self.client.api_client.table = MagicMock(
             side_effect=tdclient.errors.NotFoundError
         )
-        self.assertTrue(self.client.exist("a"))
-        self.assertFalse(self.client.exist("a", "b"))
+        self.assertTrue(self.client.exists("a"))
+        self.assertFalse(self.client.exists("a", "b"))
 
         # DB doesn't exist
         self.client.api_client.database = MagicMock(
             side_effect=tdclient.errors.NotFoundError
         )
-        self.assertFalse(self.client.exist("a"))
-        self.assertFalse(self.client.exist("a", "b"))
+        self.assertFalse(self.client.exists("a"))
+        self.assertFalse(self.client.exists("a", "b"))
 
     def test_create_database_if_not_exists(self):
         self.client.api_client.database = MagicMock(

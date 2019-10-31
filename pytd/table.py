@@ -46,7 +46,7 @@ class Table(object):
         self.client = client
 
     @property
-    def exist(self):
+    def exists(self):
         """Check if a configured table exists.
 
         Returns
