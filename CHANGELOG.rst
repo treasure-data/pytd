@@ -1,6 +1,17 @@
 Changelog
 =========
 
+v1.0.0 (2019-11-11)
+-------------------
+
+-  Update documentation site. (`#49 <https://github.com/treasure-data/pytd/pull/49>`__, `#57 <https://github.com/treasure-data/pytd/pull/57>`__)
+-  Add Treasure Data API endpoint HTTPS scheme validation. (`#51 <https://github.com/treasure-data/pytd/pull/51>`__)
+-  Support bulk importing with the MessagePack format. (`#53 <https://github.com/treasure-data/pytd/pull/53>`__)
+-  Improve stability of ``BulkImportWriter`` session ID. (`#55 <https://github.com/treasure-data/pytd/pull/55>`__)
+-  Require td-client-python version 1.1.0 or later. (`#56 <https://github.com/treasure-data/pytd/pull/56>`__)
+-  Add ``Client#exists(database, table)`` and ``Client#create_database_if_not_exists(database)`` method. (`#58 <https://github.com/treasure-data/pytd/pull/58/>`__)
+
+
 v0.8.0 (2019-09-17)
 -------------------
 
