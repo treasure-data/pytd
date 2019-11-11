@@ -167,7 +167,7 @@ class InsertIntoWriter(Writer):
             - ignore: do nothing.
         """
 
-        if table.exist:
+        if table.exists:
             if if_exists == "error":
                 raise RuntimeError(
                     "target table '{}.{}' already exists".format(
@@ -315,7 +315,7 @@ class BulkImportWriter(Writer):
             File format for bulk import. See also :func:`write_dataframe`
         """
         params = None
-        if table.exist:
+        if table.exists:
             if if_exists == "error":
                 raise RuntimeError(
                     "target table '{}.{}' already exists".format(

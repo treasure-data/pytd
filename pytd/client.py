@@ -1,9 +1,12 @@
+import logging
 import os
 
 import tdclient
 
 from .query_engine import HiveQueryEngine, PrestoQueryEngine, QueryEngine
 from .table import Table
+
+logger = logging.getLogger(__name__)
 
 
 class Client(object):
@@ -218,6 +221,43 @@ class Client(object):
         :class:`pytd.table.Table`
         """
         return Table(self, database, table)
+
+    def exists(self, database, table=None):
+        """Check if a database and table exists.
+
+        Parameters
+        ----------
+        database : str
+            Database name.
+
+        table : str, optional
+            Table name. If not given, just check the database existence.
+
+        Returns
+        -------
+        bool
+        """
+        try:
+            tbl = self.get_table(database, table)
+        except ValueError:
+            return False
+        if table is None:
+            return True
+        return tbl.exists
+
+    def create_database_if_not_exists(self, database):
+        """Create a database on Treasure Data if it does not exist.
+
+        Parameters
+        ----------
+        database : str
+            Database name.
+        """
+        if self.exists(database):
+            logger.info("database `{}` already exists".format(database))
+        else:
+            self.api_client.create_database(database)
+            logger.info("created database `{}`".format(database))
 
     def load_table_from_dataframe(
         self, dataframe, destination, writer="bulk_import", if_exists="error", **kwargs

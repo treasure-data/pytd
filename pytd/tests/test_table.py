@@ -18,7 +18,7 @@ class TableTestCase(unittest.TestCase):
     def test_properties(self):
         self.assertEqual(self.table.database, self.database_name)
         self.assertEqual(self.table.table, self.table_name)
-        self.assertTrue(self.table.exist)
+        self.assertTrue(self.table.exists)
 
     def test_create_empty(self):
         self.table.create()
