@@ -68,3 +68,26 @@ Build HTML files to render Sphinx documentation:
    make html
 
 The ``doc/`` folder is monitored and automatically published by `Read the Docs <https://readthedocs.org/projects/pytd-doc/>`__.
+
+Releasing
+---------
+
+Update version in ``pytd/version.py``. Set it to ``1.0.0``, for example:
+
+.. code:: py
+
+   __version__ = "1.0.0"
+
+Commit and push the latest code, and tag the version:
+
+.. code:: sh
+
+   git tag 1.0.0
+   git push --tags
+
+Build a package and upload to PyPI:
+
+.. code:: sh
+
+   python setup.py sdist bdist_wheel
+   twine upload --skip-existing dist/*
