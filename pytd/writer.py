@@ -7,6 +7,7 @@ import time
 import uuid
 
 import msgpack
+import numpy as np
 import pandas as pd
 from tdclient.util import normalized_msgpack
 
@@ -15,8 +16,16 @@ from .spark import fetch_td_spark_context
 logger = logging.getLogger(__name__)
 
 
-def _cast_dtypes(dataframe, inplace=True):
-    """Convert dtypes into one of {int, float, str} type.
+def _to_list(ary):
+    _ary = np.asarray(ary)
+    # Replace numpy.nan to None which will be converted to NULL on TD
+    if _ary.dtype.kind == "f":
+        _ary = np.where(np.isnan(_ary), None, _ary)
+    return _ary.tolist()
+
+
+def _cast_dtypes(dataframe, inplace=True, keep_list=False):
+    """Convert dtypes into one of {int, float, str, list} type.
 
     A character code (one of ‘biufcmMOSUV’) identifying the general kind of data.
 
@@ -35,12 +44,15 @@ def _cast_dtypes(dataframe, inplace=True):
     df = dataframe if inplace else dataframe.copy()
 
     for column, kind in dataframe.dtypes.apply(lambda dtype: dtype.kind).iteritems():
+        t = str
         if kind == "i" or kind == "u":
             t = "Int64" if df[column].isnull().any() else "int64"
         elif kind == "f":
             t = float
-        else:
-            t = str
+        elif kind == "O" and keep_list:
+            if df[column].apply(lambda x: isinstance(x, (list, np.ndarray))).all():
+                t = object
+                df[column] = df[column].apply(_to_list)
         df[column] = df[column].astype(t)
 
         # Bulk Import API internally handles boolean string as a boolean type,
@@ -232,7 +244,7 @@ class BulkImportWriter(Writer):
     td-client-python's bulk importer.
     """
 
-    def write_dataframe(self, dataframe, table, if_exists, fmt="csv"):
+    def write_dataframe(self, dataframe, table, if_exists, fmt="csv", keep_list=False):
         """Write a given DataFrame to a Treasure Data table.
 
         This method internally converts a given :class:`pandas.DataFrame` into a
@@ -265,6 +277,61 @@ class BulkImportWriter(Writer):
             - msgpack
                 Convert to temporary msgpack.gz file. Fast option but might be
                 unstable because of skipping ``tdclient.API._prepare_file()``
+
+        keep_list : boolean, default: False
+            If this argument is True, keep list or numpy.ndarray column as list, which
+            will be converted array<T> on Treasure Data table.
+            Each type of element of list will be converted by
+            ``numpy.array(your_list).tolist()``.
+
+            If True, ``fmt`` argument will be overwritten with ``msgpack``.
+
+            Examples
+            ---------
+
+            A dataframe containing list will be treated array<T> in TD.
+
+            >>> import pytd
+            >>> import numpy as np
+            >>> import pandas as pd
+            >>> df = pd.DataFrame(
+            ...     {
+            ...         "a": [[1, 2, 3], [2, 3, 4]],
+            ...         "b": [[0, None, 2], [2, 3, 4]],
+            ...         "c": [np.array([1, np.nan, 3]), [2, 3, 4]]
+            ...     }
+            ... )
+            >>> client = pytd.Client()
+            >>> table = pytd.table.Table(client, "mydb", "test")
+            >>> writer = pytd.writer.BulkImportWriter()
+            >>> writer.write_dataframe(df, table, if_exists="overwrite", keep_list=True)
+
+            In this case, the type of columns will be:
+            ``{"a": array<int>, "b": array<string>, "c": array<string>}``
+
+            If you want to set the type after ingestion, you need to run
+            ``tdclient.Client.update_schema`` like:
+
+            >>> client.api_client.update_schema(
+            ...     "mydb",
+            ...     "test",
+            ...     [
+            ...         ["a", "array<long>", "a"],
+            ...         ["b", "array<int>", "b"],
+            ...         ["c", "array<int>", "c"],
+            ...     ],
+            ... )
+
+            Note that ``numpy.nan`` will be converted as a string value as ``"NaN"`` or
+            ``"nan"``, so pytd will convert ``numpy.nan`` to ``None`` only when the
+            dtype of a ndarray is `float`.
+            Also, numpy converts integer array including ``numpy.nan`` into float array
+            because ``numpy.nan`` is a Floating Point Special Value. See also:
+            https://docs.scipy.org/doc/numpy-1.13.0/user/misc.html#ieee-754-floating-point-special-values
+
+            Or, you can use :func:`Client.load_table_from_dataframe` function as well.
+
+            >>> client.load_table_from_dataframe(df, "bulk_import", keep_list=True)
         """
         if self.closed:
             raise RuntimeError("this writer is already closed and no longer available")
@@ -272,7 +339,11 @@ class BulkImportWriter(Writer):
         if "time" not in dataframe.columns:  # need time column for bulk import
             dataframe["time"] = int(time.time())
 
-        _cast_dtypes(dataframe)
+        # We enforce using "msgpack" format for list since CSV can't handle list.
+        if keep_list:
+            fmt = "msgpack"
+
+        _cast_dtypes(dataframe, keep_list=keep_list)
 
         if fmt == "csv":
             fp = tempfile.NamedTemporaryFile(suffix=".csv")
@@ -330,7 +401,7 @@ class BulkImportWriter(Writer):
                 table.delete()
                 table.create()
             else:
-                raise ValueError("invalid valud for if_exists: {}".format(if_exists))
+                raise ValueError("invalid value for if_exists: {}".format(if_exists))
         else:
             table.create()
 
@@ -476,7 +547,7 @@ class SparkWriter(Writer):
             raise RuntimeError("this writer is already closed and no longer available")
 
         if if_exists not in ("error", "overwrite", "append", "ignore"):
-            raise ValueError("invalid valud for if_exists: {}".format(if_exists))
+            raise ValueError("invalid value for if_exists: {}".format(if_exists))
 
         if self.td_spark is None:
             self.td_spark = fetch_td_spark_context(

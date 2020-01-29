@@ -25,7 +25,13 @@ class WriterTestCase(unittest.TestCase):
                 "E": pd.Series([1.0] * 3).astype("float32"),
                 "F": False,
                 "G": pd.Series([1] * 3, dtype="int8"),
-                "H": [[0, 1, 2], [1, 2, 3], [2, 3, 4]],
+                "H": [[0, None, 2], [1, 2, 3], [2, 3, 4]],
+                "I": [
+                    np.array([0, np.nan, 2]),
+                    np.array([1, 2, 3]),
+                    np.array([2, 3, 4]),
+                ],
+                "J": [np.array([0, np.nan, 2]), [1, 2, 3], [3, 4, 5]],
             }
         )
 
@@ -36,6 +42,8 @@ class WriterTestCase(unittest.TestCase):
             dtypes, set([np.dtype("int"), np.dtype("float"), np.dtype("O")])
         )
         self.assertEqual(dft["F"][0], "false")
+        self.assertTrue(isinstance(dft["H"][1], str))
+        self.assertEqual(dft["H"][1], "[1, 2, 3]")
 
     def test_cast_dtypes_inplace(self):
         _cast_dtypes(self.dft)
@@ -44,6 +52,21 @@ class WriterTestCase(unittest.TestCase):
             dtypes, set([np.dtype("int"), np.dtype("float"), np.dtype("O")])
         )
         self.assertEqual(self.dft["F"][0], "false")
+
+    def test_cast_dtypes_keep_list(self):
+        _cast_dtypes(self.dft, keep_list=True)
+        dtypes = set(self.dft.dtypes)
+        self.assertEqual(
+            dtypes, set([np.dtype("int"), np.dtype("float"), np.dtype("O")])
+        )
+        self.assertTrue(self.dft["H"].apply(lambda x: isinstance(x, list)).all())
+        self.assertTrue(self.dft["I"].apply(lambda x: isinstance(x, list)).all())
+        self.assertTrue(self.dft["J"].apply(lambda x: isinstance(x, list)).all())
+        self.assertTrue(isinstance(self.dft["H"].iloc[0][2], int))
+        # numpy.ndarray containing numpy.nan will be converted as float type
+        self.assertTrue(isinstance(self.dft["I"].iloc[0][2], float))
+        self.assertTrue(isinstance(self.dft["I"].iloc[1][2], int))
+        self.assertTrue(self.dft["I"].iloc[0][1] is None)
 
 
 class InsertIntoWriterTestCase(unittest.TestCase):
