@@ -318,7 +318,7 @@ class BulkImportWriter(Writer):
 
             Note that ``numpy.nan`` will be converted as a string value as ``"NaN"``.
             Also, numpy converts integer array including ``numpy.nan`` into float array because
-            ``np.nan`` is a Floating Point Special Value. See also:
+            ``numpy.nan`` is a Floating Point Special Value. See also:
             https://docs.scipy.org/doc/numpy-1.13.0/user/misc.html#ieee-754-floating-point-special-values
 
             Or, you can use :func:`Client.load_table_from_dataframe` function as well.
