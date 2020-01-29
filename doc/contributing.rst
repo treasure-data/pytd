@@ -53,7 +53,7 @@ Documenting
 
 .. code:: sh
 
-   pip install -r doc/requirements.txt
+   pip install .[doc]
 
 Edit contents in ``doc/``:
 
