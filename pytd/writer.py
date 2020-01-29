@@ -298,7 +298,7 @@ class BulkImportWriter(Writer):
             ...     {
             ...         "a": [[1, 2, 3], [2, 3, 4]],
             ...         "b": [[0, None, 2], [2, 3, 4]],
-            ...         "c": np.array([1, np.nan, 3], np.array([2, 3, 4]))
+            ...         "c": [np.array([1, np.nan, 3]), [2, 3, 4]]
             ...     }
             ... )
             >>> client = pytd.Client()
