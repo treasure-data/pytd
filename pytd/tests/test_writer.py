@@ -31,6 +31,7 @@ class WriterTestCase(unittest.TestCase):
                     np.array([1, 2, 3]),
                     np.array([2, 3, 4]),
                 ],
+                "J": [np.array([0, np.nan, 2]), [1, 2, 3], [3, 4, 5]],
             }
         )
 
@@ -58,8 +59,9 @@ class WriterTestCase(unittest.TestCase):
         self.assertEqual(
             dtypes, set([np.dtype("int"), np.dtype("float"), np.dtype("O")])
         )
-        self.assertTrue(isinstance(self.dft["H"].iloc[0], list))
-        self.assertTrue(isinstance(self.dft["I"].iloc[0], list))
+        self.assertTrue(self.dft["H"].apply(lambda x: isinstance(x, list)).all())
+        self.assertTrue(self.dft["I"].apply(lambda x: isinstance(x, list)).all())
+        self.assertTrue(self.dft["J"].apply(lambda x: isinstance(x, list)).all())
         self.assertTrue(isinstance(self.dft["H"].iloc[0][2], int))
         # numpy.ndarray containing numpy.nan will be converted as float type
         self.assertTrue(isinstance(self.dft["I"].iloc[0][2], float))
