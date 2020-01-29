@@ -16,8 +16,16 @@ from .spark import fetch_td_spark_context
 logger = logging.getLogger(__name__)
 
 
+def _to_list(ary):
+    _ary = np.asarray(ary)
+    # Replace numpy.nan to None which will be converted to NULL on TD
+    if _ary.dtype.kind == "f":
+        _ary = np.where(np.isnan(_ary), None, _ary)
+    return _ary.tolist()
+
+
 def _cast_dtypes(dataframe, inplace=True, keep_list=False):
-    """Convert dtypes into one of {int, float, str} type.
+    """Convert dtypes into one of {int, float, str, list} type.
 
     A character code (one of ‘biufcmMOSUV’) identifying the general kind of data.
 
@@ -36,24 +44,15 @@ def _cast_dtypes(dataframe, inplace=True, keep_list=False):
     df = dataframe if inplace else dataframe.copy()
 
     for column, kind in dataframe.dtypes.apply(lambda dtype: dtype.kind).iteritems():
+        t = str
         if kind == "i" or kind == "u":
             t = "Int64" if df[column].isnull().any() else "int64"
         elif kind == "f":
             t = float
-        elif kind == "O":
-            if keep_list and df[column].apply(lambda x: isinstance(x, list)).all():
+        elif kind == "O" and keep_list:
+            if df[column].apply(lambda x: isinstance(x, (list, np.ndarray))).all():
                 t = object
-                df[column] = df[column].apply(lambda x: np.array(x).tolist())
-            elif (
-                keep_list
-                and df[column].apply(lambda x: isinstance(x, np.ndarray)).all()
-            ):
-                t = object
-                df[column] = df[column].apply(lambda x: x.tolist())
-            else:
-                t = str
-        else:
-            t = str
+                df[column] = df[column].apply(_to_list)
         df[column] = df[column].astype(t)
 
         # Bulk Import API internally handles boolean string as a boolean type,
@@ -285,6 +284,8 @@ class BulkImportWriter(Writer):
             Each type of element of list will be converted by
             ``numpy.array(your_list).tolist()``.
 
+            If True, ``fmt`` argument will be overwritten with ``msgpack``.
+
             Examples
             ---------
 
@@ -295,8 +296,9 @@ class BulkImportWriter(Writer):
             >>> import pandas as pd
             >>> df = pd.DataFrame(
             ...     {
-            ...         "A": [[1, 2, 3], [2, 3, 4]],
-            ...         "B": [[0, None, 2], [2, 3, 4]],
+            ...         "a": [[1, 2, 3], [2, 3, 4]],
+            ...         "b": [[0, None, 2], [2, 3, 4]],
+            ...         "c": np.array([1, np.nan, 3], np.array([2, 3, 4]))
             ...     }
             ... )
             >>> client = pytd.Client()
@@ -305,7 +307,7 @@ class BulkImportWriter(Writer):
             >>> writer.write_dataframe(df, table, if_exists="overwrite", keep_list=True)
 
             In this case, the type of columns will be:
-            ``{"A": array<int>, "b": array<string>}``
+            ``{"a": array<int>, "b": array<string>, "c": array<string>}``
 
             If you want to set the type after ingestion, you need to run
             ``tdclient.Client.update_schema`` like:
@@ -313,15 +315,22 @@ class BulkImportWriter(Writer):
             >>> client.api_client.update_schema(
             ...     "mydb",
             ...     "test",
-            ...     [["a", "array<long>", "a"], ["b", "array<int>", "b"],
+            ...     [
+            ...         ["a", "array<long>", "a"],
+            ...         ["b", "array<int>", "b"],
+            ...         ["c", "array<int>", "c"],
+            ...     ],
             ... )
 
-            Note that ``numpy.nan`` will be converted as a string value as ``"NaN"``.
-            Also, numpy converts integer array including ``numpy.nan`` into float array because
-            ``numpy.nan`` is a Floating Point Special Value. See also:
+            Note that ``numpy.nan`` will be converted as a string value as ``"NaN"`` or
+            ``"nan"``, so pytd will convert ``numpy.nan`` to ``None`` only when the
+            dtype of a ndarray is `float`.
+            Also, numpy converts integer array including ``numpy.nan`` into float array
+            because ``numpy.nan`` is a Floating Point Special Value. See also:
             https://docs.scipy.org/doc/numpy-1.13.0/user/misc.html#ieee-754-floating-point-special-values
 
             Or, you can use :func:`Client.load_table_from_dataframe` function as well.
+
             >>> client.load_table_from_dataframe(df, "bulk_import", keep_list=True)
         """
         if self.closed:

@@ -26,7 +26,11 @@ class WriterTestCase(unittest.TestCase):
                 "F": False,
                 "G": pd.Series([1] * 3, dtype="int8"),
                 "H": [[0, None, 2], [1, 2, 3], [2, 3, 4]],
-                "I": [[0, np.nan, 2], [1, 2, 3], [2, 3, 4]],
+                "I": [
+                    np.array([0, np.nan, 2]),
+                    np.array([1, 2, 3]),
+                    np.array([2, 3, 4]),
+                ],
             }
         )
 
@@ -59,7 +63,8 @@ class WriterTestCase(unittest.TestCase):
         self.assertTrue(isinstance(self.dft["H"].iloc[0][2], int))
         # numpy.ndarray containing numpy.nan will be converted as float type
         self.assertTrue(isinstance(self.dft["I"].iloc[0][2], float))
-        self.assertTrue(np.isnan(self.dft["I"].iloc[0][1]))
+        self.assertTrue(isinstance(self.dft["I"].iloc[1][2], int))
+        self.assertTrue(self.dft["I"].iloc[0][1] is None)
 
 
 class InsertIntoWriterTestCase(unittest.TestCase):
