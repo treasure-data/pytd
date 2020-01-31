@@ -77,6 +77,7 @@ class Client(object):
         self.database = database
 
         self.default_engine = default_engine
+        self.query_executed = None
 
         self.api_client = tdclient.Client(
             apikey=apikey,
@@ -143,6 +144,9 @@ class Client(object):
     def query(self, query, engine=None, **kwargs):
         """Run query and get results.
 
+        Executed result stored in ``QueryEngine`` is retained in
+        ``self.query_executed``.
+
         Parameters
         ----------
         query : str
@@ -182,6 +186,7 @@ class Client(object):
             'columns'
                 List of column names.
         """
+        self.query_executed = None
         if isinstance(engine, QueryEngine):
             pass  # use the given QueryEngine instance
         elif isinstance(engine, str):
@@ -203,7 +208,9 @@ class Client(object):
         else:
             engine = self.default_engine
         header = engine.create_header("Client#query")
-        return engine.execute(header + query, **kwargs)
+        res = engine.execute(header + query, **kwargs)
+        self.query_executed = engine.executed
+        return res
 
     def get_table(self, database, table):
         """Create a pytd table control instance.

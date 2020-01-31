@@ -49,6 +49,7 @@ class PrestoQueryEngineTestCase(unittest.TestCase):
             "1/XXX", "https://api.treasuredata.com/", "sample_datasets", True
         )
         self.assertTrue(connect.called)
+        self.assertEqual(self.presto.executed, None)
 
     def test_user_agent(self):
         ua = self.presto.user_agent
@@ -105,6 +106,7 @@ class HiveQueryEngineTestCase(unittest.TestCase):
             "1/XXX", "https://api.treasuredata.com/", "sample_datasets", True
         )
         self.assertTrue(connect.called)
+        self.assertEqual(self.hive.executed, None)
 
     def test_user_agent(self):
         hive_no_header = HiveQueryEngine(

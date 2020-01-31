@@ -36,6 +36,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
         self.endpoint = endpoint
         self.database = database
         self.header = header
+        self.executed = None
 
     @property
     def user_agent(self):
@@ -45,6 +46,9 @@ class QueryEngine(metaclass=abc.ABCMeta):
 
     def execute(self, query, **kwargs):
         """Execute a given SQL statement and return results.
+
+        Executed result returned by Cursor object is stored in
+        ``self.executed``.
 
         Parameters
         ----------
@@ -80,7 +84,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
                 List of column names.
         """
         cur = self.cursor(**kwargs)
-        cur.execute(query)
+        self.executed = cur.execute(query)
         rows = cur.fetchall()
         columns = [desc[0] for desc in cur.description]
         return {"data": rows, "columns": columns}
