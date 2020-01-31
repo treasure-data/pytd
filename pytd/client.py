@@ -44,6 +44,31 @@ class Client(object):
     ----------
     api_client : :class:`tdclient.Client`
         Connection to Treasure Data.
+
+    query_executed : str or :class:`prestodb.client.PrestoResult`, default: `None`
+        Query execution result returned from DB-API Cursor object.
+
+        Examples
+        ---------
+
+        Presto query executed via ``prestodb`` returns ``PrestoResult`` object:
+
+        >>> import pytd
+        >>> client = pytd.Client()
+        >>> client.query_executed
+        >>> client.query('select 1')
+        >>> client.query_executed
+        <prestodb.client.PrestoResult object at 0x10b9826a0>
+
+        Meanwhile, ``tdclient`` runs a job on Treasure Data, and Cursor returns
+        its job id:
+
+        >>> client.query('select 1', priority=0)
+        >>> client.query_executed
+        '669563342'
+
+        Note that the optional argument ``priority`` forces the client to query
+        via tdclient.
     """
 
     def __init__(
