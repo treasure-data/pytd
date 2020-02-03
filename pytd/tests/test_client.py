@@ -19,6 +19,7 @@ class ClientTest(unittest.TestCase):
         self.assertEqual(self.client.database, "sample_datasets")
 
         self.assertTrue(fetch_query_engine.called)
+        self.assertEqual(self.client.query_executed, None)
         self.client.default_engine = MagicMock()
         self.client.api_client = MagicMock()
 
