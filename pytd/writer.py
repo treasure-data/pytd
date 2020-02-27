@@ -5,6 +5,7 @@ import logging
 import tempfile
 import time
 import uuid
+from collections.abc import Iterable
 
 import msgpack
 import numpy as np
@@ -467,6 +468,9 @@ class BulkImportWriter(Writer):
             for item in items:
                 try:
                     mp = packer.pack(item)
+                except TypeError:
+                    packer.reset()
+                    mp = packer.pack(self._nullable_msgpack(item))
                 except (OverflowError, ValueError):
                     packer.reset()
                     mp = packer.pack(normalized_msgpack(item))
@@ -474,6 +478,30 @@ class BulkImportWriter(Writer):
 
         stream.seek(0)
         return stream
+
+    def _nullable_msgpack(self, value):
+        if isinstance(value, dict):
+            return {
+                k: (
+                    None
+                    if not isinstance(v, Iterable) and pd.isnull(v)
+                    else self._nullable_msgpack(v)
+                )
+                for k, v in value.items()
+            }
+        elif isinstance(value, (list, tuple)):
+            return [
+                None
+                if not isinstance(v, Iterable) and pd.isnull(v)
+                else self._nullable_msgpack(v)
+                for v in value
+            ]
+        # dataframe.to_dict returns numpy.dtypes as of pandas 1.0.1
+        # if the dtype is nullable type
+        elif isinstance(value, np.generic):
+            return value.item()
+        else:
+            return value
 
 
 class SparkWriter(Writer):
