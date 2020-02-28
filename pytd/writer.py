@@ -17,11 +17,25 @@ logger = logging.getLogger(__name__)
 
 
 def _to_list(ary):
+    is_null_ary = pd.isnull(ary)
+    if ary is None or (not isinstance(is_null_ary, np.ndarray) and is_null_ary):
+        return None
     _ary = np.asarray(ary)
+    if ary is None or pd.isnull(_ary).all():
+        return None
     # Replace numpy.nan to None which will be converted to NULL on TD
     if _ary.dtype.kind == "f":
         _ary = np.where(np.isnan(_ary), None, _ary)
     return _ary.tolist()
+
+
+def _check_column_type(x, t):
+    return x is None or x is np.nan or isinstance(x, t)
+
+
+def _convert_nullable_str(x, t, lower=False):
+    v = str(x).lower() if lower else str(x)
+    return v if isinstance(x, t) else None
 
 
 def _cast_dtypes(dataframe, inplace=True, keep_list=False):
@@ -49,10 +63,23 @@ def _cast_dtypes(dataframe, inplace=True, keep_list=False):
             t = "Int64" if df[column].isnull().any() else "int64"
         elif kind == "f":
             t = float
-        elif kind == "O" and keep_list:
-            if df[column].apply(lambda x: isinstance(x, (list, np.ndarray))).all():
+        elif kind == "O":
+            if df[column].apply(_check_column_type, args=[(list, np.ndarray)]).all():
                 t = object
-                df[column] = df[column].apply(_to_list)
+                if keep_list:
+                    df[column] = df[column].apply(_to_list)
+                else:
+                    df[column] = df[column].apply(
+                        _convert_nullable_str, args=[(list, np.ndarray)]
+                    )
+            elif df[column].apply(_check_column_type, args=[bool]).all():
+                t = object
+                df[column] = df[column].apply(
+                    _convert_nullable_str, args=[bool], lower=True
+                )
+            elif df[column].apply(_check_column_type, args=[str]).all():
+                t = object
+                df[column] = df[column].apply(_convert_nullable_str, args=[str])
         df[column] = df[column].astype(t)
 
         # Bulk Import API internally handles boolean string as a boolean type,

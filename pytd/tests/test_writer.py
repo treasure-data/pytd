@@ -10,6 +10,7 @@ from pytd.writer import (
     InsertIntoWriter,
     SparkWriter,
     _cast_dtypes,
+    _check_column_type,
     _get_schema,
 )
 
@@ -25,13 +26,13 @@ class WriterTestCase(unittest.TestCase):
                 "E": pd.Series([1.0] * 3).astype("float32"),
                 "F": False,
                 "G": pd.Series([1] * 3, dtype="int8"),
-                "H": [[0, None, 2], [1, 2, 3], [2, 3, 4]],
-                "I": [
-                    np.array([0, np.nan, 2]),
-                    np.array([1, 2, 3]),
-                    np.array([2, 3, 4]),
-                ],
-                "J": [np.array([0, np.nan, 2]), [1, 2, 3], [3, 4, 5]],
+                "H": [[0, None, 2], [1, 2, 3], None],
+                "I": [np.array([0, np.nan, 2]), np.array([1, 2, 3]), np.nan],
+                "J": [np.array([0, np.nan, 2]), [1, 2, 3], None],
+                "K": [True, np.nan, False],
+                "L": [True, None, False],
+                "M": ["foo", None, "bar"],
+                "N": [1, None, 3],
             }
         )
 
@@ -44,6 +45,15 @@ class WriterTestCase(unittest.TestCase):
         self.assertEqual(dft["F"][0], "false")
         self.assertTrue(isinstance(dft["H"][1], str))
         self.assertEqual(dft["H"][1], "[1, 2, 3]")
+        self.assertTrue(dft["H"][2] is None)
+        self.assertTrue(dft["I"][2] is None)
+        self.assertTrue(dft["J"][2] is None)
+        self.assertTrue(dft["K"][1] is None)
+        self.assertTrue(dft["L"][1] is None)
+        self.assertTrue(dft["M"][1] is None)
+        self.assertTrue(np.isnan(dft["N"][1]))
+        # Nullable int will be float dtype by pandas default
+        self.assertTrue(isinstance(dft["N"][0], float))
 
     def test_cast_dtypes_inplace(self):
         _cast_dtypes(self.dft)
@@ -59,9 +69,9 @@ class WriterTestCase(unittest.TestCase):
         self.assertEqual(
             dtypes, set([np.dtype("int"), np.dtype("float"), np.dtype("O")])
         )
-        self.assertTrue(self.dft["H"].apply(lambda x: isinstance(x, list)).all())
-        self.assertTrue(self.dft["I"].apply(lambda x: isinstance(x, list)).all())
-        self.assertTrue(self.dft["J"].apply(lambda x: isinstance(x, list)).all())
+        self.assertTrue(self.dft["H"].apply(_check_column_type, args=[list]).all())
+        self.assertTrue(self.dft["I"].apply(_check_column_type, args=[list]).all())
+        self.assertTrue(self.dft["J"].apply(_check_column_type, args=[list]).all())
         self.assertTrue(isinstance(self.dft["H"].iloc[0][2], int))
         # numpy.ndarray containing numpy.nan will be converted as float type
         self.assertTrue(isinstance(self.dft["I"].iloc[0][2], float))
