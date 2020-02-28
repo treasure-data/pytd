@@ -25,7 +25,7 @@ def _to_list(ary):
     return _ary.tolist()
 
 
-def _cast_dtypes(dataframe, inplace=True, keep_list=False):
+def _cast_dtypes(dataframe, inplace=False, keep_list=False):
     """Convert dtypes into one of {int, float, str, list} type.
 
     A character code (one of ‘biufcmMOSUV’) identifying the general kind of data.
@@ -42,28 +42,33 @@ def _cast_dtypes(dataframe, inplace=True, keep_list=False):
     U  Unicode
     V  void
     """
-    df = dataframe if inplace else dataframe.copy()
+    if inplace:
+        raise ValueError("unable to set inplace option")
+    # Infer BooleanDtypes(), StringDtypes(), Int64() with pd.NaN
+    df = dataframe.convert_dtypes()
 
-    for column, kind in dataframe.dtypes.apply(lambda dtype: dtype.kind).iteritems():
-        t = str
-        if kind == "i" or kind == "u":
-            t = "Int64" if df[column].isnull().any() else "int64"
-        elif kind == "f":
-            t = float
-        elif kind == "O" and keep_list:
-            if df[column].apply(lambda x: isinstance(x, (list, np.ndarray))).all():
-                t = object
-                df[column] = df[column].apply(_to_list)
-        df[column] = df[column].astype(t)
-
+    for column, dtype in dataframe.dtypes.iteritems():
         # Bulk Import API internally handles boolean string as a boolean type,
         # and hence "True" ("False") will be stored as "true" ("false"). Align
         # to lower case here.
-        if kind == "b":
-            df[column] = df[column].apply(lambda s: s.lower())
+        if dtype.kind == "b":
+            df[column] = df[column].apply(
+                lambda e: str(e).lower() if isinstance(e, bool) else None
+            )
+        elif dtype.kind == "O":
+            if df[column].apply(lambda x: isinstance(x, (list, np.ndarray))).all():
+                if keep_list:
+                    df[column] = df[column].apply(_to_list)
+                else:
+                    df[column] = df[column].apply(
+                        lambda e: str(e) if isinstance(e, (list, np.ndarray)) else None
+                    )
+        elif dtype.kind not in ("i", "f", "u"):
+            df[column] = df[column].apply(
+                lambda e: None if e is None or e is np.nan else str(e)
+            )
 
-    if not inplace:
-        return df
+    return df
 
 
 def _get_schema(dataframe):
@@ -139,7 +144,7 @@ class InsertIntoWriter(Writer):
         if self.closed:
             raise RuntimeError("this writer is already closed and no longer available")
 
-        _cast_dtypes(dataframe)
+        dataframe = _cast_dtypes(dataframe)
 
         column_names, column_types = _get_schema(dataframe)
 
@@ -344,7 +349,7 @@ class BulkImportWriter(Writer):
         if keep_list:
             fmt = "msgpack"
 
-        _cast_dtypes(dataframe, keep_list=keep_list)
+        dataframe = _cast_dtypes(dataframe, keep_list=keep_list)
 
         if fmt == "csv":
             fp = tempfile.NamedTemporaryFile(suffix=".csv")
@@ -601,7 +606,7 @@ class SparkWriter(Writer):
 
         from py4j.protocol import Py4JJavaError
 
-        _cast_dtypes(dataframe)
+        dataframe = _cast_dtypes(dataframe)
         sdf = self.td_spark.spark.createDataFrame(dataframe)
         try:
             destination = "{}.{}".format(table.database, table.table)

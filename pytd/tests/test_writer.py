@@ -32,41 +32,53 @@ class WriterTestCase(unittest.TestCase):
                     np.array([2, 3, 4]),
                 ],
                 "J": [np.array([0, np.nan, 2]), [1, 2, 3], [3, 4, 5]],
+                "K": [True, np.nan, False],
+                "L": [True, None, False],
+                "M": ["foo", None, "bar"],
+                "N": [1, None, 3],
             }
+        )
+        self.dtypes = set(
+            [
+                np.dtype("float"),
+                np.dtype("O"),
+                pd.StringDtype(),
+                pd.Int8Dtype(),
+                pd.Int64Dtype(),
+                pd.BooleanDtype(),
+            ]
         )
 
     def test_cast_dtypes(self):
-        dft = _cast_dtypes(self.dft, inplace=False)
+        dft = _cast_dtypes(self.dft)
         dtypes = set(dft.dtypes)
-        self.assertEqual(
-            dtypes, set([np.dtype("int"), np.dtype("float"), np.dtype("O")])
-        )
+        self.assertEqual(dtypes, self.dtypes)
         self.assertEqual(dft["F"][0], "false")
         self.assertTrue(isinstance(dft["H"][1], str))
         self.assertEqual(dft["H"][1], "[1, 2, 3]")
+        self.assertTrue(dft["K"][1] is pd.NA)
+        self.assertTrue(dft["L"][1] is pd.NA)
+        self.assertTrue(dft["M"][1] is pd.NA)
+        self.assertTrue(dft["N"][1] is pd.NA)
+        # Int64Dtype keep np.int64 type
+        self.assertTrue(isinstance(dft["N"][0], np.int64))
 
     def test_cast_dtypes_inplace(self):
-        _cast_dtypes(self.dft)
-        dtypes = set(self.dft.dtypes)
-        self.assertEqual(
-            dtypes, set([np.dtype("int"), np.dtype("float"), np.dtype("O")])
-        )
-        self.assertEqual(self.dft["F"][0], "false")
+        with self.assertRaises(ValueError):
+            _cast_dtypes(self.dft, inplace=True)
 
     def test_cast_dtypes_keep_list(self):
-        _cast_dtypes(self.dft, keep_list=True)
-        dtypes = set(self.dft.dtypes)
-        self.assertEqual(
-            dtypes, set([np.dtype("int"), np.dtype("float"), np.dtype("O")])
-        )
-        self.assertTrue(self.dft["H"].apply(lambda x: isinstance(x, list)).all())
-        self.assertTrue(self.dft["I"].apply(lambda x: isinstance(x, list)).all())
-        self.assertTrue(self.dft["J"].apply(lambda x: isinstance(x, list)).all())
-        self.assertTrue(isinstance(self.dft["H"].iloc[0][2], int))
+        dft = _cast_dtypes(self.dft, keep_list=True)
+        dtypes = set(dft.dtypes)
+        self.assertEqual(dtypes, self.dtypes)
+        self.assertTrue(dft["H"].apply(lambda x: isinstance(x, list)).all())
+        self.assertTrue(dft["I"].apply(lambda x: isinstance(x, list)).all())
+        self.assertTrue(dft["J"].apply(lambda x: isinstance(x, list)).all())
+        self.assertTrue(isinstance(dft["H"].iloc[0][2], int))
         # numpy.ndarray containing numpy.nan will be converted as float type
-        self.assertTrue(isinstance(self.dft["I"].iloc[0][2], float))
-        self.assertTrue(isinstance(self.dft["I"].iloc[1][2], int))
-        self.assertTrue(self.dft["I"].iloc[0][1] is None)
+        self.assertTrue(isinstance(dft["I"].iloc[0][2], float))
+        self.assertTrue(isinstance(dft["I"].iloc[1][2], int))
+        self.assertTrue(dft["I"].iloc[0][1] is None)
 
 
 class InsertIntoWriterTestCase(unittest.TestCase):
