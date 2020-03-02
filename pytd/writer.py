@@ -16,21 +16,45 @@ from .spark import fetch_td_spark_context
 logger = logging.getLogger(__name__)
 
 
+def _is_np_nan(x):
+    return isinstance(x, float) and np.isnan(x)
+
+
+def _is_0d_ary(x):
+    return isinstance(x, np.ndarray) and len(x.shape) == 0
+
+
+def _is_0d_nan(x):
+    return _is_0d_ary(x) and x.dtype.kind == "f" and np.isnan(x)
+
+
 def _to_list(ary):
-    is_null_ary = pd.isnull(ary)
-    if ary is None or (not isinstance(is_null_ary, np.ndarray) and is_null_ary):
+    # Return None if None, np.nan, or np.nan in 0-d array given
+    if ary is None or _is_np_nan(ary) or _is_0d_nan(ary):
         return None
+
+    # Return Python primitive value if 0-d array given
+    if _is_0d_ary(ary):
+        return ary.tolist()
+
     _ary = np.asarray(ary)
-    if ary is None or pd.isnull(_ary).all():
-        return None
     # Replace numpy.nan to None which will be converted to NULL on TD
-    if _ary.dtype.kind == "f":
+    kind = _ary.dtype.kind
+    if kind == "f":
         _ary = np.where(np.isnan(_ary), None, _ary)
+    elif kind == "U":
+        _ary = np.where(_ary == "nan", None, _ary)
+    elif kind == "O":
+        _ary = np.array([None if _is_np_nan(x) else x for x in _ary])
     return _ary.tolist()
 
 
-def _check_column_type(x, t):
-    return x is None or x is np.nan or isinstance(x, t)
+def _isnull(x):
+    return x is None or x is np.nan
+
+
+def _isinstance_or_null(x, t):
+    return _isnull(x) or isinstance(x, t)
 
 
 def _convert_nullable_str(x, t, lower=False):
@@ -59,27 +83,27 @@ def _cast_dtypes(dataframe, inplace=True, keep_list=False):
 
     for column, kind in dataframe.dtypes.apply(lambda dtype: dtype.kind).iteritems():
         t = str
-        if kind == "i" or kind == "u":
+        if kind in ("i", "u"):
             t = "Int64" if df[column].isnull().any() else "int64"
         elif kind == "f":
             t = float
         elif kind == "O":
-            if df[column].apply(_check_column_type, args=[(list, np.ndarray)]).all():
-                t = object
+            t = object
+            if df[column].apply(_isinstance_or_null, args=((list, np.ndarray),)).all():
                 if keep_list:
                     df[column] = df[column].apply(_to_list)
                 else:
                     df[column] = df[column].apply(
-                        _convert_nullable_str, args=[(list, np.ndarray)]
+                        _convert_nullable_str, args=((list, np.ndarray),)
                     )
-            elif df[column].apply(_check_column_type, args=[bool]).all():
-                t = object
+            elif df[column].apply(_isinstance_or_null, args=(bool,)).all():
                 df[column] = df[column].apply(
-                    _convert_nullable_str, args=[bool], lower=True
+                    _convert_nullable_str, args=(bool,), lower=True
                 )
-            elif df[column].apply(_check_column_type, args=[str]).all():
-                t = object
-                df[column] = df[column].apply(_convert_nullable_str, args=[str])
+            elif df[column].apply(_isinstance_or_null, args=(str,)).all():
+                df[column] = df[column].apply(_convert_nullable_str, args=(str,))
+            else:
+                t = str
         df[column] = df[column].astype(t)
 
         # Bulk Import API internally handles boolean string as a boolean type,
