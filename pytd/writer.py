@@ -28,6 +28,14 @@ def _is_0d_nan(x):
     return _is_0d_ary(x) and x.dtype.kind == "f" and np.isnan(x)
 
 
+def _isnull(x):
+    return x is None or _is_np_nan(x)
+
+
+def _isinstance_or_null(x, t):
+    return _isnull(x) or isinstance(x, t)
+
+
 def _to_list(ary):
     # Return None if None, np.nan, or np.nan in 0-d array given
     if ary is None or _is_np_nan(ary) or _is_0d_nan(ary):
@@ -47,14 +55,6 @@ def _to_list(ary):
     elif kind == "O":
         _ary = np.array([None if _is_np_nan(x) else x for x in _ary])
     return _ary.tolist()
-
-
-def _isnull(x):
-    return x is None or x is np.nan
-
-
-def _isinstance_or_null(x, t):
-    return _isnull(x) or isinstance(x, t)
 
 
 def _convert_nullable_str(x, t, lower=False):
