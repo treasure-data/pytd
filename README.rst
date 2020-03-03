@@ -99,6 +99,22 @@ data to Treasure Data:
    -  Local customized Spark instance directly writes ``DataFrame`` to
       Treasure Data’s primary storage system.
 
+Characteristics of each of these methods can be summarized as follows:
+
++-----------------------------------+------------------+------------------+-----------+
+|                                   | ``bulk_import``  | ``insert_into``  | ``spark`` |
++===================================+==================+==================+===========+
+| Scalable against data volume      |        ✓         |                  |     ✓     |
++-----------------------------------+------------------+------------------+-----------+
+| Write performance for larger data |                  |                  |     ✓     |
++-----------------------------------+------------------+------------------+-----------+
+| Memory efficient                  |        ✓         |        ✓         |           |
++-----------------------------------+------------------+------------------+-----------+
+| Disk efficient                    |                  |        ✓         |           |
++-----------------------------------+------------------+------------------+-----------+
+| Minimal package dependency        |        ✓         |        ✓         |           |
++-----------------------------------+------------------+------------------+-----------+
+
 Enabling Spark Writer
 ^^^^^^^^^^^^^^^^^^^^^
 
