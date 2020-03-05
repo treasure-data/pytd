@@ -53,6 +53,7 @@ class WriterTestCase(unittest.TestCase):
         self.assertEqual(
             _to_list(np.array([np.nan, np.nan, np.nan])), [None, None, None]
         )
+        self.assertEqual(_to_list([1, 2, np.nan]), [1, 2, None])
         self.assertEqual(_to_list(np.array([1, 2, np.nan])), [1.0, 2.0, None])
         self.assertEqual(
             _to_list(np.array(["foo", "bar", np.nan])), ["foo", "bar", None]
@@ -279,6 +280,19 @@ class SparkWriterTestCase(unittest.TestCase):
             self.writer.write_dataframe(
                 pd.DataFrame([[1, 2], [3, 4]]), self.table, if_exists="bar"
             )
+
+    def test_write_dataframe_with_int_nan(self):
+        df = pd.DataFrame(
+            data=[{"a": 1, "b": 2}, {"a": 3, "b": 4, "c": 5}], dtype="Int64"
+        )
+        expected_df = df.replace({np.nan: None})
+        for col in ["a", "b"]:
+            expected_df[col] = expected_df[col].astype("int64")
+        self.writer.td_spark.spark.createDataFrame.return_value = "Dummy DataFrame"
+        self.writer.write_dataframe(df, self.table, "overwrite")
+        pd.testing.assert_frame_equal(
+            self.writer.td_spark.spark.createDataFrame.call_args[0][0], expected_df
+        )
 
     def test_close(self):
         self.writer.close()
