@@ -63,7 +63,7 @@ def setup_package():
         install_requires=[
             "urllib3<1.25,>=1.21.1",
             "presto-python-client>=0.6.0",
-            "pandas>=0.22.0",
+            "pandas>=0.24.0",
             "td-client>=1.1.0",
             "pytz>=2018.5",
         ],
