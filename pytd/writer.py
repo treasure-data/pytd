@@ -625,6 +625,9 @@ class SparkWriter(Writer):
         from py4j.protocol import Py4JJavaError
 
         _cast_dtypes(dataframe)
+        # Replace np.nan to None to avoid Int64 conversion issue
+        if dataframe.isnull().any().any():
+            dataframe.replace({np.nan: None}, inplace=True)
         sdf = self.td_spark.spark.createDataFrame(dataframe)
         try:
             destination = "{}.{}".format(table.database, table.table)
