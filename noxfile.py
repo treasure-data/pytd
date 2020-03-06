@@ -12,6 +12,8 @@ def lint(session):
 
 
 @nox.session
-def tests(session):
+@nox.parametrize("pandas", ["0.25", "1.0"])
+def tests(session, pandas):
     session.install(".[test,spark]")
+    session.install("pandas=={}".format(pandas))
     session.run("pytest", "-v")

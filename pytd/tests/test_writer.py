@@ -34,6 +34,7 @@ class WriterTestCase(unittest.TestCase):
                 "L": [True, None, False],
                 "M": ["foo", None, "bar"],
                 "N": [1, None, 3],
+                "O": pd.Series([1, 2, None], dtype="Int64"),
             }
         )
 
@@ -68,26 +69,46 @@ class WriterTestCase(unittest.TestCase):
         dft = _cast_dtypes(self.dft, inplace=False)
         dtypes = set(dft.dtypes)
         self.assertEqual(
-            dtypes, set([np.dtype("int"), np.dtype("float"), np.dtype("O")])
+            dtypes,
+            set([np.dtype("int"), np.dtype("float"), np.dtype("O"), pd.Int64Dtype()]),
         )
         self.assertEqual(dft["F"][0], "false")
         self.assertTrue(isinstance(dft["H"][1], str))
         self.assertEqual(dft["H"][1], "[1, 2, 3]")
-        self.assertTrue(dft["H"][2] is None)
-        self.assertTrue(dft["I"][2] is None)
-        self.assertTrue(dft["J"][2] is None)
-        self.assertTrue(dft["K"][1] is None)
-        self.assertTrue(dft["L"][1] is None)
-        self.assertTrue(dft["M"][1] is None)
+        self.assertIsNone(dft["H"][2])
+        self.assertIsNone(dft["I"][2])
+        self.assertIsNone(dft["J"][2])
+        self.assertIsNone(dft["K"][1])
+        self.assertIsNone(dft["L"][1])
+        self.assertIsNone(dft["M"][1])
         self.assertTrue(np.isnan(dft["N"][1]))
         # Nullable int will be float dtype by pandas default
         self.assertTrue(isinstance(dft["N"][0], float))
+        # _cast_dtypes keeps np.nan/pd.NA when None in Int64 column given
+        # This is for consistency of _get_schema
+        self.assertTrue(pd.isna(dft["O"][2]))
+
+    @unittest.skipIf(pd.__version__ < "1.0.0", "not supported in this pandas version")
+    def test_cast_dtypes_nullable(self):
+        dft = pd.DataFrame(
+            {
+                "P": pd.Series([True, False, None], dtype="boolean"),
+                "Q": pd.Series(["foo", "bar", None], dtype="string"),
+            }
+        )
+
+        dft = _cast_dtypes(dft, inplace=False)
+        dtypes = set(dft.dtypes)
+        self.assertEqual(dtypes, set([np.dtype("O")]))
+        self.assertTrue(dft["P"][2] is None)
+        self.assertTrue(dft["Q"][2] is None)
 
     def test_cast_dtypes_inplace(self):
         _cast_dtypes(self.dft)
         dtypes = set(self.dft.dtypes)
         self.assertEqual(
-            dtypes, set([np.dtype("int"), np.dtype("float"), np.dtype("O")])
+            dtypes,
+            set([np.dtype("int"), np.dtype("float"), np.dtype("O"), pd.Int64Dtype()]),
         )
         self.assertEqual(self.dft["F"][0], "false")
 
@@ -95,7 +116,8 @@ class WriterTestCase(unittest.TestCase):
         _cast_dtypes(self.dft, keep_list=True)
         dtypes = set(self.dft.dtypes)
         self.assertEqual(
-            dtypes, set([np.dtype("int"), np.dtype("float"), np.dtype("O")])
+            dtypes,
+            set([np.dtype("int"), np.dtype("float"), np.dtype("O"), pd.Int64Dtype()]),
         )
         self.assertTrue(self.dft["H"].apply(_isinstance_or_null, args=(list,)).all())
         self.assertTrue(self.dft["I"].apply(_isinstance_or_null, args=(list,)).all())
@@ -241,6 +263,63 @@ class BulkImportWriterTestCase(unittest.TestCase):
         )
         self.assertFalse(api_client.create_bulk_import().upload_file.called)
 
+    def test_write_dataframe_msgpack_with_int_na(self):
+        # Although this conversion ensures pd.NA Int64 dtype to None,
+        # BulkImport API will treat the column as varchar
+        df = pd.DataFrame(
+            data=[
+                {"a": 1, "b": 2, "time": 1234},
+                {"a": 3, "b": 4, "c": 5, "time": 1234},
+            ],
+            dtype="Int64",
+        )
+        expected_list = [
+            {"a": 1, "b": 2, "c": None, "time": 1234},
+            {"a": 3, "b": 4, "c": 5, "time": 1234},
+        ]
+        self.writer._write_msgpack_stream = MagicMock()
+        self.writer.write_dataframe(df, self.table, "overwrite", fmt="msgpack")
+        self.assertTrue(self.writer._write_msgpack_stream.called)
+        self.assertEqual(
+            self.writer._write_msgpack_stream.call_args[0][0], expected_list
+        )
+
+    @unittest.skipIf(pd.__version__ < "1.0.0", "not supported in this pandas version")
+    def test_write_dataframe_msgpack_with_string_na(self):
+        df = pd.DataFrame(
+            data=[{"a": "foo", "b": "bar"}, {"a": "buzz", "b": "buzz", "c": "alice"}],
+            dtype="string",
+        )
+        df["time"] = 1234
+        expected_list = [
+            {"a": "foo", "b": "bar", "c": None, "time": 1234},
+            {"a": "buzz", "b": "buzz", "c": "alice", "time": 1234},
+        ]
+        self.writer._write_msgpack_stream = MagicMock()
+        self.writer.write_dataframe(df, self.table, "overwrite", fmt="msgpack")
+        self.assertTrue(self.writer._write_msgpack_stream.called)
+        self.assertEqual(
+            self.writer._write_msgpack_stream.call_args[0][0], expected_list
+        )
+
+    @unittest.skipIf(pd.__version__ < "1.0.0", "not supported in this pandas version")
+    def test_write_dataframe_msgpack_with_boolean_na(self):
+        df = pd.DataFrame(
+            data=[{"a": True, "b": False}, {"a": False, "b": True, "c": True}],
+            dtype="boolean",
+        )
+        df["time"] = 1234
+        expected_list = [
+            {"a": "true", "b": "false", "c": None, "time": 1234},
+            {"a": "false", "b": "true", "c": "true", "time": 1234},
+        ]
+        self.writer._write_msgpack_stream = MagicMock()
+        self.writer.write_dataframe(df, self.table, "overwrite", fmt="msgpack")
+        self.assertTrue(self.writer._write_msgpack_stream.called)
+        self.assertEqual(
+            self.writer._write_msgpack_stream.call_args[0][0], expected_list
+        )
+
     def test_write_dataframe_invalid_if_exists(self):
         with self.assertRaises(ValueError):
             self.writer.write_dataframe(
@@ -281,13 +360,41 @@ class SparkWriterTestCase(unittest.TestCase):
                 pd.DataFrame([[1, 2], [3, 4]]), self.table, if_exists="bar"
             )
 
-    def test_write_dataframe_with_int_nan(self):
+    def test_write_dataframe_with_int_na(self):
         df = pd.DataFrame(
             data=[{"a": 1, "b": 2}, {"a": 3, "b": 4, "c": 5}], dtype="Int64"
         )
         expected_df = df.replace({np.nan: None})
         for col in ["a", "b"]:
             expected_df[col] = expected_df[col].astype("int64")
+        self.writer.td_spark.spark.createDataFrame.return_value = "Dummy DataFrame"
+        self.writer.write_dataframe(df, self.table, "overwrite")
+        pd.testing.assert_frame_equal(
+            self.writer.td_spark.spark.createDataFrame.call_args[0][0], expected_df
+        )
+
+    @unittest.skipIf(pd.__version__ < "1.0.0", "not supported in this pandas version")
+    def test_write_dataframe_with_string_na(self):
+        df = pd.DataFrame(
+            data=[{"a": "foo", "b": "bar"}, {"a": "buzz", "b": "buzz", "c": "alice"}],
+            dtype="string",
+        )
+        expected_df = df.replace({np.nan: None}).astype(object)
+        self.writer.td_spark.spark.createDataFrame.return_value = "Dummy DataFrame"
+        self.writer.write_dataframe(df, self.table, "overwrite")
+        pd.testing.assert_frame_equal(
+            self.writer.td_spark.spark.createDataFrame.call_args[0][0], expected_df
+        )
+
+    @unittest.skipIf(pd.__version__ < "1.0.0", "not supported in this pandas version")
+    def test_write_dataframe_with_boolean_na(self):
+        df = pd.DataFrame(
+            data=[{"a": True, "b": False}, {"a": False, "b": True, "c": True}],
+            dtype="boolean",
+        )
+        expected_df = pd.DataFrame(
+            data=[{"a": "true", "b": "false"}, {"a": "false", "b": "true", "c": "true"}]
+        )
         self.writer.td_spark.spark.createDataFrame.return_value = "Dummy DataFrame"
         self.writer.write_dataframe(df, self.table, "overwrite")
         pd.testing.assert_frame_equal(
