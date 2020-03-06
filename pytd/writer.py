@@ -15,6 +15,17 @@ from .spark import fetch_td_spark_context
 
 logger = logging.getLogger(__name__)
 
+if pd.__version__ >= "1.0.0":
+    logger.warning(
+        "You are using pandas 1.0.0 or later, but pytd is not fully tested on "
+        "the major version. Since the version has introduced some "
+        "experimental, backward-incompatible features, there might be a "
+        "chance of unexpected runtime failure when you handle a DataFrame "
+        "containing null or array. See pandas official documentation for more "
+        "information: "
+        "https://pandas.pydata.org/pandas-docs/version/1.0.0/whatsnew/v1.0.0.html"
+    )
+
 
 def _is_np_nan(x):
     return isinstance(x, float) and np.isnan(x)
@@ -79,17 +90,6 @@ def _cast_dtypes(dataframe, inplace=True, keep_list=False):
     U  Unicode
     V  void
     """
-    if pd.__version__ >= "1.0.0":
-        logger.warning(
-            "You are using pandas 1.0.0 or later, but pytd is not fully tested on "
-            "the major version. Since the version has introduced some "
-            "experimental, backward-incompatible features, there might be a "
-            "chance of unexpected runtime failure when you write a DataFrame "
-            "containing null or array, See pandas official documentation for more "
-            "information: "
-            "https://pandas.pydata.org/pandas-docs/version/1.0.0/whatsnew/v1.0.0.html"
-        )
-
     df = dataframe if inplace else dataframe.copy()
 
     for column, kind in dataframe.dtypes.apply(lambda dtype: dtype.kind).iteritems():
