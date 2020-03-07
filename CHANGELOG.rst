@@ -1,6 +1,14 @@
 Changelog
 =========
 
+v1.1.0 (2020-03-07)
+-------------------
+
+- Support list-type column in ``BulkImportWriter#write_dataframe``. A list-type column of ``pandas.DataFrame`` will be stored into Treasure Data table as an array-type column. (`#60 <https://github.com/treasure-data/pytd/pull/60>`__)
+- Store a resulting object from ``Client#query`` to ``Client.query_executed``. The object could be a Treasure Data job id if query is executed via ``tdclient``. (`#63 <https://github.com/treasure-data/pytd/pull/63>`__)
+- Support null value in ``str``, ``bool``, and ``"Int64"``-type column of ``pandas.DataFrame``. (`#68 <https://github.com/treasure-data/pytd/pull/68>`__, `#71 <https://github.com/treasure-data/pytd/pull/71>`__)
+- Update minimum required pandas version to 0.24.0 (`#69 <https://github.com/treasure-data/pytd/pull/69>`__)
+
 v1.0.0 (2019-11-11)
 -------------------
 
@@ -10,7 +18,6 @@ v1.0.0 (2019-11-11)
 -  Improve stability of ``BulkImportWriter`` session ID. (`#55 <https://github.com/treasure-data/pytd/pull/55>`__)
 -  Require td-client-python version 1.1.0 or later. (`#56 <https://github.com/treasure-data/pytd/pull/56>`__)
 -  Add ``Client#exists(database, table)`` and ``Client#create_database_if_not_exists(database)`` method. (`#58 <https://github.com/treasure-data/pytd/pull/58/>`__)
-
 
 v0.8.0 (2019-09-17)
 -------------------
