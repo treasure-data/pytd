@@ -102,8 +102,8 @@ class WriterTestCase(unittest.TestCase):
         dft = _cast_dtypes(dft, inplace=False)
         dtypes = set(dft.dtypes)
         self.assertEqual(dtypes, set([np.dtype("O")]))
-        self.assertTrue(dft["P"][2] is None)
-        self.assertTrue(dft["Q"][2] is None)
+        self.assertIsNone(dft["P"][2])
+        self.assertIsNone(dft["Q"][2])
 
     def test_cast_dtypes_inplace(self):
         _cast_dtypes(self.dft)
@@ -128,7 +128,7 @@ class WriterTestCase(unittest.TestCase):
         # numpy.ndarray containing numpy.nan will be converted as float type
         self.assertTrue(isinstance(self.dft["I"].iloc[0][2], float))
         self.assertTrue(isinstance(self.dft["I"].iloc[1][2], int))
-        self.assertTrue(self.dft["I"].iloc[0][1] is None)
+        self.assertIsNone(self.dft["I"].iloc[0][1])
 
 
 class InsertIntoWriterTestCase(unittest.TestCase):
