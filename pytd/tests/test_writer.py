@@ -88,7 +88,9 @@ class WriterTestCase(unittest.TestCase):
         # This is for consistency of _get_schema
         self.assertTrue(pd.isna(dft["O"][2]))
 
-    @unittest.skipIf(pd.__version__ < "1.0.0", "not supported in this pandas version")
+    @unittest.skipIf(
+        pd.__version__ < "1.0.0", "pd.NA is not supported in this pandas version"
+    )
     def test_cast_dtypes_nullable(self):
         dft = pd.DataFrame(
             {
@@ -284,7 +286,9 @@ class BulkImportWriterTestCase(unittest.TestCase):
             self.writer._write_msgpack_stream.call_args[0][0], expected_list
         )
 
-    @unittest.skipIf(pd.__version__ < "1.0.0", "not supported in this pandas version")
+    @unittest.skipIf(
+        pd.__version__ < "1.0.0", "pd.NA not supported in this pandas version"
+    )
     def test_write_dataframe_msgpack_with_string_na(self):
         df = pd.DataFrame(
             data=[{"a": "foo", "b": "bar"}, {"a": "buzz", "b": "buzz", "c": "alice"}],
@@ -302,7 +306,9 @@ class BulkImportWriterTestCase(unittest.TestCase):
             self.writer._write_msgpack_stream.call_args[0][0], expected_list
         )
 
-    @unittest.skipIf(pd.__version__ < "1.0.0", "not supported in this pandas version")
+    @unittest.skipIf(
+        pd.__version__ < "1.0.0", "pd.NA not supported in this pandas version"
+    )
     def test_write_dataframe_msgpack_with_boolean_na(self):
         df = pd.DataFrame(
             data=[{"a": True, "b": False}, {"a": False, "b": True, "c": True}],
@@ -373,7 +379,9 @@ class SparkWriterTestCase(unittest.TestCase):
             self.writer.td_spark.spark.createDataFrame.call_args[0][0], expected_df
         )
 
-    @unittest.skipIf(pd.__version__ < "1.0.0", "not supported in this pandas version")
+    @unittest.skipIf(
+        pd.__version__ < "1.0.0", "pd.NA is not supported in this pandas version"
+    )
     def test_write_dataframe_with_string_na(self):
         df = pd.DataFrame(
             data=[{"a": "foo", "b": "bar"}, {"a": "buzz", "b": "buzz", "c": "alice"}],
@@ -386,7 +394,9 @@ class SparkWriterTestCase(unittest.TestCase):
             self.writer.td_spark.spark.createDataFrame.call_args[0][0], expected_df
         )
 
-    @unittest.skipIf(pd.__version__ < "1.0.0", "not supported in this pandas version")
+    @unittest.skipIf(
+        pd.__version__ < "1.0.0", "pd.NA is not supported in this pandas version"
+    )
     def test_write_dataframe_with_boolean_na(self):
         df = pd.DataFrame(
             data=[{"a": True, "b": False}, {"a": False, "b": True, "c": True}],

@@ -12,7 +12,7 @@ def lint(session):
 
 
 @nox.session
-@nox.parametrize("pandas", ["0.25", "1.0"])
+@nox.parametrize("pandas", ["0.24.2", "0.25.3", "1.0.1"])
 def tests(session, pandas):
     session.install(".[test,spark]")
     session.install("pandas=={}".format(pandas))

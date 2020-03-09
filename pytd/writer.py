@@ -99,7 +99,7 @@ def _cast_dtypes(dataframe, inplace=True, keep_list=False):
             t = "Int64" if df[column].isnull().any() else "int64"
         elif kind == "f":
             t = float
-        elif kind == "O":
+        elif kind in ("b", "O"):
             t = object
             if df[column].apply(_isinstance_or_null, args=((list, np.ndarray),)).all():
                 if keep_list:
@@ -109,6 +109,9 @@ def _cast_dtypes(dataframe, inplace=True, keep_list=False):
                         _convert_nullable_str, args=((list, np.ndarray),)
                     )
             elif df[column].apply(_isinstance_or_null, args=(bool,)).all():
+                # Bulk Import API internally handles boolean string as a boolean type,
+                # and hence "True" ("False") will be stored as "true" ("false"). Align
+                # to lower case here.
                 df[column] = df[column].apply(
                     _convert_nullable_str, args=(bool,), lower=True
                 )
@@ -116,14 +119,6 @@ def _cast_dtypes(dataframe, inplace=True, keep_list=False):
                 df[column] = df[column].apply(_convert_nullable_str, args=(str,))
             else:
                 t = str
-        elif kind == "b":
-            # Bulk Import API internally handles boolean string as a boolean type,
-            # and hence "True" ("False") will be stored as "true" ("false"). Align
-            # to lower case here.
-            t = object
-            df[column] = df[column].apply(
-                _convert_nullable_str, args=(bool,), lower=True
-            )
         df[column] = df[column].astype(t)
 
     if not inplace:
