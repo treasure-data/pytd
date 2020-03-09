@@ -27,6 +27,11 @@ if pd.__version__ >= "1.0.0":
     )
 
 
+def _is_pd_na(x):
+    is_na = pd.isna(x)
+    return isinstance(is_na, bool) and is_na
+
+
 def _is_np_nan(x):
     return isinstance(x, float) and np.isnan(x)
 
@@ -40,11 +45,18 @@ def _is_0d_nan(x):
 
 
 def _isnull(x):
-    return x is None or _is_np_nan(x)
+    return x is None or _is_np_nan(x) or _is_pd_na(x)
 
 
 def _isinstance_or_null(x, t):
     return _isnull(x) or isinstance(x, t)
+
+
+def _replace_pd_na(dataframe):
+    """Replace np.nan to None to avoid Int64 conversion issue
+    """
+    if dataframe.isnull().any().any():
+        dataframe.replace({np.nan: None}, inplace=True)
 
 
 def _to_list(ary):
@@ -64,7 +76,7 @@ def _to_list(ary):
     elif kind == "U":
         _ary = np.where(_ary == "nan", None, _ary)
     elif kind == "O":
-        _ary = np.array([None if _is_np_nan(x) else x for x in _ary])
+        _ary = np.array([None if _is_np_nan(x) or _is_pd_na(x) else x for x in _ary])
     return _ary.tolist()
 
 
@@ -98,7 +110,7 @@ def _cast_dtypes(dataframe, inplace=True, keep_list=False):
             t = "Int64" if df[column].isnull().any() else "int64"
         elif kind == "f":
             t = float
-        elif kind == "O":
+        elif kind in ("b", "O"):
             t = object
             if df[column].apply(_isinstance_or_null, args=((list, np.ndarray),)).all():
                 if keep_list:
@@ -108,6 +120,9 @@ def _cast_dtypes(dataframe, inplace=True, keep_list=False):
                         _convert_nullable_str, args=((list, np.ndarray),)
                     )
             elif df[column].apply(_isinstance_or_null, args=(bool,)).all():
+                # Bulk Import API internally handles boolean string as a boolean type,
+                # and hence "True" ("False") will be stored as "true" ("false"). Align
+                # to lower case here.
                 df[column] = df[column].apply(
                     _convert_nullable_str, args=(bool,), lower=True
                 )
@@ -116,12 +131,6 @@ def _cast_dtypes(dataframe, inplace=True, keep_list=False):
             else:
                 t = str
         df[column] = df[column].astype(t)
-
-        # Bulk Import API internally handles boolean string as a boolean type,
-        # and hence "True" ("False") will be stored as "true" ("false"). Align
-        # to lower case here.
-        if kind == "b":
-            df[column] = df[column].apply(lambda s: s.lower())
 
     if not inplace:
         return df
@@ -313,6 +322,10 @@ class BulkImportWriter(Writer):
         temporary CSV/msgpack file, and upload the file to Treasure Data via bulk
         import API.
 
+        Note:
+            If you pass a dataframe with ``Int64`` column, the column will be converted
+            as ``varchar`` on Treasure Data schema due to BulkImport API restriction.
+
         Parameters
         ----------
         dataframe : :class:`pandas.DataFrame`
@@ -411,6 +424,8 @@ class BulkImportWriter(Writer):
             fp = tempfile.NamedTemporaryFile(suffix=".csv")
             dataframe.to_csv(fp.name)
         elif fmt == "msgpack":
+            _replace_pd_na(dataframe)
+
             fp = io.BytesIO()
             fp = self._write_msgpack_stream(dataframe.to_dict(orient="records"), fp)
         else:
@@ -636,9 +651,8 @@ class SparkWriter(Writer):
         from py4j.protocol import Py4JJavaError
 
         _cast_dtypes(dataframe)
-        # Replace np.nan to None to avoid Int64 conversion issue
-        if dataframe.isnull().any().any():
-            dataframe.replace({np.nan: None}, inplace=True)
+        _replace_pd_na(dataframe)
+
         sdf = self.td_spark.spark.createDataFrame(dataframe)
         try:
             destination = "{}.{}".format(table.database, table.table)
