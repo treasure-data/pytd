@@ -1,0 +1,39 @@
+name: Build and test pytd
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    - name: Install dependencies
+      run: |
+        wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+        bash miniconda.sh -b -p $HOME/miniconda
+        export PATH="$HOME/miniconda/bin:$PATH"
+        hash -r
+        conda config --set always_yes yes --set changeps1 no
+        conda install -c anaconda setuptools # See https://github.com/conda/conda/issues/8149
+        conda update -q conda
+        # Useful for debugging any issues with conda
+        conda info -a
+        conda create -q -n test-environment python=3.7
+        source activate test-environment
+    - name: Install pytd
+      run: |
+        pip install .[spark]
+        pip check
+    - name: Run unit tests
+      run: |
+        pip install nox
+        nox
+      env:
+        TD_API_KEY: 1/XXX
+        TD_API_SERVER: https://api.treasure-data.com/
