@@ -70,7 +70,7 @@ class WriterTestCase(unittest.TestCase):
         dtypes = set(dft.dtypes)
         self.assertEqual(
             dtypes,
-            set([np.dtype("int"), np.dtype("float"), np.dtype("O"), pd.Int64Dtype()]),
+            set([np.dtype("int64"), np.dtype("float"), np.dtype("O"), pd.Int64Dtype()]),
         )
         self.assertEqual(dft["F"][0], "false")
         self.assertTrue(isinstance(dft["H"][1], str))
@@ -110,7 +110,7 @@ class WriterTestCase(unittest.TestCase):
         dtypes = set(self.dft.dtypes)
         self.assertEqual(
             dtypes,
-            set([np.dtype("int"), np.dtype("float"), np.dtype("O"), pd.Int64Dtype()]),
+            set([np.dtype("int64"), np.dtype("float"), np.dtype("O"), pd.Int64Dtype()]),
         )
         self.assertEqual(self.dft["F"][0], "false")
 
@@ -119,7 +119,7 @@ class WriterTestCase(unittest.TestCase):
         dtypes = set(self.dft.dtypes)
         self.assertEqual(
             dtypes,
-            set([np.dtype("int"), np.dtype("float"), np.dtype("O"), pd.Int64Dtype()]),
+            set([np.dtype("int64"), np.dtype("float"), np.dtype("O"), pd.Int64Dtype()]),
         )
         self.assertTrue(self.dft["H"].apply(_isinstance_or_null, args=(list,)).all())
         self.assertTrue(self.dft["I"].apply(_isinstance_or_null, args=(list,)).all())
