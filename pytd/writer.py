@@ -2,6 +2,7 @@ import abc
 import gzip
 import io
 import logging
+import os
 import tempfile
 import time
 import uuid
@@ -421,7 +422,7 @@ class BulkImportWriter(Writer):
         _cast_dtypes(dataframe, keep_list=keep_list)
 
         if fmt == "csv":
-            fp = tempfile.NamedTemporaryFile(suffix=".csv")
+            fp = tempfile.NamedTemporaryFile(suffix=".csv", delete=False)
             dataframe.to_csv(fp.name)
         elif fmt == "msgpack":
             _replace_pd_na(dataframe)
@@ -437,6 +438,8 @@ class BulkImportWriter(Writer):
         self._bulk_import(table, fp, if_exists, fmt)
 
         fp.close()
+        if fmt == "csv":
+            os.unlink(fp.name)
 
     def _bulk_import(self, table, file_like, if_exists, fmt="csv"):
         """Write a specified CSV file to a Treasure Data table.
