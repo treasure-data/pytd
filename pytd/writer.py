@@ -6,6 +6,7 @@ import os
 import tempfile
 import time
 import uuid
+from contextlib import ExitStack
 
 import msgpack
 import numpy as np
@@ -421,25 +422,25 @@ class BulkImportWriter(Writer):
 
         _cast_dtypes(dataframe, keep_list=keep_list)
 
-        if fmt == "csv":
-            fp = tempfile.NamedTemporaryFile(suffix=".csv", delete=False)
-            dataframe.to_csv(fp.name)
-        elif fmt == "msgpack":
-            _replace_pd_na(dataframe)
+        with ExitStack() as stack:
+            if fmt == "csv":
+                fp = tempfile.NamedTemporaryFile(suffix=".csv", delete=False)
+                stack.callback(os.unlink, fp.name)
+                stack.callback(fp.close)
+                dataframe.to_csv(fp.name)
+            elif fmt == "msgpack":
+                _replace_pd_na(dataframe)
 
-            fp = io.BytesIO()
-            fp = self._write_msgpack_stream(dataframe.to_dict(orient="records"), fp)
-        else:
-            raise ValueError(
-                "unsupported format '{}' for bulk import. "
-                "should be 'csv' or 'msgpack'".format(fmt)
-            )
-
-        self._bulk_import(table, fp, if_exists, fmt)
-
-        fp.close()
-        if fmt == "csv":
-            os.unlink(fp.name)
+                fp = io.BytesIO()
+                fp = self._write_msgpack_stream(dataframe.to_dict(orient="records"), fp)
+                stack.callback(fp.close)
+            else:
+                raise ValueError(
+                    "unsupported format '{}' for bulk import. "
+                    "should be 'csv' or 'msgpack'".format(fmt)
+                )
+            self._bulk_import(table, fp, if_exists, fmt)
+            stack.close()
 
     def _bulk_import(self, table, file_like, if_exists, fmt="csv"):
         """Write a specified CSV file to a Treasure Data table.
