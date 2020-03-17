@@ -1,4 +1,5 @@
 import io
+import os
 import unittest
 from unittest.mock import ANY, MagicMock
 
@@ -249,6 +250,26 @@ class BulkImportWriterTestCase(unittest.TestCase):
         self.assertTrue(self.table.client.api_client.create_bulk_import.called)
         args, kwargs = self.table.client.api_client.create_bulk_import.call_args
         self.assertEqual(kwargs.get("params"), None)
+
+    def test_write_dataframe_tempfile_deletion(self):
+        # Case #1: bulk import succeeded
+        self.writer._bulk_import = MagicMock()
+        self.writer.write_dataframe(
+            pd.DataFrame([[1, 2], [3, 4]]), self.table, "overwrite"
+        )
+        # file pointer to a temp CSV file
+        fp = self.writer._bulk_import.call_args[0][1]
+        # temp file should not exist
+        self.assertFalse(os.path.isfile(fp.name))
+
+        # Case #2: bulk import failed
+        self.writer._bulk_import = MagicMock(side_effect=Exception())
+        with self.assertRaises(Exception):
+            self.writer.write_dataframe(
+                pd.DataFrame([[1, 2], [3, 4]]), self.table, "overwrite"
+            )
+        fp = self.writer._bulk_import.call_args[0][1]
+        self.assertFalse(os.path.isfile(fp.name))
 
     def test_write_dataframe_msgpack(self):
         df = pd.DataFrame([[1, 2], [3, 4]])
