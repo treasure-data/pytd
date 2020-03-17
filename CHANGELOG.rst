@@ -1,6 +1,12 @@
 Changelog
 =========
 
+v1.2.0 (2020-03-18)
+-------------------
+
+- Support nullable column containing ``pandas.NA``, which was `newly introduced in pandas 1.0.0 <https://pandas.pydata.org/pandas-docs/version/1.0.0/whatsnew/v1.0.0.html#experimental-na-scalar-to-denote-missing-values>`__. The ``Writer`` module internally converts ``pandas.NA`` into ``None`` before ingesting ``pandas.DataFrame`` to Treasure Data. (`#72 <https://github.com/treasure-data/pytd/pull/72>`__)
+
+
 v1.1.0 (2020-03-07)
 -------------------
 
