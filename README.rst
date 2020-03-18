@@ -180,7 +180,7 @@ Consequently, all ``pandas_td`` code should keep running correctly with
 `here <https://github.com/treasure-data/pytd/issues/new>`__ if you
 noticed any incompatible behaviors.
 
-.. |Build status| image:: https://github.com/treasure-data/pytd/workflows/Build%20and%20test%20pytd/badge.svg
+.. |Build status| image:: https://github.com/treasure-data/pytd/workflows/Build/badge.svg
    :target: https://github.com/treasure-data/pytd/actions/
 .. |PyPI version| image:: https://badge.fury.io/py/pytd.svg
    :target: https://badge.fury.io/py/pytd
