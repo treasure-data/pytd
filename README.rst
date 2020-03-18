@@ -1,7 +1,7 @@
 pytd
 ====
 
-|Build Status| |Build status| |PyPI version| |docs status|
+|Build status| |PyPI version| |docs status|
 
 **pytd** provides user-friendly interfaces to Treasure Data’s `REST
 APIs <https://github.com/treasure-data/td-client-python>`__, `Presto
@@ -180,10 +180,8 @@ Consequently, all ``pandas_td`` code should keep running correctly with
 `here <https://github.com/treasure-data/pytd/issues/new>`__ if you
 noticed any incompatible behaviors.
 
-.. |Build Status| image:: https://travis-ci.org/treasure-data/pytd.svg?branch=master
-   :target: https://travis-ci.org/treasure-data/pytd
-.. |Build status| image:: https://ci.appveyor.com/api/projects/status/h1os6uvl598o7cau?svg=true
-   :target: https://ci.appveyor.com/project/takuti/pytd
+.. |Build status| image:: https://github.com/treasure-data/pytd/workflows/Build%20and%20test%20pytd/badge.svg
+   :target: https://github.com/treasure-data/pytd/actions/
 .. |PyPI version| image:: https://badge.fury.io/py/pytd.svg
    :target: https://badge.fury.io/py/pytd
 .. |docs status| image:: https://readthedocs.org/projects/pytd-doc/badge/?version=latest
