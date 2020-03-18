@@ -15,17 +15,6 @@ from .spark import fetch_td_spark_context
 
 logger = logging.getLogger(__name__)
 
-if pd.__version__ >= "1.0.0":
-    logger.warning(
-        "You are using pandas 1.0.0 or later, but pytd is not fully tested on "
-        "the major version. Since the version has introduced some "
-        "experimental, backward-incompatible features, there might be a "
-        "chance of unexpected runtime failure when you handle a DataFrame "
-        "containing null or array. See pandas official documentation for more "
-        "information: "
-        "https://pandas.pydata.org/pandas-docs/version/1.0.0/whatsnew/v1.0.0.html"
-    )
-
 
 def _is_pd_na(x):
     is_na = pd.isna(x)
