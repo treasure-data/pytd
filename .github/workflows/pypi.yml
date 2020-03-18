@@ -1,6 +1,8 @@
 name: Publish Python Package to PyPI
 
-on: push
+on:
+  release:
+    types: [created]
 
 jobs:
   deploy:
@@ -18,7 +20,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine
     - name: Build and publish to PyPI
-      if: startsWith(github.event.ref, 'refs/tags')  # publish only on tagged commit
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
