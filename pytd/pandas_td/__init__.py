@@ -361,6 +361,7 @@ def to_td(
     chunksize=10000,
     date_format=None,
     writer="bulk_import",
+    **kwargs
 ):
     """Write a DataFrame to a Treasure Data table.
 
@@ -442,7 +443,7 @@ def to_td(
     frame = _convert_date_format(frame, date_format)
 
     database, table = name.split(".")
-    con.get_table(database, table).import_dataframe(frame, writer, mode)
+    con.get_table(database, table).import_dataframe(frame, writer, mode, **kwargs)
 
 
 def _convert_time_column(frame, time_col=None, time_index=None):
