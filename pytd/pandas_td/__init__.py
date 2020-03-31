@@ -424,6 +424,20 @@ def to_td(
                 :class:`pytd.writer.Writer`, default: 'bulk_import'
         A Writer to choose writing method to Treasure Data. If not given or
         string value, a temporal Writer instance will be created.
+
+    fmt : str, {'csv', 'msgpack'}, default: 'csv'
+        Format for bulk_import.
+
+        - csv
+            Convert dataframe to temporary CSV file. Stable option but slower
+            than msgpack option because pytd saves dataframe as temporary CSV file,
+            then td-client converts it to msgpack.
+            Types of columns are guessed by ``pandas.read_csv`` and it causes
+            unintended type conversion e.g., 0-padded string ``"00012"`` into
+            integer ``12``.
+        - msgpack
+            Convert to temporary msgpack.gz file. Fast option but there is a
+            slight difference on type conversion compared to csv.
     """
     if if_exists == "fail" or if_exists == "error":
         mode = "error"
