@@ -201,6 +201,9 @@ class Client(object):
             - ``retry_limit`` (int): max number of automatic retries
             - ``wait_interval`` (int): sleep interval until job finish
             - ``wait_callback`` (function): called every interval against job itself
+            - ``engine_version`` (str): run query with Hive 2 if this parameter
+              is set to ``"experimental"`` and ``engine`` denotes Hive.
+              https://support.treasuredata.com/hc/en-us/articles/360027259074-How-to-use-Hive-2
 
         Returns
         -------
