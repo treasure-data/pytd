@@ -340,9 +340,12 @@ class BulkImportWriter(Writer):
                 Convert dataframe to temporary CSV file. Stable option but slower
                 than msgpack option because pytd saves dataframe as temporary CSV file,
                 then td-client converts it to msgpack.
+                Types of columns are guessed by ``pandas.read_csv`` and it causes
+                unintended type conversion e.g., 0-padded string ``"00012"`` into
+                integer ``12``.
             - msgpack
-                Convert to temporary msgpack.gz file. Fast option but might be
-                unstable because of skipping ``tdclient.API._prepare_file()``
+                Convert to temporary msgpack.gz file. Fast option but there is a
+                slight difference on type conversion compared to csv.
 
         keep_list : boolean, default: False
             If this argument is True, keep list or numpy.ndarray column as list, which
