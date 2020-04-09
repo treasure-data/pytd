@@ -178,6 +178,7 @@ def read_td_query(
     """
     if params is None:
         params = {}
+    params["force_tdclient"] = True
 
     if isinstance(engine, PrestoQueryEngine) and distributed_join is not None:
         header = engine.create_header(
