@@ -77,6 +77,12 @@ class QueryEngine(metaclass=abc.ABCMeta):
               is set to ``"experimental"`` in ``HiveQueryEngine``.
               https://support.treasuredata.com/hc/en-us/articles/360027259074-How-to-use-Hive-2
 
+            Meanwhile, when a following argument is set to ``True``, query is
+            deterministically issued via ``tdclient``.
+
+            - ``force_tdclient`` (bool): force Presto engines to issue a query
+              via ``tdclient`` rather than its default ``prestodb`` interface.
+
         Returns
         -------
         dict : keys ('data', 'columns')
@@ -122,7 +128,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
         return header
 
     @abc.abstractmethod
-    def cursor(self, **kwargs):
+    def cursor(self, force_tdclient=False, **kwargs):
         pass
 
     @abc.abstractmethod
@@ -269,11 +275,16 @@ class PrestoQueryEngine(QueryEngine):
             "TD_PRESTO_API", urlparse(self.endpoint).netloc.replace("api", "api-presto")
         )
 
-    def cursor(self, **kwargs):
+    def cursor(self, force_tdclient=False, **kwargs):
         """Get cursor defined by DB-API.
 
         Parameters
         ----------
+        force_tdclient : bool
+            Specify whether the method always returns
+            :class:`tdclient.cursor.Cursor`.  If ``False``, returned cursor
+            type is dynamically selected depending on ``**kwargs``.
+
         **kwargs
             Treasure Data-specific optional query parameters. Giving these
             keyword arguments forces query engine to issue a query via Treasure
@@ -297,7 +308,7 @@ class PrestoQueryEngine(QueryEngine):
         -------
         prestodb.dbapi.Cursor, or tdclient.cursor.Cursor
         """
-        if len(kwargs) == 0:
+        if not force_tdclient and len(kwargs) == 0:
             return self.prestodb_connection.cursor()
 
         return self._get_tdclient_cursor(self.tdclient_connection, **kwargs)
@@ -357,11 +368,18 @@ class HiveQueryEngine(QueryEngine):
         """
         return "pytd/{0} (tdclient/{1})".format(__version__, tdclient.__version__)
 
-    def cursor(self, **kwargs):
+    def cursor(self, force_tdclient=True, **kwargs):
         """Get cursor defined by DB-API.
 
         Parameters
         ----------
+        force_tdclient : bool
+            Specify whether the method always returns
+            :class:`tdclient.cursor.Cursor`.  Currently, the parameter changes
+            nothing in ``HiveQueryEngine`` since
+            :class:`tdclient.cursor.Curosr` is the only option as a type of
+            returned value.
+
         **kwargs
             Treasure Data-specific optional query parameters. Giving these
             keyword arguments forces query engine to issue a query via Treasure

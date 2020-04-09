@@ -85,6 +85,10 @@ class PrestoQueryEngineTestCase(unittest.TestCase):
         self.presto.cursor()
         self.assertTrue(self.presto.prestodb_connection.cursor.called)
 
+    def test_cursor_tdclient(self):
+        self.presto.cursor(force_tdclient=True)
+        self.assertTrue(self.presto.tdclient_connection.cursor.called)
+
     def test_cursor_with_params(self):
         self.presto.cursor(priority="LOW")
         self.assertTrue(self.presto.tdclient_connection.cursor.called)
@@ -133,6 +137,10 @@ class HiveQueryEngineTestCase(unittest.TestCase):
 
     def test_cursor(self):
         self.hive.cursor()
+        self.assertTrue(self.hive.engine.cursor.called)
+
+        # the `force_tdclient` flag has no effect for HiveQueryEngine
+        self.hive.cursor(force_tdclient=False)
         self.assertTrue(self.hive.engine.cursor.called)
 
     def test_close(self):
