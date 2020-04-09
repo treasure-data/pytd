@@ -306,7 +306,7 @@ class PrestoQueryEngine(QueryEngine):
 
         Returns
         -------
-        prestodb.dbapi.Cursor, or tdclient.cursor.Cursor
+        :class:`prestodb.dbapi.Cursor`, or :class:`tdclient.cursor.Cursor`
         """
         if not force_tdclient and len(kwargs) == 0:
             return self.prestodb_connection.cursor()
