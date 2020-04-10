@@ -205,6 +205,12 @@ class Client(object):
               is set to ``"experimental"`` and ``engine`` denotes Hive.
               https://support.treasuredata.com/hc/en-us/articles/360027259074-How-to-use-Hive-2
 
+            Meanwhile, when a following argument is set to ``True``, query is
+            deterministically issued via ``tdclient``.
+
+            - ``force_tdclient`` (bool): force Presto engines to issue a query
+              via ``tdclient`` rather than its default ``prestodb`` interface.
+
         Returns
         -------
         dict : keys ('data', 'columns')

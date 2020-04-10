@@ -126,6 +126,11 @@ def read_td_query(
     Optionally provide an index_col parameter to use one of the columns as
     the index, otherwise default integer index will be used.
 
+    While Presto in pytd has two options to issue a query, by either
+    ``tdclient`` or ``prestodb``, pytd.pandas_td#read_td_query always uses the
+    former to be compatible with the original pandas-td. Use
+    :class:`pytd.Client` to take advantage of the latter option.
+
     Parameters
     ----------
     query : str
@@ -178,6 +183,7 @@ def read_td_query(
     """
     if params is None:
         params = {}
+    params["force_tdclient"] = True
 
     if isinstance(engine, PrestoQueryEngine) and distributed_join is not None:
         header = engine.create_header(
