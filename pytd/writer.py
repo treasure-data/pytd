@@ -200,6 +200,11 @@ class InsertIntoWriter(Writer):
         if self.closed:
             raise RuntimeError("this writer is already closed and no longer available")
 
+        if isinstance(table, str):
+            raise TypeError(
+                "table '{}' should be pytd.table.Table, not str".format(table)
+            )
+
         _cast_dtypes(dataframe)
 
         column_names, column_types = _get_schema(dataframe)
@@ -404,6 +409,11 @@ class BulkImportWriter(Writer):
         """
         if self.closed:
             raise RuntimeError("this writer is already closed and no longer available")
+
+        if isinstance(table, str):
+            raise TypeError(
+                "table '{}' should be pytd.table.Table, not str".format(table)
+            )
 
         if "time" not in dataframe.columns:  # need time column for bulk import
             dataframe["time"] = int(time.time())
@@ -621,6 +631,11 @@ class SparkWriter(Writer):
 
         if if_exists not in ("error", "overwrite", "append", "ignore"):
             raise ValueError("invalid value for if_exists: {}".format(if_exists))
+
+        if isinstance(table, str):
+            raise TypeError(
+                "table '{}' should be pytd.table.Table, not str".format(table)
+            )
 
         if self.td_spark is None:
             self.td_spark = fetch_td_spark_context(

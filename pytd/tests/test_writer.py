@@ -203,6 +203,10 @@ class InsertIntoWriterTestCase(unittest.TestCase):
                 pd.DataFrame([[1, 2], [3, 4]]), self.table, "error"
             )
 
+    def test_table(self):
+        with self.assertRaises(TypeError):
+            self.writer.write_dataframe(pd.DataFrame([[1, 2], [3, 4]]), "foo", "error")
+
 
 class BulkImportWriterTestCase(unittest.TestCase):
     def setUp(self):
@@ -361,6 +365,10 @@ class BulkImportWriterTestCase(unittest.TestCase):
                 pd.DataFrame([[1, 2], [3, 4]]), self.table, "error"
             )
 
+    def test_table(self):
+        with self.assertRaises(TypeError):
+            self.writer.write_dataframe(pd.DataFrame([[1, 2], [3, 4]]), "foo", "error")
+
 
 class SparkWriterTestCase(unittest.TestCase):
     def setUp(self):
@@ -442,3 +450,7 @@ class SparkWriterTestCase(unittest.TestCase):
             self.writer.write_dataframe(
                 pd.DataFrame([[1, 2], [3, 4]]), self.table, "error"
             )
+
+    def test_table(self):
+        with self.assertRaises(TypeError):
+            self.writer.write_dataframe(pd.DataFrame([[1, 2], [3, 4]]), "foo", "error")
