@@ -6,7 +6,7 @@ pytd
 **pytd** provides user-friendly interfaces to Treasure Data’s `REST
 APIs <https://github.com/treasure-data/td-client-python>`__, `Presto
 query
-engine <https://support.treasuredata.com/hc/en-us/articles/360001457427-Presto-Query-Engine-Introduction>`__,
+engine <https://tddocs.atlassian.net/wiki/spaces/PD/pages/1083607/Presto+Query+Engine+Introduction>`__,
 and `Plazma primary
 storage <https://www.slideshare.net/treasure-data/td-techplazma>`__.
 
@@ -29,9 +29,9 @@ Usage
    Colaboratory <https://colab.research.google.com/drive/1ps_ChU-H2FvkeNlj1e1fcOebCt4ryN11>`__
 
 Set your `API
-key <https://support.treasuredata.com/hc/en-us/articles/360000763288-Get-API-Keys>`__
+key <https://tddocs.atlassian.net/wiki/spaces/PD/pages/1081428/Getting+Your+API+Keys>`__
 and
-`endpoint <https://support.treasuredata.com/hc/en-us/articles/360001474288-Sites-and-Endpoints>`__
+`endpoint <https://tddocs.atlassian.net/wiki/spaces/PD/pages/1085143/Sites+and+Endpoints>`__
 to the environment variables, ``TD_API_KEY`` and ``TD_API_SERVER``,
 respectively, and create a client instance:
 
@@ -93,7 +93,7 @@ data to Treasure Data:
       query through the Presto query engine.
    -  Recommended only for a small volume of data.
 
-3. `td-spark <https://support.treasuredata.com/hc/en-us/articles/360001487167-Apache-Spark-Driver-td-spark-FAQs>`__:
+3. `td-spark <https://tddocs.atlassian.net/wiki/spaces/PD/pages/1082513/Apache+Spark+Driver+td-spark+FAQs>`__:
    ``spark``
 
    -  Local customized Spark instance directly writes ``DataFrame`` to

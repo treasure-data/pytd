@@ -68,7 +68,7 @@ def fetch_td_spark_context(
     endpoint : str, optional
         Treasure Data API server. If not given, ``https://api.treasuredata.com`` is
         used by default. List of available endpoints is:
-        https://support.treasuredata.com/hc/en-us/articles/360001474288-Sites-and-Endpoints
+        https://tddocs.atlassian.net/wiki/spaces/PD/pages/1085143/Sites+and+Endpoints
 
     td_spark_path : str, optional
         Path to td-spark-assembly_x.xx-x.x.x.jar. If not given, seek a path
