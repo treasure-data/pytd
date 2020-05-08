@@ -137,8 +137,36 @@ with ``td_spark_path`` option would be helpful.
    writer = SparkWriter(apikey='1/XXX', endpoint='https://api.treasuredata.com/', td_spark_path='/path/to/td-spark-assembly.jar')
    client.load_table_from_dataframe(df, 'mydb.bar', writer=writer, if_exists='overwrite')
 
+Comparison between pytd, td-client-python, and pandas-td
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Treasure Data offers three different Python clients on GitHub, and the following list summarizes their characteristics.
+
+1. `td-client-python <https://github.com/treasure-data/td-client-python>`__
+
+   - Basic REST API wrapper.
+   - Similar functionalities to td-client-{`ruby <https://github.com/treasure-data/td-client-ruby>`__, `java <https://github.com/treasure-data/td-client-java>`__, `node <https://github.com/treasure-data/td-client-node>`__, `go <https://github.com/treasure-data/td-client-go>`__}.
+   - The capability is limited by `what Treasure Data REST API can do <https://tddocs.atlassian.net/wiki/spaces/PD/pages/1085354/REST+APIs+in+Treasure+Data>`__.
+
+2. `pandas-td <https://github.com/treasure-data/pandas-td>`__ *(deprecated)*
+
+   - Old alternative tool optimized for `pandas <https://pandas.pydata.org>`__ and `Jupyter Notebook <https://jupyter.org>`__.
+
+3. **pytd**
+
+   - Access to Plazma via td-spark as introduced above.
+   - Efficient connection to Presto based on `presto-python-client <https://github.com/prestodb/presto-python-client>`__.
+   - Multiple data ingestion methods and a variety of utility functions.
+   - pandas-td-compatible function set (see below for the detail).
+
+An optimal choice of package depends on your specific use case, but common guidelines can be listed as follows:
+
+- Use td-client-python if you want to execute *basic CRUD operations* from Python applications.
+- Use **pytd** for (1) *analytical purpose* relying on pandas and Jupyter Notebook, and (2) achieving *more efficient data access* at ease.
+- Do not use pandas-td. If you are using pandas-td, replace the code with pytd based on the following guidance as soon as possible.
+
 How to replace pandas-td
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 **pytd** offers
 `pandas-td <https://github.com/treasure-data/pandas-td>`__-compatible
