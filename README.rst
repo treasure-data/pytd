@@ -148,16 +148,16 @@ Treasure Data offers three different Python clients on GitHub, and the following
    - Similar functionalities to td-client-{`ruby <https://github.com/treasure-data/td-client-ruby>`__, `java <https://github.com/treasure-data/td-client-java>`__, `node <https://github.com/treasure-data/td-client-node>`__, `go <https://github.com/treasure-data/td-client-go>`__}.
    - The capability is limited by `what Treasure Data REST API can do <https://tddocs.atlassian.net/wiki/spaces/PD/pages/1085354/REST+APIs+in+Treasure+Data>`__.
 
-2. `pandas-td <https://github.com/treasure-data/pandas-td>`__ *(deprecated)*
-
-   - Old alternative tool optimized for `pandas <https://pandas.pydata.org>`__ and `Jupyter Notebook <https://jupyter.org>`__.
-
-3. **pytd**
+2. **pytd**
 
    - Access to Plazma via td-spark as introduced above.
    - Efficient connection to Presto based on `presto-python-client <https://github.com/prestodb/presto-python-client>`__.
    - Multiple data ingestion methods and a variety of utility functions.
-   - pandas-td-compatible function set (see below for the detail).
+
+3. `pandas-td <https://github.com/treasure-data/pandas-td>`__ *(deprecated)*
+
+   - Old tool optimized for `pandas <https://pandas.pydata.org>`__ and `Jupyter Notebook <https://jupyter.org>`__.
+   - **pytd** offers its compatible function set (see below for the detail).
 
 An optimal choice of package depends on your specific use case, but common guidelines can be listed as follows:
 
