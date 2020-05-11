@@ -1,6 +1,16 @@
 Changelog
 =========
 
+v1.3.0 (2020-05-11)
+-------------------
+
+- Enable passing extra keyword arguments (e.g., ``fmt="msgpack"``) to ``pandas_td.to_td``. (`#80 <https://github.com/treasure-data/pytd/pull/80>`__)
+- Support ``engine_version`` option in query APIs. (`#81 <https://github.com/treasure-data/pytd/pull/81>`__)
+- Add ``force_tdclient`` option to Presto query interfaces for deterministically using ``tdclient`` rather than ``prestodb``. (`#85 <https://github.com/treasure-data/pytd/pull/85>`__)
+- Add a precondition check to ``Writer#write_dataframe`` for making sure the type of ``table`` argument. (`#86 <https://github.com/treasure-data/pytd/pull/86>`__)
+- Documentation updates. (`#82 <https://github.com/treasure-data/pytd/pull/82>`__, `#89 <https://github.com/treasure-data/pytd/pull/89>`__)
+
+
 v1.2.0 (2020-03-18)
 -------------------
 
