@@ -6,7 +6,7 @@ pytd
 **pytd** provides user-friendly interfaces to Treasure Data’s `REST
 APIs <https://github.com/treasure-data/td-client-python>`__, `Presto
 query
-engine <https://support.treasuredata.com/hc/en-us/articles/360001457427-Presto-Query-Engine-Introduction>`__,
+engine <https://tddocs.atlassian.net/wiki/spaces/PD/pages/1083607/Presto+Query+Engine+Introduction>`__,
 and `Plazma primary
 storage <https://www.slideshare.net/treasure-data/td-techplazma>`__.
 
@@ -29,9 +29,9 @@ Usage
    Colaboratory <https://colab.research.google.com/drive/1ps_ChU-H2FvkeNlj1e1fcOebCt4ryN11>`__
 
 Set your `API
-key <https://support.treasuredata.com/hc/en-us/articles/360000763288-Get-API-Keys>`__
+key <https://tddocs.atlassian.net/wiki/spaces/PD/pages/1081428/Getting+Your+API+Keys>`__
 and
-`endpoint <https://support.treasuredata.com/hc/en-us/articles/360001474288-Sites-and-Endpoints>`__
+`endpoint <https://tddocs.atlassian.net/wiki/spaces/PD/pages/1085143/Sites+and+Endpoints>`__
 to the environment variables, ``TD_API_KEY`` and ``TD_API_SERVER``,
 respectively, and create a client instance:
 
@@ -93,7 +93,7 @@ data to Treasure Data:
       query through the Presto query engine.
    -  Recommended only for a small volume of data.
 
-3. `td-spark <https://support.treasuredata.com/hc/en-us/articles/360001487167-Apache-Spark-Driver-td-spark-FAQs>`__:
+3. `td-spark <https://treasure-data.github.io/td-spark/>`__:
    ``spark``
 
    -  Local customized Spark instance directly writes ``DataFrame`` to
@@ -137,8 +137,36 @@ with ``td_spark_path`` option would be helpful.
    writer = SparkWriter(apikey='1/XXX', endpoint='https://api.treasuredata.com/', td_spark_path='/path/to/td-spark-assembly.jar')
    client.load_table_from_dataframe(df, 'mydb.bar', writer=writer, if_exists='overwrite')
 
+Comparison between pytd, td-client-python, and pandas-td
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Treasure Data offers three different Python clients on GitHub, and the following list summarizes their characteristics.
+
+1. `td-client-python <https://github.com/treasure-data/td-client-python>`__
+
+   - Basic REST API wrapper.
+   - Similar functionalities to td-client-{`ruby <https://github.com/treasure-data/td-client-ruby>`__, `java <https://github.com/treasure-data/td-client-java>`__, `node <https://github.com/treasure-data/td-client-node>`__, `go <https://github.com/treasure-data/td-client-go>`__}.
+   - The capability is limited by `what Treasure Data REST API can do <https://tddocs.atlassian.net/wiki/spaces/PD/pages/1085354/REST+APIs+in+Treasure+Data>`__.
+
+2. **pytd**
+
+   - Access to Plazma via td-spark as introduced above.
+   - Efficient connection to Presto based on `presto-python-client <https://github.com/prestodb/presto-python-client>`__.
+   - Multiple data ingestion methods and a variety of utility functions.
+
+3. `pandas-td <https://github.com/treasure-data/pandas-td>`__ *(deprecated)*
+
+   - Old tool optimized for `pandas <https://pandas.pydata.org>`__ and `Jupyter Notebook <https://jupyter.org>`__.
+   - **pytd** offers its compatible function set (see below for the detail).
+
+An optimal choice of package depends on your specific use case, but common guidelines can be listed as follows:
+
+- Use td-client-python if you want to execute *basic CRUD operations* from Python applications.
+- Use **pytd** for (1) *analytical purpose* relying on pandas and Jupyter Notebook, and (2) achieving *more efficient data access* at ease.
+- Do not use pandas-td. If you are using pandas-td, replace the code with pytd based on the following guidance as soon as possible.
+
 How to replace pandas-td
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 **pytd** offers
 `pandas-td <https://github.com/treasure-data/pandas-td>`__-compatible
@@ -179,13 +207,6 @@ Consequently, all ``pandas_td`` code should keep running correctly with
 ``pytd``. Report an issue from
 `here <https://github.com/treasure-data/pytd/issues/new>`__ if you
 noticed any incompatible behaviors.
-
-.. note:: There is a known difference to ``pandas_td.to_td`` function for type conversion.
-   Since :class:`pytd.writer.BulkImportWriter`, default writer pytd, uses CSV as an intermediate file before
-   uploading a table, column type may change via ``pandas.read_csv``. To respect column type as much as possible,
-   you need to pass `fmt="msgpack"` argument to ``to_td`` function.
-
-   For more detail, see ``fmt`` option of :func:`pytd.pandas_td.to_td`.
 
 .. |Build status| image:: https://github.com/treasure-data/pytd/workflows/Build/badge.svg
    :target: https://github.com/treasure-data/pytd/actions/
