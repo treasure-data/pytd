@@ -93,7 +93,7 @@ data to Treasure Data:
       query through the Presto query engine.
    -  Recommended only for a small volume of data.
 
-3. `td-spark <https://tddocs.atlassian.net/wiki/spaces/PD/pages/1082513/Apache+Spark+Driver+td-spark+FAQs>`__:
+3. `td-spark <https://treasure-data.github.io/td-spark/>`__:
    ``spark``
 
    -  Local customized Spark instance directly writes ``DataFrame`` to
