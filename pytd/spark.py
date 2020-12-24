@@ -9,12 +9,12 @@ TD_SPARK_BASE_URL = "https://s3.amazonaws.com/td-spark/"
 logger = logging.getLogger(__name__)
 
 
-def download_td_spark(spark_binary_version="2.11", version="latest", destination=None):
+def download_td_spark(spark_binary_version="2.4.7", version="latest", destination=None):
     """Download a td-spark jar file from S3.
 
     Parameters
     ----------
-    spark_binary_version : str, default: '2.11'
+    spark_binary_version : str, default: '2.4.7'
         Apache Spark binary version.
 
     version : str, default: 'latest'
@@ -23,8 +23,8 @@ def download_td_spark(spark_binary_version="2.11", version="latest", destination
     destination : str, optional
         Where a downloaded jar file to be stored.
     """
-    td_spark_jar_name = "td-spark-assembly_{}-{}.jar".format(
-        spark_binary_version, version
+    td_spark_jar_name = "td-spark-assembly-{}_spark{}.jar".format(
+        version, spark_binary_version
     )
 
     if destination is None:
@@ -71,7 +71,8 @@ def fetch_td_spark_context(
         https://tddocs.atlassian.net/wiki/spaces/PD/pages/1085143/Sites+and+Endpoints
 
     td_spark_path : str, optional
-        Path to td-spark-assembly_x.xx-x.x.x.jar. If not given, seek a path
+        Path to td-spark-assembly-{td-spark-version}_spark{spark-version}.jar.
+        If not given, seek a path
         ``TDSparkContextBuilder.default_jar_path()`` by default.
 
     download_if_missing : bool, default: True

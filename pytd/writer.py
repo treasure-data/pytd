@@ -564,8 +564,9 @@ class SparkWriter(Writer):
     Parameters
     ----------
     td_spark_path : str, optional
-        Path to td-spark-assembly_x.xx-x.x.x.jar. If not given, seek a path
-        ``TDSparkContextBuilder.default_jar_path()`` by default.
+        Path to td-spark-assembly-{td-spark-version}_spark{spark-version}.jar.
+        If not given, seek a path ``TDSparkContextBuilder.default_jar_path()``
+        by default.
 
     download_if_missing : bool, default: True
         Download td-spark if it does not exist at the time of initialization.
@@ -576,7 +577,7 @@ class SparkWriter(Writer):
     Attributes
     ----------
     td_spark_path : str
-        Path to td-spark-assembly_x.xx-x.x.x.jar.
+        Path to td-spark-assembly-{td-spark-version}_spark{spark-version}.jar.
 
     download_if_missing : bool
         Download td-spark if it does not exist at the time of initialization.
