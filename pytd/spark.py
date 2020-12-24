@@ -86,9 +86,9 @@ def fetch_td_spark_context(
         Connection of td-spark
     """
     try:
+        import td_pyspark
         from pyspark.conf import SparkConf
         from pyspark.sql import SparkSession
-        import td_pyspark
         from td_pyspark import TDSparkContextBuilder
     except ImportError:
         raise RuntimeError("td_pyspark is not installed")

@@ -34,7 +34,7 @@ URL = "https://github.com/treasure-data/pytd"
 
 
 def setup_package():
-    from setuptools import setup, find_packages
+    from setuptools import find_packages, setup
 
     metadata = dict(
         name=DISTNAME,
