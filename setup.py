@@ -68,7 +68,7 @@ def setup_package():
             "pytz>=2018.5",
         ],
         extras_require={
-            "spark": ["td-pyspark>=19.9.0", "pyspark>=2.4.0", "pyarrow>=0.11.0"],
+            "spark": ["td-pyspark>20.10.0", "pyspark>=3.0.0", "pyarrow>=0.12.1"],
             "test": ["pytest"],
             "doc": ["sphinx>=2.2.0", "sphinx_rtd_theme", "numpydoc", "ipython"],
         },
