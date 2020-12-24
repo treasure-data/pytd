@@ -118,6 +118,8 @@ def fetch_td_spark_context(
 
     if td_spark_path is None:
         td_spark_path = TDSparkContextBuilder.default_jar_path()
+    else:
+        td_spark_path = os.path.expanduser(td_spark_path)
 
     available = os.path.exists(td_spark_path)
 
