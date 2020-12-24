@@ -40,8 +40,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
 
     @property
     def user_agent(self):
-        """User agent passed to a query engine connection.
-        """
+        """User agent passed to a query engine connection."""
         return "pytd/{0}".format(__version__)
 
     def execute(self, query, **kwargs):
@@ -260,8 +259,7 @@ class PrestoQueryEngine(QueryEngine):
 
     @property
     def user_agent(self):
-        """User agent passed to a Presto connection.
-        """
+        """User agent passed to a Presto connection."""
         return "pytd/{0} (prestodb/{1}; tdclient/{2})".format(
             __version__, prestodb.__version__, tdclient.__version__
         )
@@ -314,8 +312,7 @@ class PrestoQueryEngine(QueryEngine):
         return self._get_tdclient_cursor(self.tdclient_connection, **kwargs)
 
     def close(self):
-        """Close a connection to Presto.
-        """
+        """Close a connection to Presto."""
         self.prestodb_connection.close()
         self.tdclient_connection.close()
 
@@ -364,8 +361,7 @@ class HiveQueryEngine(QueryEngine):
 
     @property
     def user_agent(self):
-        """User agent passed to a Hive connection.
-        """
+        """User agent passed to a Hive connection."""
         return "pytd/{0} (tdclient/{1})".format(__version__, tdclient.__version__)
 
     def cursor(self, force_tdclient=True, **kwargs):
@@ -408,8 +404,7 @@ class HiveQueryEngine(QueryEngine):
         return self._get_tdclient_cursor(self.engine, **kwargs)
 
     def close(self):
-        """Close a connection to Hive.
-        """
+        """Close a connection to Hive."""
         self.engine.close()
 
     def _connect(self):

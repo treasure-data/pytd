@@ -90,8 +90,7 @@ class Table(object):
             self.client.api_client.create_log_table(self.database, self.table)
 
     def delete(self):
-        """Delete a table from Treasure Data.
-        """
+        """Delete a table from Treasure Data."""
         self.client.api_client.delete_table(self.database, self.table)
 
     def import_dataframe(self, dataframe, writer, if_exists="error", **kwargs):
