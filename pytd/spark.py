@@ -144,6 +144,8 @@ def fetch_td_spark_context(
         site = "jp"
     if "eu01" in endpoint:
         site = "eu01"
+    if "ap02" in endpoint:
+        site = "ap02"
     builder.site(site)
 
     try:
