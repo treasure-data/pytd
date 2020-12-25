@@ -161,8 +161,7 @@ class Client(object):
         return self.api_client.job(job_id)
 
     def close(self):
-        """Close a client I/O session to Treasure Data.
-        """
+        """Close a client I/O session to Treasure Data."""
         self.default_engine.close()
         self.api_client.close()
 

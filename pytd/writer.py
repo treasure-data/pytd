@@ -44,8 +44,7 @@ def _isinstance_or_null(x, t):
 
 
 def _replace_pd_na(dataframe):
-    """Replace np.nan to None to avoid Int64 conversion issue
-    """
+    """Replace np.nan to None to avoid Int64 conversion issue"""
     if dataframe.isnull().any().any():
         dataframe.replace({np.nan: None}, inplace=True)
 
@@ -679,7 +678,6 @@ class SparkWriter(Writer):
             )
 
     def close(self):
-        """Close a PySpark session connected to Treasure Data.
-        """
+        """Close a PySpark session connected to Treasure Data."""
         if self.td_spark is not None:
             self.td_spark.spark.stop()
