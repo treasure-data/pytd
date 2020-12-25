@@ -55,8 +55,10 @@ class PrestoQueryEngineTestCase(unittest.TestCase):
         ua = self.presto.user_agent
         self.assertEqual(
             ua,
-            "pytd/{0} (prestodb/{1}; tdclient/{2})".format(
-                __version__, prestodb.__version__, tdclient.__version__
+            (
+                f"pytd/{__version__} "
+                f"(prestodb/{prestodb.__version__}; "
+                f"tdclient/{tdclient.__version__})"
             ),
         )
 
@@ -73,13 +75,13 @@ class PrestoQueryEngineTestCase(unittest.TestCase):
         ua = self.presto.user_agent
 
         header = self.presto.create_header()
-        self.assertEqual(header, "-- client: {0}\n".format(ua))
+        self.assertEqual(header, f"-- client: {ua}\n")
 
         header = self.presto.create_header("foo")
-        self.assertEqual(header, "-- client: {0}\n-- foo\n".format(ua))
+        self.assertEqual(header, f"-- client: {ua}\n-- foo\n")
 
         header = self.presto.create_header(["foo", "bar"])
-        self.assertEqual(header, "-- client: {0}\n-- foo\n-- bar\n".format(ua))
+        self.assertEqual(header, f"-- client: {ua}\n-- foo\n-- bar\n")
 
     def test_cursor(self):
         self.presto.cursor()
@@ -119,21 +121,19 @@ class HiveQueryEngineTestCase(unittest.TestCase):
         self.assertEqual(hive_no_header.create_header("foo"), "")
 
         ua = self.hive.user_agent
-        self.assertEqual(
-            ua, "pytd/{0} (tdclient/{1})".format(__version__, tdclient.__version__)
-        )
+        self.assertEqual(ua, f"pytd/{__version__} (tdclient/{tdclient.__version__})")
 
     def test_create_header(self):
         ua = self.hive.user_agent
 
         header = self.hive.create_header()
-        self.assertEqual(header, "-- client: {0}\n".format(ua))
+        self.assertEqual(header, f"-- client: {ua}\n")
 
         header = self.hive.create_header("foo")
-        self.assertEqual(header, "-- client: {0}\n-- foo\n".format(ua))
+        self.assertEqual(header, f"-- client: {ua}\n-- foo\n")
 
         header = self.hive.create_header(["foo", "bar"])
-        self.assertEqual(header, "-- client: {0}\n-- foo\n-- bar\n".format(ua))
+        self.assertEqual(header, f"-- client: {ua}\n-- foo\n-- bar\n")
 
     def test_cursor(self):
         self.hive.cursor()

@@ -27,9 +27,7 @@ class TableTestCase(unittest.TestCase):
     def test_create(self):
         self.table.create(column_names=["a"], column_types=["varchar"])
         self.table.client.query.assert_called_with(
-            "CREATE TABLE {}.{} (a varchar)".format(
-                self.database_name, self.table_name
-            ),
+            f"CREATE TABLE {self.database_name}.{self.table_name} (a varchar)",
             engine="presto",
         )
 

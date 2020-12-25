@@ -23,9 +23,7 @@ def download_td_spark(spark_binary_version="3.0.1", version="latest", destinatio
     destination : str, optional
         Where a downloaded jar file to be stored.
     """
-    td_spark_jar_name = "td-spark-assembly-{}_spark{}.jar".format(
-        version, spark_binary_version
-    )
+    td_spark_jar_name = f"td-spark-assembly-{version}_spark{spark_binary_version}.jar"
 
     if destination is None:
         destination = os.path.join(
