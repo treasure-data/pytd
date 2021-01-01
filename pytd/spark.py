@@ -105,7 +105,7 @@ def fetch_td_spark_context(
         SparkConf()
         .setMaster("local[*]")
         .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-        .set("spark.sql.execution.arrow.enabled", "true")
+        .set("spark.sql.execution.arrow.pyspark.enabled", "true")
     )
     if isinstance(spark_configs, dict):
         for k, v in spark_configs.items():
