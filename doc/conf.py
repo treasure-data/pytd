@@ -79,8 +79,8 @@ def linkcode_resolve(domain, info):
 # -- Project information -----------------------------------------------------
 
 project = GH_PROJECT
-copyright = "2019, Arm Treasure Data"
-author = "Arm Treasure Data"
+copyright = "2019, Treasure Data"
+author = "Treasure Data"
 
 # The full version, including alpha/beta/rc tags
 release = pkg_resources.get_distribution(PACKAGE).version
