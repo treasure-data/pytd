@@ -25,7 +25,7 @@ with open(
 DISTNAME = "pytd"
 DESCRIPTION = "Treasure Data Driver for Python"
 LONG_DESCRIPTION = long_description or __doc__
-AUTHOR = "Arm Treasure Data"
+AUTHOR = "Treasure Data"
 AUTHOR_EMAIL = "support@treasure-data.com"
 MAINTAINER = AUTHOR
 MAINTAINER_EMAIL = AUTHOR_EMAIL
