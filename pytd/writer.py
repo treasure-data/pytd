@@ -140,8 +140,8 @@ def _get_schema(dataframe):
         else:
             presto_type = "varchar"
             logger.info(
-                "column '{}' has non-numeric. The values are stored as "
-                "'varchar' type on Treasure Data.".format(c)
+                f"column '{c}' has non-numeric. The values are stored as "
+                "'varchar' type on Treasure Data."
             )
         column_names.append(c)
         column_types.append(presto_type)
@@ -200,9 +200,7 @@ class InsertIntoWriter(Writer):
             raise RuntimeError("this writer is already closed and no longer available")
 
         if isinstance(table, str):
-            raise TypeError(
-                "table '{}' should be pytd.table.Table, not str".format(table)
-            )
+            raise TypeError(f"table '{table}' should be pytd.table.Table, not str")
 
         _cast_dtypes(dataframe)
 
@@ -248,9 +246,7 @@ class InsertIntoWriter(Writer):
         if table.exists:
             if if_exists == "error":
                 raise RuntimeError(
-                    "target table '{}.{}' already exists".format(
-                        table.database, table.table
-                    )
+                    f"target table '{table.database}.{table.table}' already exists"
                 )
             elif if_exists == "ignore":
                 return
@@ -260,7 +256,7 @@ class InsertIntoWriter(Writer):
                 table.delete()
                 table.create(column_names, column_types)
             else:
-                raise ValueError("invalid valud for if_exists: {}".format(if_exists))
+                raise ValueError(f"invalid valud for if_exists: {if_exists}")
         else:
             table.create(column_names, column_types)
 
@@ -292,16 +288,18 @@ class InsertIntoWriter(Writer):
         for tpl in list_of_tuple:
             list_of_value_strings = [
                 (
-                    "'{}'".format(e.replace("'", '"'))
+                    f"""'{e.replace("'", '"')}'"""
                     if isinstance(e, str)
                     else ("null" if pd.isnull(e) else str(e))
                 )
                 for e in tpl
             ]
-            rows.append("({})".format(", ".join(list_of_value_strings)))
+            rows.append(f"({', '.join(list_of_value_strings)})")
 
-        return "INSERT INTO {}.{} ({}) VALUES {}".format(
-            database, table, ", ".join(map(str, column_names)), ", ".join(rows)
+        return (
+            f"INSERT INTO {database}.{table} "
+            f"({', '.join(map(str, column_names))}) "
+            f"VALUES {', '.join(rows)}"
         )
 
 
@@ -410,9 +408,7 @@ class BulkImportWriter(Writer):
             raise RuntimeError("this writer is already closed and no longer available")
 
         if isinstance(table, str):
-            raise TypeError(
-                "table '{}' should be pytd.table.Table, not str".format(table)
-            )
+            raise TypeError(f"table '{table}' should be pytd.table.Table, not str")
 
         if "time" not in dataframe.columns:  # need time column for bulk import
             dataframe["time"] = int(time.time())
@@ -437,8 +433,8 @@ class BulkImportWriter(Writer):
                 stack.callback(fp.close)
             else:
                 raise ValueError(
-                    "unsupported format '{}' for bulk import. "
-                    "should be 'csv' or 'msgpack'".format(fmt)
+                    f"unsupported format '{fmt}' for bulk import. "
+                    "should be 'csv' or 'msgpack'"
                 )
             self._bulk_import(table, fp, if_exists, fmt)
             stack.close()
@@ -471,9 +467,7 @@ class BulkImportWriter(Writer):
         if table.exists:
             if if_exists == "error":
                 raise RuntimeError(
-                    "target table '{}.{}' already exists".format(
-                        table.database, table.table
-                    )
+                    f"target table '{table.database}.{table.table}' already exists"
                 )
             elif if_exists == "ignore":
                 return
@@ -483,17 +477,17 @@ class BulkImportWriter(Writer):
                 table.delete()
                 table.create()
             else:
-                raise ValueError("invalid value for if_exists: {}".format(if_exists))
+                raise ValueError(f"invalid value for if_exists: {if_exists}")
         else:
             table.create()
 
-        session_name = "session-{}".format(uuid.uuid1())
+        session_name = f"session-{uuid.uuid1()}"
 
         bulk_import = table.client.api_client.create_bulk_import(
             session_name, table.database, table.table, params=params
         )
         try:
-            logger.info("uploading data converted into a {} file".format(fmt))
+            logger.info(f"uploading data converted into a {fmt} file")
             if fmt == "msgpack":
                 size = file_like.getbuffer().nbytes
                 # To skip API._prepare_file(), which recreate msgpack again.
@@ -503,29 +497,23 @@ class BulkImportWriter(Writer):
             bulk_import.freeze()
         except Exception as e:
             bulk_import.delete()
-            raise RuntimeError("failed to upload file: {}".format(e))
+            raise RuntimeError(f"failed to upload file: {e}")
 
         logger.info("performing a bulk import job")
         job = bulk_import.perform(wait=True)
 
         if 0 < bulk_import.error_records:
             logger.warning(
-                "[job id {}] detected {} error records.".format(
-                    job.id, bulk_import.error_records
-                )
+                f"[job id {job.id}] detected {bulk_import.error_records} error records."
             )
 
         if 0 < bulk_import.valid_records:
             logger.info(
-                "[job id {}] imported {} records.".format(
-                    job.id, bulk_import.valid_records
-                )
+                f"[job id {job.id}] imported {bulk_import.valid_records} records."
             )
         else:
             raise RuntimeError(
-                "[job id {}] no records have been imported: {}".format(
-                    job.id, bulk_import.name
-                )
+                f"[job id {job.id}] no records have been imported: {bulk_import.name}"
             )
         bulk_import.commit(wait=True)
         bulk_import.delete()
@@ -564,8 +552,9 @@ class SparkWriter(Writer):
     Parameters
     ----------
     td_spark_path : str, optional
-        Path to td-spark-assembly_x.xx-x.x.x.jar. If not given, seek a path
-        ``TDSparkContextBuilder.default_jar_path()`` by default.
+        Path to td-spark-assembly-{td-spark-version}_spark{spark-version}.jar.
+        If not given, seek a path ``TDSparkContextBuilder.default_jar_path()``
+        by default.
 
     download_if_missing : bool, default: True
         Download td-spark if it does not exist at the time of initialization.
@@ -576,7 +565,7 @@ class SparkWriter(Writer):
     Attributes
     ----------
     td_spark_path : str
-        Path to td-spark-assembly_x.xx-x.x.x.jar.
+        Path to td-spark-assembly-{td-spark-version}_spark{spark-version}.jar.
 
     download_if_missing : bool
         Download td-spark if it does not exist at the time of initialization.
@@ -629,12 +618,10 @@ class SparkWriter(Writer):
             raise RuntimeError("this writer is already closed and no longer available")
 
         if if_exists not in ("error", "overwrite", "append", "ignore"):
-            raise ValueError("invalid value for if_exists: {}".format(if_exists))
+            raise ValueError(f"invalid value for if_exists: {if_exists}")
 
         if isinstance(table, str):
-            raise TypeError(
-                "table '{}' should be pytd.table.Table, not str".format(table)
-            )
+            raise TypeError(f"table '{table}' should be pytd.table.Table, not str")
 
         if self.td_spark is None:
             self.td_spark = fetch_td_spark_context(
@@ -665,7 +652,7 @@ class SparkWriter(Writer):
 
         sdf = self.td_spark.spark.createDataFrame(dataframe)
         try:
-            destination = "{}.{}".format(table.database, table.table)
+            destination = f"{table.database}.{table.table}"
             self.td_spark.write(sdf, destination, if_exists)
         except Py4JJavaError as e:
             if "API_ACCESS_FAILURE" in str(e.java_exception):

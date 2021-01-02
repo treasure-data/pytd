@@ -36,9 +36,8 @@ class Table(object):
             client.api_client.database(database)
         except tdclient.errors.NotFoundError as e:
             raise ValueError(
-                "faild to create pytd.table.Table instance for `{}.{}`: {}".format(
-                    database, table, e
-                )
+                "faild to create pytd.table.Table instance for "
+                f"`{database}.{table}`: {e}"
             )
 
         self.database = database
@@ -78,13 +77,11 @@ class Table(object):
         if len(column_names) > 0:
             schema = ", ".join(
                 map(
-                    lambda t: "{} {}".format(t[0], t[1]),
+                    lambda t: f"{t[0]} {t[1]}",
                     zip(column_names, column_types),
                 )
             )
-            q_create = "CREATE TABLE {}.{} ({})".format(
-                self.database, self.table, schema
-            )
+            q_create = f"CREATE TABLE {self.database}.{self.table} ({schema})"
             self.client.query(q_create, engine="presto")
         else:
             self.client.api_client.create_log_table(self.database, self.table)

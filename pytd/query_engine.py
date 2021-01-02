@@ -31,7 +31,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
 
     def __init__(self, apikey, endpoint, database, header):
         if len(urlparse(endpoint).scheme) == 0:
-            endpoint = "https://{}".format(endpoint)
+            endpoint = f"https://{endpoint}"
         self.apikey = apikey
         self.endpoint = endpoint
         self.database = database
@@ -41,7 +41,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
     @property
     def user_agent(self):
         """User agent passed to a query engine connection."""
-        return "pytd/{0}".format(__version__)
+        return f"pytd/{__version__}"
 
     def execute(self, query, **kwargs):
         """Execute a given SQL statement and return results.
@@ -115,14 +115,14 @@ class QueryEngine(metaclass=abc.ABCMeta):
             return ""
 
         if isinstance(self.header, str):
-            header = "-- {0}\n".format(self.header)
+            header = f"-- {self.header}\n"
         else:
-            header = "-- client: {0}\n".format(self.user_agent)
+            header = f"-- client: {self.user_agent}\n"
 
         if isinstance(extra_lines, str):
-            header += "-- {0}\n".format(extra_lines)
+            header += f"-- {extra_lines}\n"
         elif isinstance(extra_lines, (list, tuple)):
-            header += "".join(["-- {0}\n".format(line) for line in extra_lines])
+            header += "".join([f"-- {line}\n" for line in extra_lines])
 
         return header
 
@@ -209,7 +209,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
             if k not in api_param_names:
                 raise RuntimeError(
                     "unknown parameter for Treasure Data query execution API; "
-                    "'{}' is not in [{}].".format(k, ", ".join(api_param_names))
+                    f"'{k}' is not in [{', '.join(api_param_names)}]."
                 )
             cursor_kwargs[k] = v
 
@@ -260,8 +260,10 @@ class PrestoQueryEngine(QueryEngine):
     @property
     def user_agent(self):
         """User agent passed to a Presto connection."""
-        return "pytd/{0} (prestodb/{1}; tdclient/{2})".format(
-            __version__, prestodb.__version__, tdclient.__version__
+        return (
+            f"pytd/{__version__} "
+            f"(prestodb/{prestodb.__version__}; "
+            f"tdclient/{tdclient.__version__})"
         )
 
     @property
@@ -362,7 +364,7 @@ class HiveQueryEngine(QueryEngine):
     @property
     def user_agent(self):
         """User agent passed to a Hive connection."""
-        return "pytd/{0} (tdclient/{1})".format(__version__, tdclient.__version__)
+        return f"pytd/{__version__} (tdclient/{tdclient.__version__})"
 
     def cursor(self, force_tdclient=True, **kwargs):
         """Get cursor defined by DB-API.

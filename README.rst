@@ -134,7 +134,7 @@ with ``td_spark_path`` option would be helpful.
 
    from pytd.writer import SparkWriter
 
-   writer = SparkWriter(apikey='1/XXX', endpoint='https://api.treasuredata.com/', td_spark_path='/path/to/td-spark-assembly.jar')
+   writer = SparkWriter(td_spark_path='/path/to/td-spark-assembly.jar')
    client.load_table_from_dataframe(df, 'mydb.bar', writer=writer, if_exists='overwrite')
 
 Comparison between pytd, td-client-python, and pandas-td

@@ -78,7 +78,7 @@ class Client(object):
         database="sample_datasets",
         default_engine="presto",
         header=True,
-        **kwargs
+        **kwargs,
     ):
         if isinstance(default_engine, QueryEngine):
             apikey = default_engine.apikey
@@ -108,7 +108,7 @@ class Client(object):
             apikey=apikey,
             endpoint=endpoint,
             user_agent=default_engine.user_agent,
-            **kwargs
+            **kwargs,
         )
 
     def list_databases(self):
@@ -294,10 +294,10 @@ class Client(object):
             Database name.
         """
         if self.exists(database):
-            logger.info("database `{}` already exists".format(database))
+            logger.info(f"database `{database}` already exists")
         else:
             self.api_client.create_database(database)
-            logger.info("created database `{}`".format(database))
+            logger.info(f"created database `{database}`")
 
     def load_table_from_dataframe(
         self, dataframe, destination, writer="bulk_import", if_exists="error", **kwargs

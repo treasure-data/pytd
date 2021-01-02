@@ -34,7 +34,7 @@ class MagicContext(object):
 
 class MagicTable(object):
     def __init__(self, table):
-        print("INFO: import {0}".format(table.name))
+        print(f"INFO: import {table.name}")
         self.table = table
         data = [c if len(c) == 3 else [c[0], c[1], ""] for c in table.schema]
         self.columns = [c[2] if c[2] else c[0] for c in data]
@@ -248,7 +248,7 @@ class UseMagics(TDMagics):
         try:
             tables = con.list_tables(line)
         except tdclient.api.NotFoundError:
-            sys.stderr.write("ERROR: Database '{0}' not found.".format(line))
+            sys.stderr.write(f"ERROR: Database '{line}' not found.")
             return
         # update context
         self.context.database = line
@@ -375,12 +375,12 @@ class QueryMagics(TDMagics):
 
     def build_engine(self, engine_type, database, args):
         ip = get_ipython()
-        name = "{}:{}".format(engine_type, database)
+        name = f"{engine_type}:{database}"
         code_args = [repr(name)]
         # connection
         if args.connection:
             con = ip.ev(args.connection)
-            code_args.append("con={}".format(args.connection))
+            code_args.append(f"con={args.connection}")
         else:
             con = self.context.connect()
         # engine
@@ -390,10 +390,8 @@ class QueryMagics(TDMagics):
             params = {"show_progress": True, "clear_progress": False}
         else:
             params = {}
-        code_args += ["{}={}".format(k, v) for k, v in params.items()]
-        self.push_code(
-            "_e = pytd.pandas_td.create_engine({})".format(", ".join(code_args))
-        )
+        code_args += [f"{k}={v}" for k, v in params.items()]
+        self.push_code(f"_e = pytd.pandas_td.create_engine({', '.join(code_args)})")
         return create_engine(name, con=con, **params)
 
     def convert_time(self, d):
@@ -406,11 +404,11 @@ class QueryMagics(TDMagics):
                 d["time"] = pd.to_datetime(d["time"], unit="s")
 
     def set_index(self, d, index, args):
-        self.push_code("_d.set_index({}, inplace=True)".format(repr(index)))
+        self.push_code(f"_d.set_index({repr(index)}, inplace=True)")
         d.set_index(index, inplace=True)
         if index == "time" and args.timezone:
             self.push_code("_d.tz_localize('UTC', copy=False)")
-            self.push_code("_d.tz_convert('{}', copy=False)".format(args.timezone))
+            self.push_code(f"_d.tz_convert('{args.timezone}', copy=False)")
             d.tz_localize("UTC", copy=False).tz_convert(args.timezone, copy=False)
 
     def pivot(self, d, args):
@@ -432,9 +430,7 @@ class QueryMagics(TDMagics):
         if len(measure) == 1:
             measure = measure[0]
         self.push_code(
-            "_d = _d.pivot({0}, {1}, {2})".format(
-                repr(index), repr(dimension), repr(measure)
-            )
+            f"_d = _d.pivot({repr(index)}, {repr(dimension)}, {repr(measure)})"
         )
         return d.pivot(index, dimension, measure)
 
@@ -458,7 +454,7 @@ class QueryMagics(TDMagics):
         # return value
         r = d
         if args.out:
-            self.push_code("{0} = _d".format(args.out))
+            self.push_code(f"{args.out} = _d")
             ip.push({args.out: d})
             r = None
         if args.out_file:
@@ -467,12 +463,12 @@ class QueryMagics(TDMagics):
             else:
                 path = os.path.expanduser(args.out_file)
             if d.index.name:
-                self.push_code("_d.to_csv({0})".format(repr(path)))
+                self.push_code(f"_d.to_csv({repr(path)})")
                 d.to_csv(path)
             else:
-                self.push_code("_d.to_csv({0}, index=False)".format(repr(path)))
+                self.push_code(f"_d.to_csv({repr(path)}, index=False)")
                 d.to_csv(path, index=False)
-            print("INFO: saved to '{0}'".format(path))
+            print(f"INFO: saved to '{path}'")
             r = None
         if args.plot:
             self.push_code("_d.plot()")
@@ -501,7 +497,7 @@ class QueryMagics(TDMagics):
         engine = self.build_engine(job.type, job.database, args)
 
         # read_td_query
-        self.push_code("_d = pytd.pandas_td.read_td_job({}, _e)".format(args.job_id))
+        self.push_code(f"_d = pytd.pandas_td.read_td_job({args.job_id}, _e)")
         if args.dry_run:
             return self.display_code_block()
         d = read_td_job(args.job_id, engine)

@@ -9,12 +9,12 @@ TD_SPARK_BASE_URL = "https://s3.amazonaws.com/td-spark/"
 logger = logging.getLogger(__name__)
 
 
-def download_td_spark(spark_binary_version="2.11", version="latest", destination=None):
+def download_td_spark(spark_binary_version="3.0.1", version="latest", destination=None):
     """Download a td-spark jar file from S3.
 
     Parameters
     ----------
-    spark_binary_version : str, default: '2.11'
+    spark_binary_version : str, default: '3.0.1'
         Apache Spark binary version.
 
     version : str, default: 'latest'
@@ -23,9 +23,7 @@ def download_td_spark(spark_binary_version="2.11", version="latest", destination
     destination : str, optional
         Where a downloaded jar file to be stored.
     """
-    td_spark_jar_name = "td-spark-assembly_{}-{}.jar".format(
-        spark_binary_version, version
-    )
+    td_spark_jar_name = f"td-spark-assembly-{version}_spark{spark_binary_version}.jar"
 
     if destination is None:
         destination = os.path.join(
@@ -71,7 +69,8 @@ def fetch_td_spark_context(
         https://tddocs.atlassian.net/wiki/spaces/PD/pages/1085143/Sites+and+Endpoints
 
     td_spark_path : str, optional
-        Path to td-spark-assembly_x.xx-x.x.x.jar. If not given, seek a path
+        Path to td-spark-assembly-{td-spark-version}_spark{spark-version}.jar.
+        If not given, seek a path
         ``TDSparkContextBuilder.default_jar_path()`` by default.
 
     download_if_missing : bool, default: True
@@ -106,7 +105,7 @@ def fetch_td_spark_context(
         SparkConf()
         .setMaster("local[*]")
         .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-        .set("spark.sql.execution.arrow.enabled", "true")
+        .set("spark.sql.execution.arrow.pyspark.enabled", "true")
     )
     if isinstance(spark_configs, dict):
         for k, v in spark_configs.items():
@@ -117,6 +116,8 @@ def fetch_td_spark_context(
 
     if td_spark_path is None:
         td_spark_path = TDSparkContextBuilder.default_jar_path()
+    else:
+        td_spark_path = os.path.expanduser(td_spark_path)
 
     available = os.path.exists(td_spark_path)
 
@@ -141,6 +142,8 @@ def fetch_td_spark_context(
         site = "jp"
     if "eu01" in endpoint:
         site = "eu01"
+    if "ap02" in endpoint:
+        site = "ap02"
     builder.site(site)
 
     try:

@@ -75,7 +75,7 @@ with ``td_spark_path`` option would be helpful. You can pass a writer to
    apikey = '1/XXX'
    endpoint = 'https://api.treasuredata.com/'
 
-   writer = pytd.writer.SparkWriter(apikey=apikey, endpoint=endpoint, td_spark_path='/path/to/td-spark-assembly.jar')
+   writer = pytd.writer.SparkWriter(td_spark_path='/path/to/td-spark-assembly.jar')
    con = td.connect(apikey=apikey, endpoint=endpoint, writer=writer)
 
    df = pd.DataFrame(data={'col1': [1, 2], 'col2': [3, 10]})

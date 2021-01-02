@@ -99,7 +99,7 @@ def create_engine(url, con=None, header=True, show_progress=5.0, clear_progress=
         host = res.group("host")
         database = res.group("database")
 
-        endpoint = "https://{0}/".format(host)
+        endpoint = f"https://{host}/"
     else:
         res = RE_ENGINE_DESC_SHORT.search(url)
         if res is not None:
@@ -189,9 +189,8 @@ def read_td_query(
         header = engine.create_header(
             [
                 "read_td_query",
-                "set session distributed_join = '{0}'\n".format(
-                    "true" if distributed_join else "false"
-                ),
+                "set session distributed_join = "
+                f"'{'true' if distributed_join else 'false'}'\n",
             ]
         )
     else:
@@ -243,7 +242,7 @@ def read_td_job(job_id, engine, index_col=None, parse_dates=None):
     if not job.success():
         if job.debug and job.debug["stderr"]:
             logger.error(job.debug["stderr"])
-        raise RuntimeError("job {0} {1}".format(job.job_id, job.status()))
+        raise RuntimeError(f"job {job.job_id} {job.status()}")
 
     if not job.finished():
         job.wait()
@@ -301,20 +300,21 @@ def read_td_table(
     :class:`pandas.DataFrame`
     """
     # header
-    query = engine.create_header("read_td_table('{0}')".format(table_name))
+    query = engine.create_header(f"read_td_table('{table_name}')")
     # SELECT
-    query += "SELECT {0}\n".format("*" if columns is None else ", ".join(columns))
+    query += f"SELECT {'*' if columns is None else ', '.join(columns)}\n"
     # FROM
-    query += "FROM {0}\n".format(table_name)
+    query += f"FROM {table_name}\n"
     # WHERE
     if time_range is not None:
         start, end = time_range
-        query += "WHERE td_time_range(time, {0}, {1})\n".format(
-            _convert_time(start), _convert_time(end)
+        query += (
+            "WHERE td_time_range("
+            f"time, {_convert_time(start)}, {_convert_time(end)})\n"
         )
     # LIMIT
     if limit is not None:
-        query += "LIMIT {0}\n".format(limit)
+        query += f"LIMIT {limit}\n"
     # execute
     return _to_dataframe(engine.execute(query), index_col, parse_dates)
 
@@ -329,8 +329,8 @@ def _convert_time(time):
     elif isinstance(time, (datetime.date, datetime.datetime)):
         t = pd.to_datetime(time)
     else:
-        raise ValueError("invalid time value: {0}".format(time))
-    return "'{0}'".format(t.replace(microsecond=0))
+        raise ValueError(f"invalid time value: {time}")
+    return f"'{t.replace(microsecond=0)}'"
 
 
 def _to_dataframe(dic, index_col, parse_dates):
@@ -370,7 +370,7 @@ def to_td(
     chunksize=10000,
     date_format=None,
     writer="bulk_import",
-    **kwargs
+    **kwargs,
 ):
     """Write a DataFrame to a Treasure Data table.
 
@@ -457,7 +457,7 @@ def to_td(
     elif if_exists == "ignore":
         mode = "ignore"
     else:
-        raise ValueError("invalid value for if_exists: {}".format(if_exists))
+        raise ValueError(f"invalid value for if_exists: {if_exists}")
 
     # convert
     frame = frame.copy()
@@ -513,8 +513,7 @@ def _convert_index_column(frame, index=None, index_label=None):
         if isinstance(frame.index, pd.MultiIndex):
             if index_label is None:
                 index_label = [
-                    v if v else "level_{}".format(i)
-                    for i, v in enumerate(frame.index.names)
+                    v if v else f"level_{i}" for i, v in enumerate(frame.index.names)
                 ]
             for i, name in zip(frame.index.levels, index_label):
                 frame[name] = i.astype("object")
