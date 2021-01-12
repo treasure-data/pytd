@@ -151,7 +151,7 @@ def read_td_query(
     distributed_join : bool, default: `False`
         (Presto only) If True, distributed join is enabled. If False, broadcast join is
         used.
-        See https://prestodb.io/docs/current/release/release-0.77.html
+        See https://trino.io/docs/current/admin/properties-general.html#join-distribution-type
 
     params : dict, optional
         Parameters to pass to execute method. pytd does not support parameter
@@ -189,8 +189,8 @@ def read_td_query(
         header = engine.create_header(
             [
                 "read_td_query",
-                "set session distributed_join = "
-                f"'{'true' if distributed_join else 'false'}'\n",
+                "set session join_distribution_type = "
+                f"'{'PARTITIONED' if distributed_join else 'BROADCAST'}'\n",
             ]
         )
     else:
