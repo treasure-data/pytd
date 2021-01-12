@@ -1,6 +1,12 @@
 Changelog
 =========
 
+v1.4.0 (2021-01-11)
+-------------------
+
+- Deprecate (Py)Spark 2.x and Python 3.5 support, and migrate to Spark 3.x and Python 3.8, respectively. ``SparkWriter`` requires running with Spark 3.x from now on. (`#94 <https://github.com/treasure-data/pytd/pull/94>`__)
+
+
 v1.3.0 (2020-05-11)
 -------------------
 
