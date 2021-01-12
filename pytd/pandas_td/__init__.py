@@ -151,7 +151,7 @@ def read_td_query(
     distributed_join : bool, default: `False`
         (Presto only) If True, distributed join is enabled. If False, broadcast join is
         used.
-        See https://trino.io/docs/current/admin/properties-general.html#join-distribution-type
+        See https://trino.io/docs/current/admin/properties-general.html
 
     params : dict, optional
         Parameters to pass to execute method. pytd does not support parameter
