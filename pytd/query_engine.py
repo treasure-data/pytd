@@ -1,9 +1,9 @@
 import abc
 import logging
 import os
-import pkg_resources
 from urllib.parse import urlparse
 
+import pkg_resources
 import prestodb
 import tdclient
 
