@@ -8,4 +8,5 @@ a shorter time. It eventually makes your day-to-day data analytics work more
 efficient and productive.
 """
 from setuptools import setup
+
 setup()
