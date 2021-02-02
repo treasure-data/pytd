@@ -5,7 +5,7 @@ import prestodb
 import tdclient
 
 from pytd.query_engine import HiveQueryEngine, PrestoQueryEngine
-from pytd.version import __version__
+from pytd import __version__
 
 
 class QueryEngineEndpointSchemeTestCase(unittest.TestCase):
