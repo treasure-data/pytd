@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 import prestodb
 import tdclient
 
-__version__  = pkg_resources.get_distribution("pytd").version
+__version__ = pkg_resources.get_distribution("pytd").version
 
 logger = logging.getLogger(__name__)
 
