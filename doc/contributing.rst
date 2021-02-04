@@ -74,8 +74,10 @@ Releasing
 
 Update version in ``setup.cfg``. Set it to ``1.0.0``, for example:
 
-.. code:: py
+.. code:: ini
 
+   [metadata]
+   name = pytd
    version = 1.0.0
 
 Commit and push the latest code, and tag the version:
