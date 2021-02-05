@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, patch
 import prestodb
 import tdclient
 
+from pytd import __version__
 from pytd.query_engine import HiveQueryEngine, PrestoQueryEngine
-from pytd.version import __version__
 
 
 class QueryEngineEndpointSchemeTestCase(unittest.TestCase):

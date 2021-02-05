@@ -3,10 +3,11 @@ import logging
 import os
 from urllib.parse import urlparse
 
+import pkg_resources
 import prestodb
 import tdclient
 
-from .version import __version__
+__version__ = pkg_resources.get_distribution("pytd").version
 
 logger = logging.getLogger(__name__)
 

@@ -72,11 +72,13 @@ The ``doc/`` folder is monitored and automatically published by `Read the Docs <
 Releasing
 ---------
 
-Update version in ``pytd/version.py``. Set it to ``1.0.0``, for example:
+Update version in ``setup.cfg``. Set it to ``1.0.0``, for example:
 
-.. code:: py
+.. code:: ini
 
-   __version__ = "1.0.0"
+   [metadata]
+   name = pytd
+   version = 1.0.0
 
 Commit and push the latest code, and tag the version:
 
