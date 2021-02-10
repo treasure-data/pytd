@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v1.4.3 (2021-02-10)
+-------------------
+
+- [hot fix] Set upper version for pandas lower than 1.2 (`#108 <https://github.com/treasure-data/pytd/pull/108>`__)
+
 v1.4.2 (2021-02-10)
 -------------------
 
