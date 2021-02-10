@@ -1,6 +1,15 @@
 Changelog
 =========
 
+v1.4.2 (2021-02-10)
+-------------------
+
+- Presto queries issued by ``pandas_td.read_td_query`` use ``join_distribution_type`` session property instead of the deprecated ``distributed_join`` property. See our `documentation <https://docs.treasuredata.com/display/public/PD/Presto+0.205+to+317+Migration+2020#Presto0.205to317Migration2020-DeprecatedFeatures>`__ for more information about the change. (`#100 <https://github.com/treasure-data/pytd/pull/100>`__)
+
+.. note::
+   pytd does not offer its version 1.4.1 because an unofficial 1.4.1 binary was unexpectedly published to PyPI and deleted immediately; PyPI refuses to re-upload deleted version numbers.
+
+
 v1.4.0 (2021-01-11)
 -------------------
 
