@@ -1,8 +1,9 @@
 name: Publish Python Package to PyPI
 
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+      - '*.*.*' # Push events to tags following semantic versioning
 
 jobs:
   deploy:
