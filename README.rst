@@ -123,7 +123,8 @@ Since td-spark gives special access to the main storage system via
 follow the instructions below:
 
 1. Contact support@treasuredata.com to activate the permission to your
-   Treasure Data account.
+   Treasure Data account. Note that the underlying component, Plazma Public
+   API, limits its free tier at 100GB Read and 100TB Write.
 2. Install pytd with ``[spark]`` option if you use the third option:
    ``pip install pytd[spark]``
 
