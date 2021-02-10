@@ -232,7 +232,7 @@ class InsertIntoWriter(Writer):
         column_types : list of str
             Column types corresponding to the names. Note that Treasure Data
             supports limited amount of types as documented in:
-            https://tddocs.atlassian.net/wiki/spaces/PD/pages/1083743/Schema+Management
+            https://docs.treasuredata.com/display/public/PD/Schema+Management
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}
             What happens when a target table already exists.

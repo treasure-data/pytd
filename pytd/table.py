@@ -72,7 +72,7 @@ class Table(object):
         column_types : list of str, optional
             Column types corresponding to the names. Note that Treasure Data
             supports limited amount of types as documented in:
-            https://tddocs.atlassian.net/wiki/spaces/PD/pages/1083743/Schema+Management
+            https://docs.treasuredata.com/display/public/PD/Schema+Management
         """
         if len(column_names) > 0:
             schema = ", ".join(
