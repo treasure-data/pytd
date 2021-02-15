@@ -25,7 +25,7 @@ class Client(object):
     endpoint : str, optional
         Treasure Data API server. If not given, ``https://api.treasuredata.com`` is
         used by default. List of available endpoints is:
-        https://tddocs.atlassian.net/wiki/spaces/PD/pages/1085143/Sites+and+Endpoints
+        https://docs.treasuredata.com/display/public/PD/Sites+and+Endpoints
 
     database : str, default: 'sample_datasets'
         Name of connected database.
@@ -201,8 +201,8 @@ class Client(object):
             - ``wait_interval`` (int): sleep interval until job finish
             - ``wait_callback`` (function): called every interval against job itself
             - ``engine_version`` (str): run query with Hive 2 if this parameter
-              is set to ``"experimental"`` and ``engine`` denotes Hive.
-              https://tddocs.atlassian.net/wiki/spaces/PD/pages/1083123/Using+Hive+2+to+Create+Queries
+              is set to ``"stable"`` and ``engine`` denotes Hive.
+              https://docs.treasuredata.com/display/public/PD/Writing+Hive+Queries
 
             Meanwhile, when a following argument is set to ``True``, query is
             deterministically issued via ``tdclient``.

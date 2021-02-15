@@ -87,9 +87,4 @@ Commit and push the latest code, and tag the version:
    git tag 1.0.0
    git push --tags
 
-Build a package and upload to PyPI:
-
-.. code:: sh
-
-   python setup.py sdist bdist_wheel
-   twine upload --skip-existing dist/*
+`GitHub Actions Workflow <https://github.com/treasure-data/pytd/blob/master/.github/workflows/pypi.yml>`__ then automatically releases the tagged version on PyPI. A tag and version number must be identical and following the `semantic versioning convention <https://semver.org/>`__.

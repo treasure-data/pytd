@@ -23,7 +23,7 @@ def connect(apikey=None, endpoint=None, **kwargs):
     endpoint : str, optional
         Treasure Data API server. If not given, ``https://api.treasuredata.com`` is
         used by default. List of available endpoints is:
-        https://tddocs.atlassian.net/wiki/spaces/PD/pages/1085143/Sites+and+Endpoints
+        https://docs.treasuredata.com/display/public/PD/Sites+and+Endpoints
 
     kwargs : dict, optional
         Optional arguments
@@ -173,8 +173,8 @@ def read_td_query(
         - ``wait_interval`` (int): sleep interval until job finish
         - ``wait_callback`` (function): called every interval against job itself
         - ``engine_version`` (str): run query with Hive 2 if this parameter is
-          set to ``"experimental"`` in ``HiveQueryEngine``.
-          https://tddocs.atlassian.net/wiki/spaces/PD/pages/1083123/Using+Hive+2+to+Create+Queries
+          set to ``"stable"`` in ``HiveQueryEngine``.
+          https://docs.treasuredata.com/display/public/PD/Writing+Hive+Queries
 
     Returns
     -------
