@@ -173,7 +173,7 @@ def read_td_query(
         - ``wait_interval`` (int): sleep interval until job finish
         - ``wait_callback`` (function): called every interval against job itself
         - ``engine_version`` (str): run query with Hive 2 if this parameter is
-          set to ``"experimental"`` in ``HiveQueryEngine``.
+          set to ``"stable"`` in ``HiveQueryEngine``.
           https://docs.treasuredata.com/display/public/PD/Writing+Hive+Queries
 
     Returns
