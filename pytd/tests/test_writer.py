@@ -228,18 +228,18 @@ class BulkImportWriterTestCase(unittest.TestCase):
     def test_write_dataframe_error(self):
         with self.assertRaises(RuntimeError):
             self.writer.write_dataframe(
-                pd.DataFrame([[1, 2], [3, 4]]), self.table, "error"
+                pd.DataFrame([[1, 2], [3, 4]]), self.table, "error", fmt="csv"
             )
 
     def test_write_dataframe_ignore(self):
         self.writer.write_dataframe(
-            pd.DataFrame([[1, 2], [3, 4]]), self.table, "ignore"
+            pd.DataFrame([[1, 2], [3, 4]]), self.table, "ignore", fmt="csv"
         )
         self.assertFalse(self.table.client.api_client.create_bulk_import.called)
 
     def test_write_dataframe_append(self):
         self.writer.write_dataframe(
-            pd.DataFrame([[1, 2], [3, 4]]), self.table, "append"
+            pd.DataFrame([[1, 2], [3, 4]]), self.table, "append", fmt="csv"
         )
         self.assertTrue(self.table.client.api_client.create_bulk_import.called)
         args, kwargs = self.table.client.api_client.create_bulk_import.call_args
@@ -247,7 +247,7 @@ class BulkImportWriterTestCase(unittest.TestCase):
 
     def test_write_dataframe_overwrite(self):
         self.writer.write_dataframe(
-            pd.DataFrame([[1, 2], [3, 4]]), self.table, "overwrite"
+            pd.DataFrame([[1, 2], [3, 4]]), self.table, "overwrite", fmt="csv"
         )
         self.assertTrue(self.table.delete.called)
         self.assertTrue(self.table.create.called)
@@ -259,7 +259,7 @@ class BulkImportWriterTestCase(unittest.TestCase):
         # Case #1: bulk import succeeded
         self.writer._bulk_import = MagicMock()
         self.writer.write_dataframe(
-            pd.DataFrame([[1, 2], [3, 4]]), self.table, "overwrite"
+            pd.DataFrame([[1, 2], [3, 4]]), self.table, "overwrite", fmt="csv"
         )
         # file pointer to a temp CSV file
         fp = self.writer._bulk_import.call_args[0][1]
@@ -270,7 +270,7 @@ class BulkImportWriterTestCase(unittest.TestCase):
         self.writer._bulk_import = MagicMock(side_effect=Exception())
         with self.assertRaises(Exception):
             self.writer.write_dataframe(
-                pd.DataFrame([[1, 2], [3, 4]]), self.table, "overwrite"
+                pd.DataFrame([[1, 2], [3, 4]]), self.table, "overwrite", fmt="csv"
             )
         fp = self.writer._bulk_import.call_args[0][1]
         self.assertFalse(os.path.isfile(fp.name))
