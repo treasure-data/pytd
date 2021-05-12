@@ -308,7 +308,7 @@ class BulkImportWriter(Writer):
     td-client-python's bulk importer.
     """
 
-    def write_dataframe(self, dataframe, table, if_exists, fmt="csv", keep_list=False):
+    def write_dataframe(self, dataframe, table, if_exists, fmt="msgpack", keep_list=False):
         """Write a given DataFrame to a Treasure Data table.
 
         This method internally converts a given :class:`pandas.DataFrame` into a
@@ -335,7 +335,7 @@ class BulkImportWriter(Writer):
             - append: insert data. Create if does not exist.
             - ignore: do nothing.
 
-        fmt : {'csv', 'msgpack'}, default: 'csv'
+        fmt : {'csv', 'msgpack'}, default: 'msgpack'
             Format for bulk_import.
 
             - csv
