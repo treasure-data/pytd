@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v1.4.4 (2022-09-06)
+-------------------
+
+- Upgrade urllib3 version (`#112 <https://github.com/treasure-data/pytd/pull/112>`__)
+
 v1.4.3 (2021-02-10)
 -------------------
 

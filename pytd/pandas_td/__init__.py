@@ -484,7 +484,7 @@ def _convert_time_column(frame, time_col=None, time_index=None):
             col = pd.to_datetime(col)
         # convert pandas datetime to unixtime
         if col.dtype.name == "datetime64[ns]":
-            frame["time"] = col.astype("int64") // (10 ** 9)
+            frame["time"] = col.astype("int64") // (10**9)
     elif time_index is not None:
         # Use 'time_index' as time column
         if type(time_index) is bool or not isinstance(time_index, int):
@@ -499,7 +499,7 @@ def _convert_time_column(frame, time_col=None, time_index=None):
         if idx.dtype.name != "datetime64[ns]":
             raise TypeError("index type must be datetime64[ns]")
         # convert pandas datetime to unixtime
-        frame["time"] = idx.astype("int64") // (10 ** 9)
+        frame["time"] = idx.astype("int64") // (10**9)
     else:
         # Use current time as time column
         frame["time"] = int(time.time())
