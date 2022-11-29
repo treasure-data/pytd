@@ -22,7 +22,10 @@ jobs:
           - python-version: "3.7"
             pandas-version: "1.5.2"
           - python-version: "3.10"
-            pandas-version: "1.2.5"
+        include:
+          - python-version: "3.10"
+            pandas-version: "1.5.2"
+
 
     steps:
     - uses: actions/checkout@v2

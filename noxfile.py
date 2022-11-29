@@ -21,6 +21,8 @@ def lint(session):
         if (python, pandas) != ("3.7", "1.4.4")
         if (python, pandas) != ("3.7", "1.5.2")
         if (python, pandas) != ("3.10", "1.2.5")
+        if (python, pandas) != ("3.10", "1.3.5")
+        if (python, pandas) != ("3.10", "1.4.4")
     ],
 )
 def tests(session, python, pandas):
