@@ -1,6 +1,12 @@
 Changelog
 =========
 
+v1.5.0 (2022-12-06)
+-------------------
+
+- Updated dependencies and pytd now supports python 3.9 and 3.10
+
+
 v1.4.4 (2022-09-06)
 -------------------
 
