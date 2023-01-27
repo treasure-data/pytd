@@ -67,6 +67,36 @@ It is also possible to explicitly initialize ``pytd.Client`` for Hive:
    client_hive = pytd.Client(database='sample_datasets', default_engine='hive')
    client_hive.query('select hivemall_version()')
 
+Here is an example of generator-based iterative retrieval using DB-API.
+For details, please refer to `Documentation  <https://pytd-doc.readthedocs.io/en/latest/usage.html#working-with-db-api>`__
+
+.. code:: py
+
+   from pytd.dbapi import connect
+
+   conn = connect(pytd.Client(database='sample_datasets'))
+   # or, connect with Hive:
+   # >>> conn = connect(pytd.Client(database='sample_datasets', default_engine='hive'))
+
+   def iterrows(sql, connection):
+      cur = connection.cursor()
+      cur.execute(sql)
+      index = 0
+      columns = None
+      while True:
+         row = cur.fetchone()
+         if row is None:
+            break
+         if columns is None:
+            columns = [desc[0] for desc in cur.description]
+         yield index, dict(zip(columns, row))
+         index += 1
+
+   for index, row in iterrows('select symbol, count(1) as cnt from nasdaq group by 1 order by 1', conn):
+      print(index, row)
+
+When you face unexpected timeout error with Presto, you can try iterative way to retrieve data.
+
 Write data to Treasure Data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
