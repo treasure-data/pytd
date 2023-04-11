@@ -94,7 +94,7 @@ def _cast_dtypes(dataframe, inplace=True, keep_list=False):
     """
     df = dataframe if inplace else dataframe.copy()
 
-    for column, kind in dataframe.dtypes.apply(lambda dtype: dtype.kind).iteritems():
+    for column, kind in dataframe.dtypes.apply(lambda dtype: dtype.kind).items():
         t = str
         if kind in ("i", "u"):
             t = "Int64" if df[column].isnull().any() else "int64"
