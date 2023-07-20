@@ -124,7 +124,7 @@ data to Treasure Data:
    -  Recommended only for a small volume of data.
 
 3. `td-spark <https://treasure-data.github.io/td-spark/>`__:
-   ``spark``
+   ``spark`` (No longer available)
 
    -  Local customized Spark instance directly writes ``DataFrame`` to
       Treasure Data’s primary storage system.
@@ -132,7 +132,7 @@ data to Treasure Data:
 Characteristics of each of these methods can be summarized as follows:
 
 +-----------------------------------+------------------+------------------+-----------+
-|                                   | ``bulk_import``  | ``insert_into``  | ``spark`` |
+|                                   | ``bulk_import``  | ``insert_into``  | ``spark (No longer available)`` |
 +===================================+==================+==================+===========+
 | Scalable against data volume      |        ✓         |                  |     ✓     |
 +-----------------------------------+------------------+------------------+-----------+
