@@ -264,7 +264,7 @@ class BulkImportWriterTestCase(unittest.TestCase):
         # file pointer to a temp CSV file
         fp = self.writer._bulk_import.call_args[0][1]
         # temp file should not exist
-        self.assertFalse(os.path.isfile(fp.name))
+        self.assertFalse(os.path.isfile(fp[0].name))
 
         # Case #2: bulk import failed
         self.writer._bulk_import = MagicMock(side_effect=Exception())
@@ -273,7 +273,7 @@ class BulkImportWriterTestCase(unittest.TestCase):
                 pd.DataFrame([[1, 2], [3, 4]]), self.table, "overwrite"
             )
         fp = self.writer._bulk_import.call_args[0][1]
-        self.assertFalse(os.path.isfile(fp.name))
+        self.assertFalse(os.path.isfile(fp[0].name))
 
     def test_write_dataframe_msgpack(self):
         df = pd.DataFrame([[1, 2], [3, 4]])
@@ -286,7 +286,7 @@ class BulkImportWriterTestCase(unittest.TestCase):
         )
         size = _bytes.getbuffer().nbytes
         api_client.create_bulk_import().upload_part.assert_called_with(
-            "part", ANY, size
+            "part-0", ANY, size
         )
         self.assertFalse(api_client.create_bulk_import().upload_file.called)
 
@@ -300,15 +300,17 @@ class BulkImportWriterTestCase(unittest.TestCase):
             ],
             dtype="Int64",
         )
-        expected_list = [
+        expected_list = (
             {"a": 1, "b": 2, "c": None, "time": 1234},
             {"a": 3, "b": 4, "c": 5, "time": 1234},
-        ]
+        )
         self.writer._write_msgpack_stream = MagicMock()
         self.writer.write_dataframe(df, self.table, "overwrite", fmt="msgpack")
         self.assertTrue(self.writer._write_msgpack_stream.called)
+        print(self.writer._write_msgpack_stream.call_args[0][0][0:2])
         self.assertEqual(
-            self.writer._write_msgpack_stream.call_args[0][0], expected_list
+            self.writer._write_msgpack_stream.call_args[0][0][0:2],
+            expected_list,
         )
 
     @unittest.skipIf(
@@ -320,15 +322,16 @@ class BulkImportWriterTestCase(unittest.TestCase):
             dtype="string",
         )
         df["time"] = 1234
-        expected_list = [
+        expected_list = (
             {"a": "foo", "b": "bar", "c": None, "time": 1234},
             {"a": "buzz", "b": "buzz", "c": "alice", "time": 1234},
-        ]
+        )
         self.writer._write_msgpack_stream = MagicMock()
         self.writer.write_dataframe(df, self.table, "overwrite", fmt="msgpack")
         self.assertTrue(self.writer._write_msgpack_stream.called)
         self.assertEqual(
-            self.writer._write_msgpack_stream.call_args[0][0], expected_list
+            self.writer._write_msgpack_stream.call_args[0][0][0:2],
+            expected_list,
         )
 
     @unittest.skipIf(
@@ -340,15 +343,16 @@ class BulkImportWriterTestCase(unittest.TestCase):
             dtype="boolean",
         )
         df["time"] = 1234
-        expected_list = [
+        expected_list = (
             {"a": "true", "b": "false", "c": None, "time": 1234},
             {"a": "false", "b": "true", "c": "true", "time": 1234},
-        ]
+        )
         self.writer._write_msgpack_stream = MagicMock()
         self.writer.write_dataframe(df, self.table, "overwrite", fmt="msgpack")
         self.assertTrue(self.writer._write_msgpack_stream.called)
         self.assertEqual(
-            self.writer._write_msgpack_stream.call_args[0][0], expected_list
+            self.writer._write_msgpack_stream.call_args[0][0][0:2],
+            expected_list,
         )
 
     def test_write_dataframe_invalid_if_exists(self):

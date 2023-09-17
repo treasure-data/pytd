@@ -6,7 +6,9 @@ import os
 import tempfile
 import time
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
+from itertools import zip_longest
 
 import msgpack
 import numpy as np
@@ -308,7 +310,9 @@ class BulkImportWriter(Writer):
     td-client-python's bulk importer.
     """
 
-    def write_dataframe(self, dataframe, table, if_exists, fmt="csv", keep_list=False):
+    def write_dataframe(
+        self, dataframe, table, if_exists, fmt="csv", keep_list=False, max_workers=5
+    ):
         """Write a given DataFrame to a Treasure Data table.
 
         This method internally converts a given :class:`pandas.DataFrame` into a
@@ -403,6 +407,10 @@ class BulkImportWriter(Writer):
             Or, you can use :func:`Client.load_table_from_dataframe` function as well.
 
             >>> client.load_table_from_dataframe(df, "bulk_import", keep_list=True)
+        
+        max_workers : int, optional, default: 5
+            The maximum number of threads that can be used to execute the given calls.
+            This is used only when ``fmt`` is ``msgpack``.
         """
         if self.closed:
             raise RuntimeError("this writer is already closed and no longer available")
@@ -420,26 +428,31 @@ class BulkImportWriter(Writer):
         _cast_dtypes(dataframe, keep_list=keep_list)
 
         with ExitStack() as stack:
+            fps = []
             if fmt == "csv":
                 fp = tempfile.NamedTemporaryFile(suffix=".csv", delete=False)
                 stack.callback(os.unlink, fp.name)
                 stack.callback(fp.close)
                 dataframe.to_csv(fp.name)
+                fps.append(fp)
             elif fmt == "msgpack":
                 _replace_pd_na(dataframe)
 
-                fp = io.BytesIO()
-                fp = self._write_msgpack_stream(dataframe.to_dict(orient="records"), fp)
-                stack.callback(fp.close)
+                records = dataframe.to_dict(orient="records")
+                for group in zip_longest(*(iter(records),) * 10000):
+                    fp = io.BytesIO()
+                    fp = self._write_msgpack_stream(group, fp)
+                    fps.append(fp)
+                    stack.callback(fp.close)
             else:
                 raise ValueError(
                     f"unsupported format '{fmt}' for bulk import. "
                     "should be 'csv' or 'msgpack'"
                 )
-            self._bulk_import(table, fp, if_exists, fmt)
+            self._bulk_import(table, fps, if_exists, fmt, max_workers=max_workers)
             stack.close()
 
-    def _bulk_import(self, table, file_like, if_exists, fmt="csv"):
+    def _bulk_import(self, table, file_like, if_exists, fmt="csv", max_workers=5):
         """Write a specified CSV file to a Treasure Data table.
 
         This method uploads the file to Treasure Data via bulk import API.
@@ -449,7 +462,7 @@ class BulkImportWriter(Writer):
         table : :class:`pytd.table.Table`
             Target table.
 
-        file_like : File like object
+        file_like : List of file like objects
             Data in this file will be loaded to a target table.
 
         if_exists : str, {'error', 'overwrite', 'append', 'ignore'}
@@ -462,6 +475,10 @@ class BulkImportWriter(Writer):
 
         fmt : str, optional, {'csv', 'msgpack'}, default: 'csv'
             File format for bulk import. See also :func:`write_dataframe`
+
+        max_workers : int, optional, default: 5
+            The maximum number of threads that can be used to execute the given calls.
+            This is used only when ``fmt`` is ``msgpack``.
         """
         params = None
         if table.exists:
@@ -489,11 +506,19 @@ class BulkImportWriter(Writer):
         try:
             logger.info(f"uploading data converted into a {fmt} file")
             if fmt == "msgpack":
-                size = file_like.getbuffer().nbytes
-                # To skip API._prepare_file(), which recreate msgpack again.
-                bulk_import.upload_part("part", file_like, size)
+                with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    _ = [
+                        executor.submit(
+                            bulk_import.upload_part,
+                            f"part-{i}",
+                            fp,
+                            fp.getbuffer().nbytes,
+                        )
+                        for i, fp in enumerate(file_like)
+                    ]
             else:
-                bulk_import.upload_file("part", fmt, file_like)
+                fp = file_like[0]
+                bulk_import.upload_file("part", fmt, fp)
             bulk_import.freeze()
         except Exception as e:
             bulk_import.delete()
@@ -535,6 +560,9 @@ class BulkImportWriter(Writer):
         with gzip.GzipFile(mode="wb", fileobj=stream) as gz:
             packer = msgpack.Packer()
             for item in items:
+                # Ignore None created by zip_longest
+                if not item:
+                    break
                 try:
                     mp = packer.pack(item)
                 except (OverflowError, ValueError):
