@@ -96,7 +96,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
         self.executed = cur.execute(query)
         rows = cur.fetchall()
         # cur.description is None for CREATE and DROP statements in recent version of Trino
-        columns = [desc[0] for desc in cur.description] if cur.description else []
+        columns = [desc[0] for desc in cur.description] if cur.description else None
         return {"data": rows, "columns": columns}
 
     def create_header(self, extra_lines=[]):
