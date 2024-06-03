@@ -1,11 +1,17 @@
 Changelog
 =========
 
+v1.5.2 (2024-06-03)
+-------------------
+
+- Handle cases with cur.description is None 
+- Keep single quotes in InsertIntoWriter
+- Use obj.items instead of iteritems() 
+
 v1.5.1 (2022-12-08)
 -------------------
 
 - Updated dependencies and pytd now supports python 3.9 and 3.10
-
 
 v1.4.4 (2022-09-06)
 -------------------
