@@ -286,9 +286,13 @@ class InsertIntoWriter(Writer):
         """
         rows = []
         for tpl in list_of_tuple:
+            # InsertIntoWriter kicks Presto (Trino).
+            # Following the list comprehension makes a single quote duplicated because
+            # Presto allows users to escape a single quote with another single quote.
+            # e.g. 'John Doe''s name' is converted to "John Doe's name" on Presto.
             list_of_value_strings = [
                 (
-                    f"""'{e.replace("'", '"')}'"""
+                    f"""'{e.replace("'", "''")}'"""
                     if isinstance(e, str)
                     else ("null" if pd.isnull(e) else str(e))
                 )
