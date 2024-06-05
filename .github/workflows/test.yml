@@ -47,3 +47,23 @@ jobs:
       env:
         TD_API_KEY: 1/XXX
         TD_API_SERVER: https://api.treasure-data.com/
+
+  dist-dry-run:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install setuptools wheel twine
+    - name: Build and check dist for PiPY (a.k.a dry run)
+      run: |
+        python setup.py sdist bdist_wheel
+        twine check dist/*
+      
