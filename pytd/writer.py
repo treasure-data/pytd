@@ -311,7 +311,14 @@ class BulkImportWriter(Writer):
     """
 
     def write_dataframe(
-        self, dataframe, table, if_exists, fmt="csv", keep_list=False, max_workers=5
+        self,
+        dataframe,
+        table,
+        if_exists,
+        fmt="csv",
+        keep_list=False,
+        max_workers=5,
+        chunk_record_size=10_000,
     ):
         """Write a given DataFrame to a Treasure Data table.
 
@@ -407,10 +414,14 @@ class BulkImportWriter(Writer):
             Or, you can use :func:`Client.load_table_from_dataframe` function as well.
 
             >>> client.load_table_from_dataframe(df, "bulk_import", keep_list=True)
-        
+
         max_workers : int, optional, default: 5
             The maximum number of threads that can be used to execute the given calls.
             This is used only when ``fmt`` is ``msgpack``.
+
+        chunk_record_size : int, optional, default: 10_000
+            The number of records to be written in a single file. This is used only when
+            ``fmt`` is ``msgpack``.
         """
         if self.closed:
             raise RuntimeError("this writer is already closed and no longer available")
@@ -439,7 +450,7 @@ class BulkImportWriter(Writer):
                 _replace_pd_na(dataframe)
 
                 records = dataframe.to_dict(orient="records")
-                for group in zip_longest(*(iter(records),) * 10000):
+                for group in zip_longest(*(iter(records),) * chunk_record_size):
                     fp = io.BytesIO()
                     fp = self._write_msgpack_stream(group, fp)
                     fps.append(fp)
