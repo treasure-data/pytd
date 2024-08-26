@@ -1,6 +1,12 @@
 Changelog
 =========
 
+v1.6.0 (2024-08-26)
+-------------------
+
+- Add support for python 3.11
+- Drop support of EOL python 3.7
+
 v1.5.2 (2024-06-03)
 -------------------
 
