@@ -1,6 +1,5 @@
 import abc
 import gzip
-import io
 import logging
 import os
 import tempfile
@@ -450,11 +449,18 @@ class BulkImportWriter(Writer):
                 _replace_pd_na(dataframe)
 
                 records = dataframe.to_dict(orient="records")
-                for group in zip_longest(*(iter(records),) * chunk_record_size):
-                    fp = io.BytesIO()
-                    fp = self._write_msgpack_stream(group, fp)
-                    fps.append(fp)
-                    stack.callback(fp.close)
+                try:
+                    for group in zip_longest(*(iter(records),) * chunk_record_size):
+                        fp = tempfile.NamedTemporaryFile(suffix=".msgpack.gz", delete=False)
+                        fp = self._write_msgpack_stream(group, fp)
+                        fps.append(fp)
+                        stack.callback(os.unlink, fp.name)
+                        stack.callback(fp.close)
+                except OSError as e:
+                    raise RuntimeError(
+                        "failed to create a temporary file. "
+                        "Increase chunk_record_size may mitigate the issue."
+                    ) from e
             else:
                 raise ValueError(
                     f"unsupported format '{fmt}' for bulk import. "
@@ -514,19 +520,21 @@ class BulkImportWriter(Writer):
         bulk_import = table.client.api_client.create_bulk_import(
             session_name, table.database, table.table, params=params
         )
+        s_time = time.time()
         try:
             logger.info(f"uploading data converted into a {fmt} file")
             if fmt == "msgpack":
                 with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                    _ = [
+                    for i, fp in enumerate(file_like):
+                        fsize = fp.tell()
+                        fp.seek(0)
                         executor.submit(
                             bulk_import.upload_part,
                             f"part-{i}",
                             fp,
-                            fp.getbuffer().nbytes,
+                            fsize,
                         )
-                        for i, fp in enumerate(file_like)
-                    ]
+                        logger.debug(f"to upload {fp.name} to TD. File size: {fsize}B")
             else:
                 fp = file_like[0]
                 bulk_import.upload_file("part", fmt, fp)
@@ -534,6 +542,8 @@ class BulkImportWriter(Writer):
         except Exception as e:
             bulk_import.delete()
             raise RuntimeError(f"failed to upload file: {e}")
+
+        logger.info(f"uploaded data in {time.time() - s_time:.2f} sec")
 
         logger.info("performing a bulk import job")
         job = bulk_import.perform(wait=True)
@@ -581,7 +591,9 @@ class BulkImportWriter(Writer):
                     mp = packer.pack(normalized_msgpack(item))
                 gz.write(mp)
 
-        stream.seek(0)
+        logger.debug(
+            f"created a msgpack file: {stream.name}. File size: {stream.tell()}"
+        )
         return stream
 
 

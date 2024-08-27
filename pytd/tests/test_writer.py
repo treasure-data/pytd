@@ -1,7 +1,7 @@
-import io
 import os
+import tempfile
 import unittest
-from unittest.mock import ANY, MagicMock
+from unittest.mock import ANY, MagicMock, patch
 
 import numpy as np
 import pandas as pd
@@ -89,9 +89,6 @@ class WriterTestCase(unittest.TestCase):
         # This is for consistency of _get_schema
         self.assertTrue(pd.isna(dft["O"][2]))
 
-    @unittest.skipIf(
-        pd.__version__ < "1.0.0", "pd.NA is not supported in this pandas version"
-    )
     def test_cast_dtypes_nullable(self):
         dft = pd.DataFrame(
             {
@@ -281,14 +278,12 @@ class BulkImportWriterTestCase(unittest.TestCase):
         api_client = self.table.client.api_client
         self.assertTrue(api_client.create_bulk_import.called)
         self.assertTrue(api_client.create_bulk_import().upload_part.called)
-        _bytes = BulkImportWriter()._write_msgpack_stream(
-            df.to_dict(orient="records"), io.BytesIO()
-        )
-        size = _bytes.getbuffer().nbytes
-        api_client.create_bulk_import().upload_part.assert_called_with(
-            "part-0", ANY, size
-        )
-        self.assertFalse(api_client.create_bulk_import().upload_file.called)
+        with tempfile.NamedTemporaryFile(delete=False) as fp:
+            fp = BulkImportWriter()._write_msgpack_stream(df.to_dict(orient="records"), fp)
+            api_client.create_bulk_import().upload_part.assert_called_with(
+                "part-0", ANY, 62
+            )
+            self.assertFalse(api_client.create_bulk_import().upload_file.called)
 
     def test_write_dataframe_msgpack_with_int_na(self):
         # Although this conversion ensures pd.NA Int64 dtype to None,
@@ -305,17 +300,15 @@ class BulkImportWriterTestCase(unittest.TestCase):
             {"a": 3, "b": 4, "c": 5, "time": 1234},
         )
         self.writer._write_msgpack_stream = MagicMock()
-        self.writer.write_dataframe(df, self.table, "overwrite", fmt="msgpack")
-        self.assertTrue(self.writer._write_msgpack_stream.called)
-        print(self.writer._write_msgpack_stream.call_args[0][0][0:2])
-        self.assertEqual(
-            self.writer._write_msgpack_stream.call_args[0][0][0:2],
-            expected_list,
-        )
+        with patch("pytd.writer.os.unlink"):
+            self.writer.write_dataframe(df, self.table, "overwrite", fmt="msgpack")
+            self.assertTrue(self.writer._write_msgpack_stream.called)
+            print(self.writer._write_msgpack_stream.call_args[0][0][0:2])
+            self.assertEqual(
+                self.writer._write_msgpack_stream.call_args[0][0][0:2],
+                expected_list,
+            )
 
-    @unittest.skipIf(
-        pd.__version__ < "1.0.0", "pd.NA not supported in this pandas version"
-    )
     def test_write_dataframe_msgpack_with_string_na(self):
         df = pd.DataFrame(
             data=[{"a": "foo", "b": "bar"}, {"a": "buzz", "b": "buzz", "c": "alice"}],
@@ -327,16 +320,14 @@ class BulkImportWriterTestCase(unittest.TestCase):
             {"a": "buzz", "b": "buzz", "c": "alice", "time": 1234},
         )
         self.writer._write_msgpack_stream = MagicMock()
-        self.writer.write_dataframe(df, self.table, "overwrite", fmt="msgpack")
-        self.assertTrue(self.writer._write_msgpack_stream.called)
-        self.assertEqual(
-            self.writer._write_msgpack_stream.call_args[0][0][0:2],
-            expected_list,
-        )
+        with patch("pytd.writer.os.unlink"):
+            self.writer.write_dataframe(df, self.table, "overwrite", fmt="msgpack")
+            self.assertTrue(self.writer._write_msgpack_stream.called)
+            self.assertEqual(
+                self.writer._write_msgpack_stream.call_args[0][0][0:2],
+                expected_list,
+            )
 
-    @unittest.skipIf(
-        pd.__version__ < "1.0.0", "pd.NA not supported in this pandas version"
-    )
     def test_write_dataframe_msgpack_with_boolean_na(self):
         df = pd.DataFrame(
             data=[{"a": True, "b": False}, {"a": False, "b": True, "c": True}],
@@ -348,12 +339,13 @@ class BulkImportWriterTestCase(unittest.TestCase):
             {"a": "false", "b": "true", "c": "true", "time": 1234},
         )
         self.writer._write_msgpack_stream = MagicMock()
-        self.writer.write_dataframe(df, self.table, "overwrite", fmt="msgpack")
-        self.assertTrue(self.writer._write_msgpack_stream.called)
-        self.assertEqual(
-            self.writer._write_msgpack_stream.call_args[0][0][0:2],
-            expected_list,
-        )
+        with patch("pytd.writer.os.unlink"):
+            self.writer.write_dataframe(df, self.table, "overwrite", fmt="msgpack")
+            self.assertTrue(self.writer._write_msgpack_stream.called)
+            self.assertEqual(
+                self.writer._write_msgpack_stream.call_args[0][0][0:2],
+                expected_list,
+            )
 
     def test_write_dataframe_invalid_if_exists(self):
         with self.assertRaises(ValueError):
@@ -412,9 +404,6 @@ class SparkWriterTestCase(unittest.TestCase):
             self.writer.td_spark.spark.createDataFrame.call_args[0][0], expected_df
         )
 
-    @unittest.skipIf(
-        pd.__version__ < "1.0.0", "pd.NA is not supported in this pandas version"
-    )
     def test_write_dataframe_with_string_na(self):
         df = pd.DataFrame(
             data=[{"a": "foo", "b": "bar"}, {"a": "buzz", "b": "buzz", "c": "alice"}],
@@ -427,9 +416,6 @@ class SparkWriterTestCase(unittest.TestCase):
             self.writer.td_spark.spark.createDataFrame.call_args[0][0], expected_df
         )
 
-    @unittest.skipIf(
-        pd.__version__ < "1.0.0", "pd.NA is not supported in this pandas version"
-    )
     def test_write_dataframe_with_boolean_na(self):
         df = pd.DataFrame(
             data=[{"a": True, "b": False}, {"a": False, "b": True, "c": True}],
