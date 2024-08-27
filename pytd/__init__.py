@@ -1,10 +1,9 @@
+import importlib.metadata
 import logging
-
-import pkg_resources
 
 from .client import Client
 
-__version__ = pkg_resources.get_distribution("pytd").version
+__version__ = importlib.metadata.version("pytd")
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
 logger.setLevel(logging.INFO)
