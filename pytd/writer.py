@@ -7,7 +7,6 @@ import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
-from itertools import zip_longest
 
 import msgpack
 import numpy as np
@@ -448,11 +447,15 @@ class BulkImportWriter(Writer):
             elif fmt == "msgpack":
                 _replace_pd_na(dataframe)
 
-                records = dataframe.to_dict(orient="records")
                 try:
-                    for group in zip_longest(*(iter(records),) * chunk_record_size):
-                        fp = tempfile.NamedTemporaryFile(suffix=".msgpack.gz", delete=False)
-                        fp = self._write_msgpack_stream(group, fp)
+                    for start in range(0, len(dataframe), chunk_record_size):
+                        records = dataframe.iloc[
+                            start : start + chunk_record_size
+                        ].to_dict(orient="records")
+                        fp = tempfile.NamedTemporaryFile(
+                            suffix=".msgpack.gz", delete=False
+                        )
+                        fp = self._write_msgpack_stream(records, fp)
                         fps.append(fp)
                         stack.callback(os.unlink, fp.name)
                         stack.callback(fp.close)
@@ -543,7 +546,7 @@ class BulkImportWriter(Writer):
             bulk_import.delete()
             raise RuntimeError(f"failed to upload file: {e}")
 
-        logger.info(f"uploaded data in {time.time() - s_time:.2f} sec")
+        logger.debug(f"uploaded data in {time.time() - s_time:.2f} sec")
 
         logger.info("performing a bulk import job")
         job = bulk_import.perform(wait=True)
@@ -581,9 +584,6 @@ class BulkImportWriter(Writer):
         with gzip.GzipFile(mode="wb", fileobj=stream) as gz:
             packer = msgpack.Packer()
             for item in items:
-                # Ignore None created by zip_longest
-                if not item:
-                    break
                 try:
                     mp = packer.pack(item)
                 except (OverflowError, ValueError):

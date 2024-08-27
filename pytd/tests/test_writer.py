@@ -279,7 +279,9 @@ class BulkImportWriterTestCase(unittest.TestCase):
         self.assertTrue(api_client.create_bulk_import.called)
         self.assertTrue(api_client.create_bulk_import().upload_part.called)
         with tempfile.NamedTemporaryFile(delete=False) as fp:
-            fp = BulkImportWriter()._write_msgpack_stream(df.to_dict(orient="records"), fp)
+            fp = BulkImportWriter()._write_msgpack_stream(
+                df.to_dict(orient="records"), fp
+            )
             api_client.create_bulk_import().upload_part.assert_called_with(
                 "part-0", ANY, 62
             )
@@ -295,10 +297,10 @@ class BulkImportWriterTestCase(unittest.TestCase):
             ],
             dtype="Int64",
         )
-        expected_list = (
+        expected_list = [
             {"a": 1, "b": 2, "c": None, "time": 1234},
             {"a": 3, "b": 4, "c": 5, "time": 1234},
-        )
+        ]
         self.writer._write_msgpack_stream = MagicMock()
         with patch("pytd.writer.os.unlink"):
             self.writer.write_dataframe(df, self.table, "overwrite", fmt="msgpack")
@@ -315,10 +317,10 @@ class BulkImportWriterTestCase(unittest.TestCase):
             dtype="string",
         )
         df["time"] = 1234
-        expected_list = (
+        expected_list = [
             {"a": "foo", "b": "bar", "c": None, "time": 1234},
             {"a": "buzz", "b": "buzz", "c": "alice", "time": 1234},
-        )
+        ]
         self.writer._write_msgpack_stream = MagicMock()
         with patch("pytd.writer.os.unlink"):
             self.writer.write_dataframe(df, self.table, "overwrite", fmt="msgpack")
@@ -334,10 +336,10 @@ class BulkImportWriterTestCase(unittest.TestCase):
             dtype="boolean",
         )
         df["time"] = 1234
-        expected_list = (
+        expected_list = [
             {"a": "true", "b": "false", "c": None, "time": 1234},
             {"a": "false", "b": "true", "c": "true", "time": 1234},
-        )
+        ]
         self.writer._write_msgpack_stream = MagicMock()
         with patch("pytd.writer.os.unlink"):
             self.writer.write_dataframe(df, self.table, "overwrite", fmt="msgpack")
