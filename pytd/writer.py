@@ -472,7 +472,7 @@ class BulkImportWriter(Writer):
             self._bulk_import(table, fps, if_exists, fmt, max_workers=max_workers)
             stack.close()
 
-    def _bulk_import(self, table, file_like, if_exists, fmt="csv", max_workers=5):
+    def _bulk_import(self, table, file_likes, if_exists, fmt="csv", max_workers=5):
         """Write a specified CSV file to a Treasure Data table.
 
         This method uploads the file to Treasure Data via bulk import API.
@@ -482,7 +482,7 @@ class BulkImportWriter(Writer):
         table : :class:`pytd.table.Table`
             Target table.
 
-        file_like : List of file like objects
+        file_likes : List of file like objects
             Data in this file will be loaded to a target table.
 
         if_exists : str, {'error', 'overwrite', 'append', 'ignore'}
@@ -528,7 +528,7 @@ class BulkImportWriter(Writer):
             logger.info(f"uploading data converted into a {fmt} file")
             if fmt == "msgpack":
                 with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                    for i, fp in enumerate(file_like):
+                    for i, fp in enumerate(file_likes):
                         fsize = fp.tell()
                         fp.seek(0)
                         executor.submit(
@@ -539,7 +539,7 @@ class BulkImportWriter(Writer):
                         )
                         logger.debug(f"to upload {fp.name} to TD. File size: {fsize}B")
             else:
-                fp = file_like[0]
+                fp = file_likes[0]
                 bulk_import.upload_file("part", fmt, fp)
             bulk_import.freeze()
         except Exception as e:
