@@ -1,13 +1,13 @@
 import abc
+import importlib.metadata
 import logging
 import os
 from urllib.parse import urlparse
 
-import pkg_resources
 import prestodb
 import tdclient
 
-__version__ = pkg_resources.get_distribution("pytd").version
+__version__ = importlib.metadata.version("pytd")
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +95,8 @@ class QueryEngine(metaclass=abc.ABCMeta):
         cur = self.cursor(**kwargs)
         self.executed = cur.execute(query)
         rows = cur.fetchall()
-        # cur.description is None for CREATE and DROP statements in recent version of Trino
+        # cur.description is None for CREATE and DROP statements in recent version of
+        # Trino
         columns = [desc[0] for desc in cur.description] if cur.description else None
         return {"data": rows, "columns": columns}
 
