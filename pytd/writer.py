@@ -462,7 +462,7 @@ class BulkImportWriter(Writer):
                 except OSError as e:
                     raise RuntimeError(
                         "failed to create a temporary file. "
-                        "Increase chunk_record_size may mitigate the issue."
+                        "Larger chunk_record_size may mitigate the issue."
                     ) from e
             else:
                 raise ValueError(
