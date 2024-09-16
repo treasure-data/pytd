@@ -17,9 +17,11 @@ def lint(session):
     [
         (python, pandas)
         for python in ("3.8", "3.9", "3.10", "3.11")
-        for pandas in ("1.3.5", "1.4.4", "1.5.3", "2.2.2")
+        for pandas in ("1.3.5", "1.4.4", "1.5.3", "2.0.3", "2.1.4", "2.2.2")
         if (python, pandas) != ("3.10", "1.3.5")
         if (python, pandas) != ("3.10", "1.4.4")
+        if (python, pandas) != ("3.8", "2.0.3")
+        if (python, pandas) != ("3.8", "2.1.4")
         if (python, pandas) != ("3.8", "2.2.2")
     ],
 )
