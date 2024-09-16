@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [ master, support-3.12 ]
+    branches: [ master, support-pandas-2 ]
   pull_request:
     branches: [ master ]
 
