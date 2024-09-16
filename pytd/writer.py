@@ -450,11 +450,13 @@ class BulkImportWriter(Writer):
                 fps.append(fp)
             elif fmt == "msgpack":
                 _replace_pd_na(dataframe)
-
+                num_rows = len(dataframe)
+                # chunk number of records should not exceed 200 to avoid OSError
+                _chunk_record_size = max(chunk_record_size, num_rows//200)
                 try:
-                    for start in range(0, len(dataframe), chunk_record_size):
+                    for start in range(0, num_rows, _chunk_record_size):
                         records = dataframe.iloc[
-                            start : start + chunk_record_size
+                            start : start + _chunk_record_size
                         ].to_dict(orient="records")
                         fp = tempfile.NamedTemporaryFile(
                             suffix=".msgpack.gz", delete=False
