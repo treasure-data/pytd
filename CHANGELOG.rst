@@ -1,6 +1,13 @@
 Changelog
 =========
 
+v1.7.0 (2024-09-20)
+-------------------
+
+- New parallel upload feature. Use two new parameters max_workers and chunk_record_size in Client’s load_table_from_dataframe api to configure parallelization of uploading data to Treasure Data, saving time
+- Support for pandas 2
+- Increase supported numpy versions to between 1.17.3 and less than 2.0.0
+
 v1.6.0 (2024-08-26)
 -------------------
 
