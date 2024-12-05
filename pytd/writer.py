@@ -458,6 +458,7 @@ class BulkImportWriter(Writer):
             elif fmt == "msgpack":
                 _replace_pd_na(dataframe)
                 num_rows = len(dataframe)
+                # chunk number of records should not exceed 200 to avoid OSError
                 _chunk_record_size = max(chunk_record_size, num_rows // 200)
                 try:
                     range_func = tqdm(range(0, num_rows, _chunk_record_size), desc="Chunking into msgpack") if show_progress else range(0, num_rows, _chunk_record_size)
