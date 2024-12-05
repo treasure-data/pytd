@@ -456,8 +456,7 @@ class BulkImportWriter(Writer):
                 try:
                     with ThreadPoolExecutor(max_workers=max_workers) as executor:
                         futures = []
-                        range_func = range(0, num_rows, _chunk_record_size)
-                        for start in range_func:
+                        for start in range(0, num_rows, _chunk_record_size):
                             records = dataframe.iloc[
                                 start : start + _chunk_record_size
                             ].to_dict(orient="records")
