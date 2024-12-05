@@ -89,7 +89,7 @@ class Client(object):
             if apikey is None:
                 raise ValueError(
                     "either argument 'apikey' or environment variable"
-                    "'TD_API_KEY' should be set"
+                    " 'TD_API_KEY' should be set"
                 )
             if endpoint is None:
                 endpoint = os.getenv("TD_API_SERVER", "https://api.treasuredata.com")

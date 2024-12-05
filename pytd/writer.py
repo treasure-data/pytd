@@ -461,10 +461,21 @@ class BulkImportWriter(Writer):
                 # chunk number of records should not exceed 200 to avoid OSError
                 _chunk_record_size = max(chunk_record_size, num_rows // 200)
                 try:
-                    range_func = tqdm(range(0, num_rows, _chunk_record_size), desc="Chunking into msgpack") if show_progress else range(0, num_rows, _chunk_record_size)
+                    range_func = (
+                        tqdm(
+                            range(0, num_rows, _chunk_record_size),
+                            desc="Chunking into msgpack",
+                        )
+                        if show_progress
+                        else range(0, num_rows, _chunk_record_size)
+                    )
                     for start in range_func:
-                        records = dataframe.iloc[start : start + _chunk_record_size].to_dict(orient="records")
-                        fp = tempfile.NamedTemporaryFile(suffix=".msgpack.gz", delete=False)
+                        records = dataframe.iloc[
+                            start : start + _chunk_record_size
+                        ].to_dict(orient="records")
+                        fp = tempfile.NamedTemporaryFile(
+                            suffix=".msgpack.gz", delete=False
+                        )
                         fp = self._write_msgpack_stream(records, fp)
                         fps.append(fp)
                         stack.callback(os.unlink, fp.name)
@@ -479,10 +490,25 @@ class BulkImportWriter(Writer):
                     f"unsupported format '{fmt}' for bulk import. "
                     "should be 'csv' or 'msgpack'"
                 )
-            self._bulk_import(table, fps, if_exists, fmt, max_workers=max_workers, show_progress=show_progress)
+            self._bulk_import(
+                table,
+                fps,
+                if_exists,
+                fmt,
+                max_workers=max_workers,
+                show_progress=show_progress,
+            )
             stack.close()
 
-    def _bulk_import(self, table, file_likes, if_exists, fmt="csv", max_workers=5, show_progress=False):
+    def _bulk_import(
+        self,
+        table,
+        file_likes,
+        if_exists,
+        fmt="csv",
+        max_workers=5,
+        show_progress=False,
+    ):
         """Write a specified CSV file to a Treasure Data table.
 
         This method uploads the file to Treasure Data via bulk import API.
