@@ -321,7 +321,6 @@ class BulkImportWriter(Writer):
         keep_list=False,
         max_workers=5,
         chunk_record_size=10_000,
-        show_progress=False,
     ):
         """Write a given DataFrame to a Treasure Data table.
 
