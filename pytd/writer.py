@@ -12,6 +12,7 @@ import msgpack
 import numpy as np
 import pandas as pd
 from tdclient.util import normalized_msgpack
+from tqdm import tqdm
 
 from .spark import fetch_td_spark_context
 
@@ -321,6 +322,7 @@ class BulkImportWriter(Writer):
         keep_list=False,
         max_workers=5,
         chunk_record_size=10_000,
+        show_progress=False,
     ):
         """Write a given DataFrame to a Treasure Data table.
 
@@ -367,6 +369,11 @@ class BulkImportWriter(Writer):
             will be converted array<T> on Treasure Data table.
             Each type of element of list will be converted by
             ``numpy.array(your_list).tolist()``.
+
+        show_progress : boolean, default: False
+            If this argument is True, shows a TQDM progress bar
+            for chunking data into msgpack format and uploading before
+            performing a bulk import.
 
             If True, ``fmt`` argument will be overwritten with ``msgpack``.
 
@@ -451,16 +458,12 @@ class BulkImportWriter(Writer):
             elif fmt == "msgpack":
                 _replace_pd_na(dataframe)
                 num_rows = len(dataframe)
-                # chunk number of records should not exceed 200 to avoid OSError
-                _chunk_record_size = max(chunk_record_size, num_rows//200)
+                _chunk_record_size = max(chunk_record_size, num_rows // 200)
                 try:
-                    for start in range(0, num_rows, _chunk_record_size):
-                        records = dataframe.iloc[
-                            start : start + _chunk_record_size
-                        ].to_dict(orient="records")
-                        fp = tempfile.NamedTemporaryFile(
-                            suffix=".msgpack.gz", delete=False
-                        )
+                    range_func = tqdm(range(0, num_rows, _chunk_record_size), desc="Chunking into msgpack") if show_progress else range(0, num_rows, _chunk_record_size)
+                    for start in range_func:
+                        records = dataframe.iloc[start : start + _chunk_record_size].to_dict(orient="records")
+                        fp = tempfile.NamedTemporaryFile(suffix=".msgpack.gz", delete=False)
                         fp = self._write_msgpack_stream(records, fp)
                         fps.append(fp)
                         stack.callback(os.unlink, fp.name)
@@ -475,10 +478,10 @@ class BulkImportWriter(Writer):
                     f"unsupported format '{fmt}' for bulk import. "
                     "should be 'csv' or 'msgpack'"
                 )
-            self._bulk_import(table, fps, if_exists, fmt, max_workers=max_workers)
+            self._bulk_import(table, fps, if_exists, fmt, max_workers=max_workers, show_progress=show_progress)
             stack.close()
 
-    def _bulk_import(self, table, file_likes, if_exists, fmt="csv", max_workers=5):
+    def _bulk_import(self, table, file_likes, if_exists, fmt="csv", max_workers=5, show_progress=False):
         """Write a specified CSV file to a Treasure Data table.
 
         This method uploads the file to Treasure Data via bulk import API.
@@ -505,6 +508,10 @@ class BulkImportWriter(Writer):
         max_workers : int, optional, default: 5
             The maximum number of threads that can be used to execute the given calls.
             This is used only when ``fmt`` is ``msgpack``.
+
+        show_progress : boolean, default: False
+            If this argument is True, shows a TQDM progress bar
+            for the upload process performed on multiple threads.
         """
         params = None
         if table.exists:
@@ -534,16 +541,25 @@ class BulkImportWriter(Writer):
             logger.info(f"uploading data converted into a {fmt} file")
             if fmt == "msgpack":
                 with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    futures = []
                     for i, fp in enumerate(file_likes):
                         fsize = fp.tell()
                         fp.seek(0)
-                        executor.submit(
-                            bulk_import.upload_part,
-                            f"part-{i}",
-                            fp,
-                            fsize,
+                        futures.append(
+                            executor.submit(
+                                bulk_import.upload_part,
+                                f"part-{i}",
+                                fp,
+                                fsize,
+                            )
                         )
                         logger.debug(f"to upload {fp.name} to TD. File size: {fsize}B")
+                    if show_progress:
+                        for _ in tqdm(futures, desc="Uploading parts"):
+                            _.result()
+                    else:
+                        for future in futures:
+                            future.result()
             else:
                 fp = file_likes[0]
                 bulk_import.upload_file("part", fmt, fp)
