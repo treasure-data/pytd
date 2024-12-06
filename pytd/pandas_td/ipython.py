@@ -1,10 +1,10 @@
 """IPython Magics
 
-    IPython magics to access to Treasure Data. Load the magics first of all:
+IPython magics to access to Treasure Data. Load the magics first of all:
 
-    .. code-block:: ipython
+.. code-block:: ipython
 
-        In [1]: %load_ext pytd.pandas_td.ipython
+    In [1]: %load_ext pytd.pandas_td.ipython
 """
 
 import argparse
