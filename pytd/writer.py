@@ -369,13 +369,13 @@ class BulkImportWriter(Writer):
             will be converted array<T> on Treasure Data table.
             Each type of element of list will be converted by
             ``numpy.array(your_list).tolist()``.
+            If True, ``fmt`` argument will be overwritten with ``msgpack``.
+
 
         show_progress : boolean, default: False
             If this argument is True, shows a TQDM progress bar
             for chunking data into msgpack format and uploading before
             performing a bulk import.
-
-            If True, ``fmt`` argument will be overwritten with ``msgpack``.
 
             Examples
             ---------
