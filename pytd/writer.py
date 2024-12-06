@@ -462,17 +462,16 @@ class BulkImportWriter(Writer):
                 _chunk_record_size = max(chunk_record_size, num_rows // 200)
                 try:
                     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                        range_func = (
+                        futures = []
+                        chunk_range = (
                             tqdm(
                                 range(0, num_rows, _chunk_record_size),
-                                desc="Chunking into msgpack",
+                                desc="Chunking data",
                             )
                             if show_progress
                             else range(0, num_rows, _chunk_record_size)
                         )
-
-                        futures = []
-                        for start in range_func:
+                        for start in chunk_range:
                             records = dataframe.iloc[
                                 start : start + _chunk_record_size
                             ].to_dict(orient="records")
@@ -489,7 +488,12 @@ class BulkImportWriter(Writer):
                             )
                             stack.callback(os.unlink, fp.name)
                             stack.callback(fp.close)
-                        for start, future in sorted(futures):
+                        resolve_range = (
+                            tqdm(sorted(futures), desc="Resolving futures")
+                            if show_progress
+                            else sorted(futures)
+                        )
+                        for start, future in resolve_range:
                             fps.append(future.result())
                 except OSError as e:
                     raise RuntimeError(
