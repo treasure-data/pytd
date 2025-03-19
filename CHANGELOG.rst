@@ -1,6 +1,12 @@
 Changelog
 =========
 
+v1.8.0 (2025-03-21)
+-------------------
+
+- Add show_progress flag to BulkImportWriter
+- Enable Multithreading on msgpack Chunking in BulkImportWriter
+
 v1.7.0 (2024-09-20)
 -------------------
 
