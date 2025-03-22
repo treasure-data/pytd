@@ -1,7 +1,7 @@
 Changelog
 =========
 
-v1.8.0 (2025-03-21)
+v1.9.0 (2025-03-21)
 -------------------
 
 - Add show_progress flag to BulkImportWriter
