@@ -274,8 +274,11 @@ class PrestoQueryEngine(QueryEngine):
         """Presto API host obtained from ``TD_PRESTO_API`` env variable or
         inferred from Treasure Data REST API endpoint.
         """
+        url = urlparse(self.endpoint).netloc
+        stage = url.split("-")[1]
         return os.getenv(
-            "TD_PRESTO_API", urlparse(self.endpoint).netloc.replace("api", "api-presto")
+            "TD_PRESTO_API",
+            url.replace(stage, f"{stage}-presto"),
         )
 
     def cursor(self, force_tdclient=False, **kwargs):
