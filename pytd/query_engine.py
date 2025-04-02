@@ -275,11 +275,15 @@ class PrestoQueryEngine(QueryEngine):
         inferred from Treasure Data REST API endpoint.
         """
         url = urlparse(self.endpoint).netloc
-        stage = url.split("-")[1]
-        return os.getenv(
-            "TD_PRESTO_API",
-            url.replace(stage, f"{stage}-presto"),
-        )
+        url_components = url.split("-")
+        if len(url_components) > 1:
+            stage = url_components[1]
+            return os.getenv(
+                "TD_PRESTO_API",
+                url.replace(stage, f"{stage}-presto"),
+            )
+        else:
+            return os.getenv("TD_PRESTO_API", url.replace("api", "api-presto"))
 
     def cursor(self, force_tdclient=False, **kwargs):
         """Get cursor defined by DB-API.
