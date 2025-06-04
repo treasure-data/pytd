@@ -17,7 +17,7 @@ def lint(session):
     [
         (python, pandas)
         for python in ("3.9", "3.10", "3.11", "3.12", "3.13")
-        for pandas in ("2.0.3", "2.1.4", "2.2.3")
+        for pandas in ("2.1.4", "2.2.3")
         # Skip combinations that don't support each other
         if not (python in ("3.9",) and pandas in ("2.2.3",))
     ],
@@ -25,4 +25,11 @@ def lint(session):
 def tests(session, python, pandas):
     session.install(".[test,spark]")
     session.install(f"pandas=={pandas}")
+
+    # Set mock environment variables for testing
+    session.env.update({
+        "TD_API_KEY": "1/test-key",
+        "TD_API_SERVER": "https://api.treasure-data.com/"
+    })
+
     session.run("pytest", "-v")

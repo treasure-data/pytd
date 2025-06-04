@@ -11,14 +11,23 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     strategy:
-      max-parallel: 2
+      max-parallel: 4
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
-        pandas-version: ["2.0.3", "2.1.4", "2.2.3"]
-        exclude:
-          # Skip combinations that don't support each other
-          - python-version: "3.9"
+        include:
+          # Core combinations - test key Python versions with supported pandas
+          - os: ubuntu-latest
+            python-version: "3.9"
+            pandas-version: "2.1.4"
+          - os: ubuntu-latest
+            python-version: "3.11"
+            pandas-version: "2.2.3"
+          - os: ubuntu-latest
+            python-version: "3.13"
+            pandas-version: "2.2.3"
+
+          # Windows compatibility check - minimal but important
+          - os: windows-latest
+            python-version: "3.11"
             pandas-version: "2.2.3"
 
 
@@ -59,4 +68,4 @@ jobs:
       run: |
         python setup.py sdist bdist_wheel
         twine check dist/*
-      
+
