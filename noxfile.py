@@ -27,9 +27,8 @@ def tests(session, python, pandas):
     session.install(f"pandas=={pandas}")
 
     # Set mock environment variables for testing
-    session.env.update({
-        "TD_API_KEY": "1/test-key",
-        "TD_API_SERVER": "https://api.treasure-data.com/"
-    })
+    session.env.update(
+        {"TD_API_KEY": "1/test-key", "TD_API_SERVER": "https://api.treasure-data.com/"}
+    )
 
     session.run("pytest", "-v")

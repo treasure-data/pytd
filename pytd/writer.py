@@ -137,12 +137,14 @@ def _get_schema(dataframe):
         #     DeprecationWarning: Numeric-style type codes are deprecated and
         #     will result in an error in the future.
         dtype_str = str(t)
-        if (t == "int64" or
-            (hasattr(pd, 'Int64Dtype') and isinstance(t, pd.Int64Dtype)) or
-            dtype_str in ["Int64", "Int32", "Int16", "Int8"] or
-            (hasattr(pd, 'Int32Dtype') and isinstance(t, pd.Int32Dtype)) or
-            (hasattr(pd, 'Int16Dtype') and isinstance(t, pd.Int16Dtype)) or
-            (hasattr(pd, 'Int8Dtype') and isinstance(t, pd.Int8Dtype))):
+        if (
+            t == "int64"
+            or (hasattr(pd, "Int64Dtype") and isinstance(t, pd.Int64Dtype))
+            or dtype_str in ["Int64", "Int32", "Int16", "Int8"]
+            or (hasattr(pd, "Int32Dtype") and isinstance(t, pd.Int32Dtype))
+            or (hasattr(pd, "Int16Dtype") and isinstance(t, pd.Int16Dtype))
+            or (hasattr(pd, "Int8Dtype") and isinstance(t, pd.Int8Dtype))
+        ):
             presto_type = "bigint"
         elif t == "float64":
             presto_type = "double"
