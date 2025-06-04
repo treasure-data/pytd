@@ -45,14 +45,16 @@ def _isinstance_or_null(x, t):
 
 
 def _replace_pd_na(dataframe):
-    """Replace np.nan to None to avoid Int64 conversion issue"""
+    """Replace np.nan and pd.NA to None to avoid Int64 conversion issue"""
     if dataframe.isnull().any().any():
-        dataframe.replace({np.nan: None}, inplace=True)
+        # Replace both np.nan and pd.NA with None
+        replace_dict = {np.nan: None, pd.NA: None}
+        dataframe.replace(replace_dict, inplace=True)
 
 
 def _to_list(ary):
-    # Return None if None, np.nan, or np.nan in 0-d array given
-    if ary is None or _is_np_nan(ary) or _is_0d_nan(ary):
+    # Return None if None, np.nan, pd.NA, or np.nan in 0-d array given
+    if ary is None or _is_np_nan(ary) or _is_0d_nan(ary) or _is_pd_na(ary):
         return None
 
     # Return Python primitive value if 0-d array given
@@ -134,7 +136,13 @@ def _get_schema(dataframe):
         # "Int64"` causes a following warning for some reasons:
         #     DeprecationWarning: Numeric-style type codes are deprecated and
         #     will result in an error in the future.
-        if t == "int64" or pd.core.dtypes.common.is_dtype_equal(t, "Int64"):
+        dtype_str = str(t)
+        if (t == "int64" or
+            (hasattr(pd, 'Int64Dtype') and isinstance(t, pd.Int64Dtype)) or
+            dtype_str in ["Int64", "Int32", "Int16", "Int8"] or
+            (hasattr(pd, 'Int32Dtype') and isinstance(t, pd.Int32Dtype)) or
+            (hasattr(pd, 'Int16Dtype') and isinstance(t, pd.Int16Dtype)) or
+            (hasattr(pd, 'Int8Dtype') and isinstance(t, pd.Int8Dtype))):
             presto_type = "bigint"
         elif t == "float64":
             presto_type = "double"

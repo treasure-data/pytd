@@ -21,6 +21,13 @@ Installation
 
    pip install pytd
 
+Requirements
+~~~~~~~~~~~~
+
+* Python 3.9 or later
+* pandas 2.0 or later
+
+
 Usage
 -----
 

@@ -14,17 +14,18 @@ jobs:
       max-parallel: 2
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
-        pandas-version: ["1.5.3", "2.2.2"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        pandas-version: ["2.0.3", "2.1.4", "2.2.3"]
         exclude:
-          - python-version: "3.8"
-            pandas-version: "2.2.2"
+          # Skip combinations that don't support each other
+          - python-version: "3.9"
+            pandas-version: "2.2.3"
 
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies

@@ -16,9 +16,10 @@ def lint(session):
     "python,pandas",
     [
         (python, pandas)
-        for python in ("3.8", "3.9", "3.10", "3.11")
-        for pandas in ("1.5.3", "2.2.2")
-        if (python, pandas) != ("3.8", "2.2.2")
+        for python in ("3.9", "3.10", "3.11", "3.12", "3.13")
+        for pandas in ("2.0.3", "2.1.4", "2.2.3")
+        # Skip combinations that don't support each other
+        if not (python in ("3.9",) and pandas in ("2.2.3",))
     ],
 )
 def tests(session, python, pandas):
