@@ -5,7 +5,20 @@ import tdclient
 import trino
 
 from pytd import __version__
-from pytd.query_engine import HiveQueryEngine, PrestoQueryEngine
+from pytd.query_engine import CustomTrinoCursor, HiveQueryEngine, PrestoQueryEngine
+
+
+class DummyCustomTrinoCursor(CustomTrinoCursor):
+    """Test version of CustomTrinoCursor that accepts mock objects."""
+
+    def __init__(self, connection, request, user_agent, legacy_primitive_types=False):
+        # For testing: skip trino's connection validation
+        self._connection = connection
+        self._request = request
+        self._legacy_primitive_types = legacy_primitive_types
+        self._query = None
+        self._iterator = None
+        self._custom_user_agent = user_agent
 
 
 class QueryEngineEndpointSchemeTestCase(unittest.TestCase):
@@ -41,14 +54,23 @@ class QueryEngineEndpointSchemeTestCase(unittest.TestCase):
 
 
 class PrestoQueryEngineTestCase(unittest.TestCase):
-    @patch.object(
-        PrestoQueryEngine, "_connect", return_value=(MagicMock(), MagicMock())
-    )
-    def setUp(self, connect):
+    @patch.object(PrestoQueryEngine, "_connect")
+    def setUp(self, connect_mock):
+        # Create mock connections
+        mock_trino_connection = MagicMock()
+        mock_tdclient_connection = MagicMock()
+
+        # Set up mock trino connection to return a cursor with _request attribute
+        mock_cursor = MagicMock()
+        mock_cursor._request = MagicMock()
+        mock_trino_connection.cursor.return_value = mock_cursor
+
+        connect_mock.return_value = (mock_trino_connection, mock_tdclient_connection)
+
         self.presto = PrestoQueryEngine(
             "1/XXX", "https://api.treasuredata.com/", "sample_datasets", True
         )
-        self.assertTrue(connect.called)
+        self.assertTrue(connect_mock.called)
         self.assertEqual(self.presto.executed, None)
 
     def test_user_agent(self):
@@ -84,8 +106,13 @@ class PrestoQueryEngineTestCase(unittest.TestCase):
         self.assertEqual(header, f"-- client: {ua}\n-- foo\n-- bar\n")
 
     def test_cursor(self):
-        self.presto.cursor()
-        self.assertTrue(self.presto.trino_connection.cursor.called)
+        # Patch CustomTrinoCursor creation to use our testable version
+        with patch("pytd.query_engine.CustomTrinoCursor", DummyCustomTrinoCursor):
+            cursor = self.presto.cursor()
+            # Verify it's our custom cursor (testable version)
+            self.assertIsInstance(cursor, DummyCustomTrinoCursor)
+            # Verify custom user agent is set
+            self.assertEqual(cursor._custom_user_agent, self.presto.user_agent)
 
     def test_cursor_tdclient(self):
         self.presto.cursor(force_tdclient=True)
