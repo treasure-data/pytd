@@ -8,8 +8,8 @@ class Connection(object):
 
     The interface internally bundles pytd.Client. Implementation is technically
     based on the DBAPI interface to Treasure Data's Presto query engine, which
-    relies on presto-python-client:
-    https://github.com/prestodb/presto-python-client.
+    relies on trino-python-client:
+    https://github.com/trinodb/trino-python-client.
 
     Parameters
     ----------

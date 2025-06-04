@@ -189,7 +189,7 @@ Treasure Data offers three different Python clients on GitHub, and the following
 2. **pytd**
 
    - Access to Plazma via td-spark as introduced above.
-   - Efficient connection to Presto based on `presto-python-client <https://github.com/prestodb/presto-python-client>`__.
+   - Efficient connection to Presto based on `trino-python-client <https://github.com/trinodb/trino-python-client>`__.
    - Multiple data ingestion methods and a variety of utility functions.
 
 3. `pandas-td <https://github.com/treasure-data/pandas-td>`__ *(deprecated)*

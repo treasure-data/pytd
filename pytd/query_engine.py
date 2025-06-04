@@ -4,8 +4,8 @@ import logging
 import os
 from urllib.parse import urlparse
 
-import prestodb
 import tdclient
+import trino
 
 __version__ = importlib.metadata.version("pytd")
 
@@ -59,7 +59,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
             Treasure Data-specific optional query parameters. Giving these
             keyword arguments forces query engine to issue a query via Treasure
             Data REST API provided by ``tdclient``, rather than using a direct
-            connection established by the ``prestodb`` package.
+            connection established by the ``trino`` package.
 
             - ``db`` (str): use the database
             - ``result_url`` (str): result output URL
@@ -81,7 +81,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
             deterministically issued via ``tdclient``.
 
             - ``force_tdclient`` (bool): force Presto engines to issue a query
-              via ``tdclient`` rather than its default ``prestodb`` interface.
+              via ``tdclient`` rather than its default ``trino`` interface.
 
         Returns
         -------
@@ -165,7 +165,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
             Treasure Data-specific optional query parameters. Giving these
             keyword arguments forces query engine to issue a query via Treasure
             Data REST API provided by ``tdclient``, rather than using a direct
-            connection established by the ``prestodb`` package.
+            connection established by the ``trino`` package.
 
             - ``db`` (str): use the database
             - ``result_url`` (str): result output URL
@@ -258,14 +258,14 @@ class PrestoQueryEngine(QueryEngine):
 
     def __init__(self, apikey, endpoint, database, header):
         super(PrestoQueryEngine, self).__init__(apikey, endpoint, database, header)
-        self.prestodb_connection, self.tdclient_connection = self._connect()
+        self.trino_connection, self.tdclient_connection = self._connect()
 
     @property
     def user_agent(self):
         """User agent passed to a Presto connection."""
         return (
             f"pytd/{__version__} "
-            f"(prestodb/{prestodb.__version__}; "
+            f"(trino/{trino.__version__}; "
             f"tdclient/{tdclient.__version__})"
         )
 
@@ -292,7 +292,7 @@ class PrestoQueryEngine(QueryEngine):
             Treasure Data-specific optional query parameters. Giving these
             keyword arguments forces query engine to issue a query via Treasure
             Data REST API provided by ``tdclient``, rather than using a direct
-            connection established by the ``prestodb`` package.
+            connection established by the ``trino`` package.
 
             - ``db`` (str): use the database
             - ``result_url`` (str): result output URL
@@ -309,28 +309,28 @@ class PrestoQueryEngine(QueryEngine):
 
         Returns
         -------
-        :class:`prestodb.dbapi.Cursor`, or :class:`tdclient.cursor.Cursor`
+        :class:`trino.dbapi.Cursor`, or :class:`tdclient.cursor.Cursor`
         """
         if not force_tdclient and len(kwargs) == 0:
-            return self.prestodb_connection.cursor()
+            return self.trino_connection.cursor()
 
         return self._get_tdclient_cursor(self.tdclient_connection, **kwargs)
 
     def close(self):
         """Close a connection to Presto."""
-        self.prestodb_connection.close()
+        self.trino_connection.close()
         self.tdclient_connection.close()
 
     def _connect(self):
         return (
-            prestodb.dbapi.connect(
+            trino.dbapi.connect(
                 host=self.presto_api_host,
                 port=443,
                 http_scheme="https",
                 user=self.apikey,
                 catalog="td-presto",
                 schema=self.database,
-                http_headers={"user-agent": self.user_agent},
+                source=self.user_agent,
             ),
             tdclient.connect(
                 apikey=self.apikey,

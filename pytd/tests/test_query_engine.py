@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-import prestodb
 import tdclient
+import trino
 
 from pytd import __version__
 from pytd.query_engine import HiveQueryEngine, PrestoQueryEngine
@@ -57,7 +57,7 @@ class PrestoQueryEngineTestCase(unittest.TestCase):
             ua,
             (
                 f"pytd/{__version__} "
-                f"(prestodb/{prestodb.__version__}; "
+                f"(trino/{trino.__version__}; "
                 f"tdclient/{tdclient.__version__})"
             ),
         )
@@ -85,7 +85,7 @@ class PrestoQueryEngineTestCase(unittest.TestCase):
 
     def test_cursor(self):
         self.presto.cursor()
-        self.assertTrue(self.presto.prestodb_connection.cursor.called)
+        self.assertTrue(self.presto.trino_connection.cursor.called)
 
     def test_cursor_tdclient(self):
         self.presto.cursor(force_tdclient=True)
@@ -101,7 +101,7 @@ class PrestoQueryEngineTestCase(unittest.TestCase):
 
     def test_close(self):
         self.presto.close()
-        self.assertTrue(self.presto.prestodb_connection.close.called)
+        self.assertTrue(self.presto.trino_connection.close.called)
         self.assertTrue(self.presto.tdclient_connection.close.called)
 
 
