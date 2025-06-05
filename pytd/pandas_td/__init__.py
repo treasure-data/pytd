@@ -127,7 +127,7 @@ def read_td_query(
     the index, otherwise default integer index will be used.
 
     While Presto in pytd has two options to issue a query, by either
-    ``tdclient`` or ``prestodb``, pytd.pandas_td#read_td_query always uses the
+    ``tdclient`` or ``trino``, pytd.pandas_td#read_td_query always uses the
     former to be compatible with the original pandas-td. Use
     :class:`pytd.Client` to take advantage of the latter option.
 

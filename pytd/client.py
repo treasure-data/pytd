@@ -45,20 +45,20 @@ class Client(object):
     api_client : :class:`tdclient.Client`
         Connection to Treasure Data.
 
-    query_executed : str or :class:`prestodb.client.PrestoResult`, default: `None`
+    query_executed : str or :class:`trino.client.TrinoResult`, default: `None`
         Query execution result returned from DB-API Cursor object.
 
         Examples
         ---------
 
-        Presto query executed via ``prestodb`` returns ``PrestoResult`` object:
+        Presto query executed via ``trino`` returns ``TrinoResult`` object:
 
         >>> import pytd
         >>> client = pytd.Client()
         >>> client.query_executed
         >>> client.query('select 1')
         >>> client.query_executed
-        <prestodb.client.PrestoResult object at 0x10b9826a0>
+        <trino.client.TrinoResult object at 0x10b9826a0>
 
         Meanwhile, ``tdclient`` runs a job on Treasure Data, and Cursor returns
         its job id:
@@ -186,7 +186,7 @@ class Client(object):
             keyword arguments forces query engine to issue a query via Treasure
             Data REST API provided by ``tdclient``; that is, if ``engine`` is
             Presto, you cannot enjoy efficient direct access to the query
-            engine provided by ``prestodb``.
+            engine provided by ``trino``.
 
             - ``db`` (str): use the database
             - ``result_url`` (str): result output URL
@@ -208,7 +208,7 @@ class Client(object):
             deterministically issued via ``tdclient``.
 
             - ``force_tdclient`` (bool): force Presto engines to issue a query
-              via ``tdclient`` rather than its default ``prestodb`` interface.
+              via ``tdclient`` rather than its default ``trino`` interface.
 
         Returns
         -------

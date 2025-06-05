@@ -4,12 +4,66 @@ import logging
 import os
 from urllib.parse import urlparse
 
-import prestodb
 import tdclient
+import trino
 
 __version__ = importlib.metadata.version("pytd")
 
 logger = logging.getLogger(__name__)
+
+
+class CustomTrinoCursor(trino.dbapi.Cursor):
+    """Custom Trino cursor that supports user-agent override."""
+
+    def __init__(self, connection, request, user_agent, legacy_primitive_types=False):
+        super().__init__(connection, request, legacy_primitive_types)
+        self._custom_user_agent = user_agent
+
+    def execute(self, operation, params=None):
+        # Prepare additional headers with custom user-agent
+        additional_headers = {"User-Agent": self._custom_user_agent}
+
+        if params:
+            assert isinstance(params, (list, tuple)), (
+                "params must be a list or tuple containing the query "
+                "parameter values"
+            )
+
+            if self.connection._use_legacy_prepared_statements():
+                statement_name = self._generate_unique_statement_name()
+                self._prepare_statement(operation, statement_name)
+
+                try:
+                    # Send execute statement and assign the return value to `results`
+                    # as it will be returned by the function
+                    self._query = self._execute_prepared_statement(
+                        statement_name, params
+                    )
+                    self._iterator = iter(
+                        self._query.execute(additional_http_headers=additional_headers)
+                    )
+                finally:
+                    # Send deallocate statement
+                    # At this point the query can be deallocated since it has already
+                    # been executed
+                    # TODO: Consider caching prepared statements if requested by caller
+                    self._deallocate_prepared_statement(statement_name)
+            else:
+                self._query = self._execute_immediate_statement(operation, params)
+                self._iterator = iter(
+                    self._query.execute(additional_http_headers=additional_headers)
+                )
+
+        else:
+            self._query = trino.client.TrinoQuery(
+                self._request,
+                query=operation,
+                legacy_primitive_types=self._legacy_primitive_types,
+            )
+            self._iterator = iter(
+                self._query.execute(additional_http_headers=additional_headers)
+            )
+        return self
 
 
 class QueryEngine(metaclass=abc.ABCMeta):
@@ -59,7 +113,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
             Treasure Data-specific optional query parameters. Giving these
             keyword arguments forces query engine to issue a query via Treasure
             Data REST API provided by ``tdclient``, rather than using a direct
-            connection established by the ``prestodb`` package.
+            connection established by the ``trino`` package.
 
             - ``db`` (str): use the database
             - ``result_url`` (str): result output URL
@@ -81,7 +135,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
             deterministically issued via ``tdclient``.
 
             - ``force_tdclient`` (bool): force Presto engines to issue a query
-              via ``tdclient`` rather than its default ``prestodb`` interface.
+              via ``tdclient`` rather than its default ``trino`` interface.
 
         Returns
         -------
@@ -165,7 +219,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
             Treasure Data-specific optional query parameters. Giving these
             keyword arguments forces query engine to issue a query via Treasure
             Data REST API provided by ``tdclient``, rather than using a direct
-            connection established by the ``prestodb`` package.
+            connection established by the ``trino`` package.
 
             - ``db`` (str): use the database
             - ``result_url`` (str): result output URL
@@ -258,14 +312,14 @@ class PrestoQueryEngine(QueryEngine):
 
     def __init__(self, apikey, endpoint, database, header):
         super(PrestoQueryEngine, self).__init__(apikey, endpoint, database, header)
-        self.prestodb_connection, self.tdclient_connection = self._connect()
+        self.trino_connection, self.tdclient_connection = self._connect()
 
     @property
     def user_agent(self):
         """User agent passed to a Presto connection."""
         return (
             f"pytd/{__version__} "
-            f"(prestodb/{prestodb.__version__}; "
+            f"(trino/{trino.__version__}; "
             f"tdclient/{tdclient.__version__})"
         )
 
@@ -292,7 +346,7 @@ class PrestoQueryEngine(QueryEngine):
             Treasure Data-specific optional query parameters. Giving these
             keyword arguments forces query engine to issue a query via Treasure
             Data REST API provided by ``tdclient``, rather than using a direct
-            connection established by the ``prestodb`` package.
+            connection established by the ``trino`` package.
 
             - ``db`` (str): use the database
             - ``result_url`` (str): result output URL
@@ -309,29 +363,37 @@ class PrestoQueryEngine(QueryEngine):
 
         Returns
         -------
-        :class:`prestodb.dbapi.Cursor`, or :class:`tdclient.cursor.Cursor`
+        :class:`trino.dbapi.Cursor`, or :class:`tdclient.cursor.Cursor`
         """
         if not force_tdclient and len(kwargs) == 0:
-            return self.prestodb_connection.cursor()
+            # Create a regular cursor first to get the request object
+            regular_cursor = self.trino_connection.cursor()
+
+            # In production, return our custom cursor with the same request object
+            return CustomTrinoCursor(
+                self.trino_connection, regular_cursor._request, self.user_agent
+            )
 
         return self._get_tdclient_cursor(self.tdclient_connection, **kwargs)
 
     def close(self):
         """Close a connection to Presto."""
-        self.prestodb_connection.close()
+        self.trino_connection.close()
         self.tdclient_connection.close()
 
     def _connect(self):
+        # Create trino connection
+        trino_connection = trino.dbapi.connect(
+            host=self.presto_api_host,
+            port=443,
+            http_scheme="https",
+            user=self.apikey,
+            catalog="td-presto",
+            schema=self.database,
+        )
+
         return (
-            prestodb.dbapi.connect(
-                host=self.presto_api_host,
-                port=443,
-                http_scheme="https",
-                user=self.apikey,
-                catalog="td-presto",
-                schema=self.database,
-                http_headers={"user-agent": self.user_agent},
-            ),
+            trino_connection,
             tdclient.connect(
                 apikey=self.apikey,
                 endpoint=self.endpoint,
