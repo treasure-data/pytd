@@ -1,6 +1,13 @@
 Changelog
 =========
 
+v2.0.0 (2025-08-05)
+-------------------
+
+- Migrate presto-python-client to trino-python-client
+- Add support for Python 3.12, 3.13
+- Drop support for Python 3.8
+
 v1.9.0 (2025-03-21)
 -------------------
 
