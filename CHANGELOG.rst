@@ -4,7 +4,7 @@ Changelog
 v2.0.0 (2025-08-05)
 -------------------
 
-- Migrate Migrate presto-python-client to trino-python-client
+- Migrate presto-python-client to trino-python-client
 - Add support for Python 3.12, 3.13
 - Drop support for Python 3.8
 
