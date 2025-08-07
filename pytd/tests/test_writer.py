@@ -367,6 +367,54 @@ class BulkImportWriterTestCase(unittest.TestCase):
         with self.assertRaises(TypeError):
             self.writer.write_dataframe(pd.DataFrame([[1, 2], [3, 4]]), "foo", "error")
 
+    def test_bulk_import_name_default(self):
+        """Test that UUID-based session name is generated when bulk_import_name is not provided"""
+        df = pd.DataFrame([[1, 2], [3, 4]])
+        self.writer.write_dataframe(df, self.table, "overwrite")
+
+        # Check that create_bulk_import was called
+        self.assertTrue(self.table.client.api_client.create_bulk_import.called)
+        args, kwargs = self.table.client.api_client.create_bulk_import.call_args
+
+        # First argument should be the session name
+        session_name = args[0]
+        self.assertTrue(session_name.startswith("session-"))
+        self.assertTrue(len(session_name) > len("session-"))  # Should have UUID part
+
+    def test_bulk_import_name_custom(self):
+        """Test that custom bulk_import_name is used when provided"""
+        df = pd.DataFrame([[1, 2], [3, 4]])
+        custom_name = "my-custom-import-job"
+
+        self.writer.write_dataframe(
+            df, self.table, "overwrite", bulk_import_name=custom_name
+        )
+
+        # Check that create_bulk_import was called with the custom name
+        self.assertTrue(self.table.client.api_client.create_bulk_import.called)
+        args, kwargs = self.table.client.api_client.create_bulk_import.call_args
+
+        # First argument should be the custom session name
+        session_name = args[0]
+        self.assertEqual(session_name, custom_name)
+
+    def test_bulk_import_name_custom_msgpack(self):
+        """Test that custom bulk_import_name works with msgpack format"""
+        df = pd.DataFrame([[1, 2], [3, 4]])
+        custom_name = "my-msgpack-import"
+
+        self.writer.write_dataframe(
+            df, self.table, "overwrite", fmt="msgpack", bulk_import_name=custom_name
+        )
+
+        # Check that create_bulk_import was called with the custom name
+        self.assertTrue(self.table.client.api_client.create_bulk_import.called)
+        args, kwargs = self.table.client.api_client.create_bulk_import.call_args
+
+        # First argument should be the custom session name
+        session_name = args[0]
+        self.assertEqual(session_name, custom_name)
+
 
 class SparkWriterTestCase(unittest.TestCase):
     def setUp(self):

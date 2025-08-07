@@ -333,6 +333,7 @@ class BulkImportWriter(Writer):
         max_workers=5,
         chunk_record_size=10_000,
         show_progress=False,
+        bulk_import_name=None,
     ):
         """Write a given DataFrame to a Treasure Data table.
 
@@ -441,6 +442,10 @@ class BulkImportWriter(Writer):
         chunk_record_size : int, optional, default: 10_000
             The number of records to be written in a single file. This is used only when
             ``fmt`` is ``msgpack``.
+
+        bulk_import_name : str, optional, default: None
+            Custom name for the bulk import job. If not provided, a UUID-based
+            name will be automatically generated.
         """
         if self.closed:
             raise RuntimeError("this writer is already closed and no longer available")
@@ -522,6 +527,7 @@ class BulkImportWriter(Writer):
                 fmt,
                 max_workers=max_workers,
                 show_progress=show_progress,
+                bulk_import_name=bulk_import_name,
             )
             stack.close()
 
@@ -533,6 +539,7 @@ class BulkImportWriter(Writer):
         fmt="csv",
         max_workers=5,
         show_progress=False,
+        bulk_import_name=None,
     ):
         """Write a specified CSV file to a Treasure Data table.
 
@@ -564,6 +571,10 @@ class BulkImportWriter(Writer):
         show_progress : boolean, default: False
             If this argument is True, shows a TQDM progress bar
             for the upload process performed on multiple threads.
+
+        bulk_import_name : str, optional, default: None
+            Custom name for the bulk import job. If not provided, a UUID-based
+            name will be automatically generated.
         """
         params = None
         if table.exists:
@@ -583,10 +594,13 @@ class BulkImportWriter(Writer):
         else:
             table.create()
 
-        session_name = f"session-{uuid.uuid1()}"
+        if bulk_import_name is None:
+            bulk_import_name = f"session-{uuid.uuid1()}"
+
+        logger.info(f"creating bulk import session: {bulk_import_name}")
 
         bulk_import = table.client.api_client.create_bulk_import(
-            session_name, table.database, table.table, params=params
+            bulk_import_name, table.database, table.table, params=params
         )
         s_time = time.time()
         try:
