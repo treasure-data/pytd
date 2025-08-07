@@ -334,6 +334,8 @@ class BulkImportWriter(Writer):
         chunk_record_size=10_000,
         show_progress=False,
         bulk_import_name=None,
+        commit_timeout=None,
+        perform_wait_callback=None,
     ):
         """Write a given DataFrame to a Treasure Data table.
 
@@ -446,6 +448,14 @@ class BulkImportWriter(Writer):
         bulk_import_name : str, optional, default: None
             Custom name for the bulk import job. If not provided, a UUID-based
             name will be automatically generated.
+
+        commit_timeout : int, optional, default: None
+            Timeout in seconds for the bulk import commit operation. If None,
+            no timeout is applied.
+
+        perform_wait_callback : callable, optional, default: None
+            A callable to be called on every tick of wait interval during
+            bulk import job execution.
         """
         if self.closed:
             raise RuntimeError("this writer is already closed and no longer available")
@@ -528,6 +538,8 @@ class BulkImportWriter(Writer):
                 max_workers=max_workers,
                 show_progress=show_progress,
                 bulk_import_name=bulk_import_name,
+                commit_timeout=commit_timeout,
+                perform_wait_callback=perform_wait_callback,
             )
             stack.close()
 
@@ -540,6 +552,8 @@ class BulkImportWriter(Writer):
         max_workers=5,
         show_progress=False,
         bulk_import_name=None,
+        commit_timeout=None,
+        perform_wait_callback=None,
     ):
         """Write a specified CSV file to a Treasure Data table.
 
@@ -575,6 +589,14 @@ class BulkImportWriter(Writer):
         bulk_import_name : str, optional, default: None
             Custom name for the bulk import job. If not provided, a UUID-based
             name will be automatically generated.
+
+        commit_timeout : int, optional, default: None
+            Timeout in seconds for the bulk import commit operation. If None,
+            no timeout is applied.
+
+        perform_wait_callback : callable, optional, default: None
+            A callable to be called on every tick of wait interval during
+            bulk import job execution.
         """
         params = None
         if table.exists:
@@ -637,7 +659,7 @@ class BulkImportWriter(Writer):
         logger.debug(f"uploaded data in {time.time() - s_time:.2f} sec")
 
         logger.info("performing a bulk import job")
-        job = bulk_import.perform(wait=True)
+        job = bulk_import.perform(wait=True, wait_callback=perform_wait_callback)
 
         if 0 < bulk_import.error_records:
             logger.warning(
@@ -652,7 +674,7 @@ class BulkImportWriter(Writer):
             raise RuntimeError(
                 f"[job id {job.id}] no records have been imported: {bulk_import.name}"
             )
-        bulk_import.commit(wait=True)
+        bulk_import.commit(wait=True, timeout=commit_timeout)
         bulk_import.delete()
 
     def _write_msgpack_stream(self, items, stream):

@@ -415,6 +415,40 @@ class BulkImportWriterTestCase(unittest.TestCase):
         session_name = args[0]
         self.assertEqual(session_name, custom_name)
 
+    def test_commit_timeout_parameter(self):
+        """Test that commit_timeout parameter is passed correctly"""
+        df = pd.DataFrame([[1, 2], [3, 4]])
+        timeout_value = 300  # 5 minutes
+
+        # Mock the bulk_import.commit method to check if timeout is passed
+        mock_bulk_import = self.table.client.api_client.create_bulk_import.return_value
+        mock_bulk_import.commit = MagicMock()
+
+        self.writer.write_dataframe(
+            df, self.table, "overwrite", commit_timeout=timeout_value
+        )
+
+        # Check that commit was called with the timeout parameter
+        mock_bulk_import.commit.assert_called_with(wait=True, timeout=timeout_value)
+
+    def test_perform_wait_callback_parameter(self):
+        """Test that perform_wait_callback parameter is passed correctly"""
+        df = pd.DataFrame([[1, 2], [3, 4]])
+        callback_func = MagicMock()
+
+        # Mock the bulk_import.perform method to check if wait_callback is passed
+        mock_bulk_import = self.table.client.api_client.create_bulk_import.return_value
+        mock_bulk_import.perform = MagicMock()
+
+        self.writer.write_dataframe(
+            df, self.table, "overwrite", perform_wait_callback=callback_func
+        )
+
+        # Check that perform was called with the wait_callback parameter
+        mock_bulk_import.perform.assert_called_with(
+            wait=True, wait_callback=callback_func
+        )
+
 
 class SparkWriterTestCase(unittest.TestCase):
     def setUp(self):
