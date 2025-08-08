@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v2.1.0 (2025-08-08)
+-------------------
+
+- Add new options for BulkImportWriter: bulk_import_name, commit_timeout and perform_wait_callback
+
 v2.0.0 (2025-08-05)
 -------------------
 
