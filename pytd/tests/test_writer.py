@@ -446,7 +446,25 @@ class BulkImportWriterTestCase(unittest.TestCase):
 
         # Check that perform was called with the wait_callback parameter
         mock_bulk_import.perform.assert_called_with(
-            wait=True, wait_callback=callback_func
+            wait=True, timeout=None, wait_callback=callback_func
+        )
+
+    def test_perform_timeout_parameter(self):
+        """Test that perform_timeout parameter is passed correctly"""
+        df = pd.DataFrame([[1, 2], [3, 4]])
+        timeout_value = 300  # 5 minutes
+
+        # Mock the bulk_import.perform method to check if timeout is passed
+        mock_bulk_import = self.table.client.api_client.create_bulk_import.return_value
+        mock_bulk_import.perform = MagicMock()
+
+        self.writer.write_dataframe(
+            df, self.table, "overwrite", perform_timeout=timeout_value
+        )
+
+        # Check that perform was called with the timeout parameter
+        mock_bulk_import.perform.assert_called_with(
+            wait=True, timeout=timeout_value, wait_callback=None
         )
 
 
