@@ -1,6 +1,12 @@
 Changelog
 =========
 
+v2.2.0 (2025-08-15)
+-------------------
+
+- Add new option perform_wait_callback for BulkImportWriter
+- Require td-client to be of at least version 1.5.0
+
 v2.1.0 (2025-08-08)
 -------------------
 
