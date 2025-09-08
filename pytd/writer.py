@@ -46,11 +46,31 @@ def _isinstance_or_null(x, t):
 
 
 def _replace_pd_na(dataframe):
-    """Replace np.nan and pd.NA to None to avoid Int64 conversion issue"""
+    """Replace pd.NA to None for non-float columns to avoid Int64 conversion issues.
+
+    Preserve NaN and Infinity in float columns for IEEE 754 compliance.
+    This allows msgpack to correctly serialize special float values while
+    maintaining compatibility with Int64 columns.
+
+    Parameters
+    ----------
+    dataframe : pandas.DataFrame
+        The dataframe to process (modified in-place)
+    """
     if dataframe.isnull().any().any():
-        # Replace both np.nan and pd.NA with None
-        replace_dict = {np.nan: None, pd.NA: None}
-        dataframe.replace(replace_dict, inplace=True)
+        for column in dataframe.columns:
+            if dataframe[column].dtype.kind != "f":  # Not float type
+                # Only replace pd.NA in non-float columns
+                # Keep NaN and Infinity in float columns as they are handled correctly by msgpack
+                mask = dataframe[column].apply(
+                    lambda x: pd.isna(x)
+                    and not (
+                        isinstance(x, (float, np.floating))
+                        and (math.isnan(x) if not math.isinf(x) else False)
+                    )
+                )
+                if mask.any():
+                    dataframe.loc[mask, column] = None
 
 
 def _to_list(ary):
