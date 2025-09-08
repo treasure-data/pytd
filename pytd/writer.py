@@ -1,6 +1,7 @@
 import abc
 import gzip
 import logging
+import math
 import os
 import tempfile
 import time
@@ -188,6 +189,45 @@ class InsertIntoWriter(Writer):
     INSERT INTO query in Presto.
     """
 
+    def _format_value_for_trino(self, value):
+        """Convert a value to appropriate string format for use in Presto queries.
+
+        Parameters
+        ----------
+        value : any
+            The value to convert
+
+        Returns
+        -------
+        str
+            String representation usable in Presto queries
+        """
+        # Handle string values with quote escaping
+        if isinstance(value, str):
+            return f"""'{value.replace("'", "''")}'"""
+
+        # Detect infinity (excluding nan)
+        if (
+            isinstance(value, (int, float, np.number))
+            and not pd.isnull(value)
+            and math.isinf(value)
+        ):
+            if value > 0:
+                return "infinity()"
+            else:
+                return "-infinity()"
+
+        # Detect nan specifically
+        if isinstance(value, (int, float, np.number)) and math.isnan(value):
+            return "nan()"
+
+        # Handle other null values (pd.NA, pd.NaT, None)
+        if pd.isnull(value):
+            return "null"
+
+        # Handle other numeric values
+        return str(value)
+
     def write_dataframe(self, dataframe, table, if_exists):
         """Write a given DataFrame to a Treasure Data table.
 
@@ -297,18 +337,7 @@ class InsertIntoWriter(Writer):
         """
         rows = []
         for tpl in list_of_tuple:
-            # InsertIntoWriter kicks Presto (Trino).
-            # Following the list comprehension makes a single quote duplicated because
-            # Presto allows users to escape a single quote with another single quote.
-            # e.g. 'John Doe''s name' is converted to "John Doe's name" on Presto.
-            list_of_value_strings = [
-                (
-                    f"""'{e.replace("'", "''")}'"""
-                    if isinstance(e, str)
-                    else ("null" if pd.isnull(e) else str(e))
-                )
-                for e in tpl
-            ]
+            list_of_value_strings = [self._format_value_for_trino(e) for e in tpl]
             rows.append(f"({', '.join(list_of_value_strings)})")
 
         return (

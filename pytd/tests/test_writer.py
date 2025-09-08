@@ -189,7 +189,10 @@ class InsertIntoWriterTestCase(unittest.TestCase):
             "foo", "bar", list(df.itertuples(index=False, name=None)), df.columns
         )
         # column 'b' is handled as float64 because of null
-        q_expected = "INSERT INTO foo.bar (a, b, c) VALUES (1, null, 4), (2, 3.0, null)"
+        # With new implementation, np.nan in float columns becomes nan() instead of null
+        q_expected = (
+            "INSERT INTO foo.bar (a, b, c) VALUES (1, nan(), 4), (2, 3.0, null)"
+        )
         self.assertEqual(q, q_expected)
 
     def test_close(self):
