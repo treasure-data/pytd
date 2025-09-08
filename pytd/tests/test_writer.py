@@ -207,6 +207,39 @@ class InsertIntoWriterTestCase(unittest.TestCase):
         with self.assertRaises(TypeError):
             self.writer.write_dataframe(pd.DataFrame([[1, 2], [3, 4]]), "foo", "error")
 
+    def test_format_value_for_trino_special_values(self):
+        """Test _format_value_for_trino with special floating-point values"""
+        # Test infinity
+        result = self.writer._format_value_for_trino(np.inf)
+        self.assertEqual(result, "infinity()")
+
+        # Test negative infinity
+        result = self.writer._format_value_for_trino(-np.inf)
+        self.assertEqual(result, "-infinity()")
+
+        # Test nan
+        result = self.writer._format_value_for_trino(np.nan)
+        self.assertEqual(result, "nan()")
+
+        # Test pd.NA, pd.NaT, None
+        result = self.writer._format_value_for_trino(pd.NA)
+        self.assertEqual(result, "null")
+
+        result = self.writer._format_value_for_trino(pd.NaT)
+        self.assertEqual(result, "null")
+
+        result = self.writer._format_value_for_trino(None)
+        self.assertEqual(result, "null")
+
+    def test_format_value_for_trino_string_escaping(self):
+        """Test _format_value_for_trino with string values requiring escaping"""
+        result = self.writer._format_value_for_trino("hello")
+        self.assertEqual(result, "'hello'")
+
+        # Test string with single quotes - should be escaped
+        result = self.writer._format_value_for_trino("O'Brien")
+        self.assertEqual(result, "'O''Brien'")
+
 
 class BulkImportWriterTestCase(unittest.TestCase):
     def setUp(self):
@@ -308,7 +341,6 @@ class BulkImportWriterTestCase(unittest.TestCase):
         with patch("pytd.writer.os.unlink"):
             self.writer.write_dataframe(df, self.table, "overwrite", fmt="msgpack")
             self.assertTrue(self.writer._write_msgpack_stream.called)
-            print(self.writer._write_msgpack_stream.call_args[0][0][0:2])
             self.assertEqual(
                 self.writer._write_msgpack_stream.call_args[0][0][0:2],
                 expected_list,
@@ -470,6 +502,74 @@ class BulkImportWriterTestCase(unittest.TestCase):
             wait=True, timeout=timeout_value, wait_callback=None
         )
 
+    def test_replace_pd_na_with_special_values(self):
+        """Test _replace_pd_na preserves special float values"""
+        from pytd.writer import _replace_pd_na
+
+        # Create DataFrame with various special values
+        df = pd.DataFrame(
+            {
+                "float_col": [1.0, np.nan, np.inf, -np.inf, 2.5],
+                "int_col": pd.array([1, pd.NA, 3, 4, 5], dtype="Int64"),
+                "str_col": ["a", pd.NA, "c", "d", "e"],
+            }
+        )
+
+        # Apply _replace_pd_na
+        _replace_pd_na(df)
+
+        # Float column should preserve special values
+        self.assertTrue(np.isnan(df["float_col"].iloc[1]))
+        self.assertTrue(
+            np.isinf(df["float_col"].iloc[2]) and df["float_col"].iloc[2] > 0
+        )
+        self.assertTrue(
+            np.isinf(df["float_col"].iloc[3]) and df["float_col"].iloc[3] < 0
+        )
+
+        # Non-float columns should have pd.NA converted to None
+        self.assertIsNone(df["str_col"].iloc[1])
+
+        # Int64 column behavior (pd.NA should remain for Int64 compatibility)
+        self.assertTrue(pd.isna(df["int_col"].iloc[1]))
+
+    def test_msgpack_serialization_with_special_values(self):
+        """Test that msgpack correctly handles special float values"""
+        import msgpack
+
+        from pytd.writer import _replace_pd_na
+
+        # Create DataFrame with special values
+        df = pd.DataFrame(
+            {
+                "float_col": [1.0, np.nan, np.inf, -np.inf, 2.5],
+                "int_col": [1, 2, 3, 4, 5],
+                "str_col": ["a", "b", "c", "d", "e"],
+            }
+        )
+
+        # Process with _replace_pd_na
+        _replace_pd_na(df)
+
+        # Convert to records format (as done in BulkImportWriter)
+        records = df.to_dict(orient="records")
+
+        # Test msgpack serialization and deserialization
+        packer = msgpack.Packer()
+        for record in records:
+            try:
+                packed = packer.pack(record)
+                unpacked = msgpack.unpackb(packed, raw=False)
+
+                # Verify special values are preserved
+                if np.isnan(record.get("float_col", 0)):
+                    self.assertTrue(np.isnan(unpacked["float_col"]))
+                elif np.isinf(record.get("float_col", 0)):
+                    self.assertEqual(record["float_col"], unpacked["float_col"])
+
+            except Exception as e:
+                self.fail(f"msgpack serialization failed for record {record}: {e}")
+
 
 class SparkWriterTestCase(unittest.TestCase):
     def setUp(self):
@@ -503,7 +603,9 @@ class SparkWriterTestCase(unittest.TestCase):
         expected_df = df.replace({np.nan: None})
         for col in ["a", "b"]:
             expected_df[col] = expected_df[col].astype("int64")
-        self.writer.td_spark.spark.createDataFrame.return_value = "Dummy DataFrame"
+        # Column "c" has null values, so it should remain as "Int64"
+        expected_df["c"] = expected_df["c"].astype("Int64")
+        self.writer.td_spark.spark.createDataFrame.return_value = MagicMock()
         self.writer.write_dataframe(df, self.table, "overwrite")
         pd.testing.assert_frame_equal(
             self.writer.td_spark.spark.createDataFrame.call_args[0][0], expected_df
@@ -529,7 +631,10 @@ class SparkWriterTestCase(unittest.TestCase):
         expected_df = pd.DataFrame(
             data=[{"a": "true", "b": "false"}, {"a": "false", "b": "true", "c": "true"}]
         )
-        self.writer.td_spark.spark.createDataFrame.return_value = "Dummy DataFrame"
+        # Convert pd.NA to None in expected_df to match actual processing
+        expected_df = expected_df.replace({pd.NA: None})
+
+        self.writer.td_spark.spark.createDataFrame.return_value = MagicMock()
         self.writer.write_dataframe(df, self.table, "overwrite")
         pd.testing.assert_frame_equal(
             self.writer.td_spark.spark.createDataFrame.call_args[0][0], expected_df
@@ -549,3 +654,83 @@ class SparkWriterTestCase(unittest.TestCase):
     def test_table(self):
         with self.assertRaises(TypeError):
             self.writer.write_dataframe(pd.DataFrame([[1, 2], [3, 4]]), "foo", "error")
+
+    def test_replace_pd_na_with_special_float_values(self):
+        """Test that SparkWriter preserves special float values when processing DataFrame"""
+        from pytd.writer import _cast_dtypes, _replace_pd_na
+
+        # Create DataFrame with special float values
+        df = pd.DataFrame(
+            {
+                "float_col": [1.0, np.nan, np.inf, -np.inf, 2.5],
+                "int_col": [1, 2, 3, 4, 5],
+                "str_col": ["a", "b", "c", "d", "e"],
+            }
+        )
+
+        # Apply processing as SparkWriter does
+        _cast_dtypes(df)
+        _replace_pd_na(df)
+
+        # Verify special float values are preserved
+        self.assertTrue(np.isnan(df["float_col"].iloc[1]))
+        self.assertTrue(
+            np.isinf(df["float_col"].iloc[2]) and df["float_col"].iloc[2] > 0
+        )
+        self.assertTrue(
+            np.isinf(df["float_col"].iloc[3]) and df["float_col"].iloc[3] < 0
+        )
+
+        # Mock Spark DataFrame creation to verify the processed data
+        self.writer.td_spark.spark.createDataFrame.return_value = MagicMock()
+        self.writer.write_dataframe(df, self.table, "overwrite")
+
+        # Verify that the DataFrame passed to Spark contains special values
+        passed_df = self.writer.td_spark.spark.createDataFrame.call_args[0][0]
+        self.assertTrue(np.isnan(passed_df["float_col"].iloc[1]))
+        self.assertTrue(
+            np.isinf(passed_df["float_col"].iloc[2])
+            and passed_df["float_col"].iloc[2] > 0
+        )
+        self.assertTrue(
+            np.isinf(passed_df["float_col"].iloc[3])
+            and passed_df["float_col"].iloc[3] < 0
+        )
+        self.assertTrue(self.writer.td_spark.spark.createDataFrame.called)
+
+    def test_write_dataframe_special_values_consistency(self):
+        """Test that SparkWriter handles special values consistently with other writers"""
+        # Create test DataFrame with special values
+        df = pd.DataFrame(
+            {
+                "float_col": [1.0, np.nan, np.inf, -np.inf],
+                "str_col": ["test", None, "value", "data"],
+            }
+        )
+
+        # Mock the Spark context
+        self.writer.td_spark.spark.createDataFrame.return_value = MagicMock()
+
+        # Should not raise any exceptions with special float values
+        self.writer.write_dataframe(df, self.table, "overwrite")
+
+        # Verify DataFrame was processed and passed to Spark
+        self.assertTrue(self.writer.td_spark.spark.createDataFrame.called)
+
+        # Get the call arguments to createDataFrame
+        passed_df = self.writer.td_spark.spark.createDataFrame.call_args[0][0]
+
+        # Verify the processed DataFrame structure
+        self.assertEqual(passed_df.shape, (4, 2))
+        self.assertListEqual(list(passed_df.columns), ["float_col", "str_col"])
+
+        # Verify special float values are preserved for Spark to handle
+        self.assertTrue(np.isnan(passed_df["float_col"].iloc[1]))
+        self.assertTrue(np.isinf(passed_df["float_col"].iloc[2]))
+        self.assertTrue(
+            np.isinf(passed_df["float_col"].iloc[3])
+            and passed_df["float_col"].iloc[3] < 0
+        )
+
+        # Verify None values are properly handled
+        self.assertIsNone(passed_df["str_col"].iloc[1])

@@ -61,7 +61,8 @@ def _replace_pd_na(dataframe):
         for column in dataframe.columns:
             if dataframe[column].dtype.kind != "f":  # Not float type
                 # Only replace pd.NA in non-float columns
-                # Keep NaN and Infinity in float columns as they are handled correctly by msgpack
+                # Keep NaN and Infinity in float columns as they are handled correctly
+                # by msgpack
                 mask = dataframe[column].apply(
                     lambda x: pd.isna(x)
                     and not (
