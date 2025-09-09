@@ -46,32 +46,25 @@ def _isinstance_or_null(x, t):
 
 
 def _replace_pd_na(dataframe):
-    """Replace pd.NA to None for non-float columns to avoid Int64 conversion issues.
-
-    Preserve NaN and Infinity in float columns for IEEE 754 compliance.
-    This allows msgpack to correctly serialize special float values while
-    maintaining compatibility with Int64 columns.
-
-    Parameters
-    ----------
-    dataframe : pandas.DataFrame
-        The dataframe to process (modified in-place)
-    """
+    """Replace np.nan and pd.NA to None to avoid Int64 conversion issue"""
     if dataframe.isnull().any().any():
-        for column in dataframe.columns:
-            if dataframe[column].dtype.kind != "f":  # Not float type
-                # Only replace pd.NA in non-float columns
-                # Keep NaN and Infinity in float columns as they are handled correctly
-                # by msgpack
-                mask = dataframe[column].apply(
-                    lambda x: pd.isna(x)
-                    and not (
-                        isinstance(x, (float, np.floating))
-                        and (math.isnan(x) if not math.isinf(x) else False)
-                    )
-                )
-                if mask.any():
-                    dataframe.loc[mask, column] = None
+        # Replace both np.nan and pd.NA with None
+        replace_dict = {np.nan: None, pd.NA: None}
+        dataframe.replace(replace_dict, inplace=True)
+
+
+def _replace_special_float_values(dataframe):
+    """Replace infinity values (inf, -inf) with None for BulkImportWriter compatibility.
+    NaN values will be handled by _replace_pd_na() afterward."""
+    for column in dataframe.columns:
+        if dataframe[column].dtype.kind == "f":  # Float type
+            series = dataframe[column]
+            # Create mask for infinity values only (not NaN)
+            inf_mask = np.isinf(series)
+            if inf_mask.any():
+                # Convert to Float64 dtype to allow None values while preserving numeric type
+                dataframe[column] = dataframe[column].astype("Float64")
+                dataframe.loc[inf_mask, column] = None
 
 
 def _to_list(ary):
@@ -124,7 +117,7 @@ def _cast_dtypes(dataframe, inplace=True, keep_list=False):
         if kind in ("i", "u"):
             t = "Int64" if df[column].isnull().any() else "int64"
         elif kind == "f":
-            t = float
+            t = "Float64" if df[column].isnull().any() else "float64"
         elif kind in ("b", "O"):
             t = object
             if df[column].apply(_isinstance_or_null, args=((list, np.ndarray),)).all():
@@ -168,7 +161,12 @@ def _get_schema(dataframe):
             or (hasattr(pd, "Int8Dtype") and isinstance(t, pd.Int8Dtype))
         ):
             presto_type = "bigint"
-        elif t == "float64":
+        elif (
+            t == "float64"
+            or (hasattr(pd, "Float64Dtype") and isinstance(t, pd.Float64Dtype))
+            or dtype_str in ["Float64", "Float32"]
+            or (hasattr(pd, "Float32Dtype") and isinstance(t, pd.Float32Dtype))
+        ):
             presto_type = "double"
         else:
             presto_type = "varchar"
@@ -536,7 +534,7 @@ class BulkImportWriter(Writer):
                 dataframe.to_csv(fp.name)
                 fps.append(fp)
             elif fmt == "msgpack":
-                _replace_pd_na(dataframe)
+                _replace_special_float_values(dataframe)
                 num_rows = len(dataframe)
                 # chunk number of records should not exceed 200 to avoid OSError
                 _chunk_record_size = max(chunk_record_size, num_rows // 200)

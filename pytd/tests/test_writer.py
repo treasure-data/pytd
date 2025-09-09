@@ -3,6 +3,7 @@ import tempfile
 import unittest
 from unittest.mock import ANY, MagicMock, patch
 
+import msgpack
 import numpy as np
 import pandas as pd
 
@@ -13,6 +14,8 @@ from pytd.writer import (
     _cast_dtypes,
     _get_schema,
     _isinstance_or_null,
+    _replace_pd_na,
+    _replace_special_float_values,
     _to_list,
 )
 
@@ -71,7 +74,15 @@ class WriterTestCase(unittest.TestCase):
         dtypes = set(dft.dtypes)
         self.assertEqual(
             dtypes,
-            set([np.dtype("int64"), np.dtype("float"), np.dtype("O"), pd.Int64Dtype()]),
+            set(
+                [
+                    np.dtype("int64"),
+                    np.dtype("float64"),
+                    np.dtype("O"),
+                    pd.Int64Dtype(),
+                    pd.Float64Dtype(),
+                ]
+            ),
         )
         self.assertEqual(dft["F"][0], "false")
         self.assertTrue(isinstance(dft["H"][1], str))
@@ -82,9 +93,10 @@ class WriterTestCase(unittest.TestCase):
         self.assertIsNone(dft["K"][1])
         self.assertIsNone(dft["L"][1])
         self.assertIsNone(dft["M"][1])
-        self.assertTrue(np.isnan(dft["N"][1]))
-        # Nullable int will be float dtype by pandas default
-        self.assertTrue(isinstance(dft["N"][0], float))
+        # N column is now Float64, so pd.NA instead of np.nan
+        self.assertTrue(pd.isna(dft["N"][1]))
+        # Nullable float will be Float64 dtype
+        self.assertTrue(pd.api.types.is_extension_array_dtype(dft["N"]))
         # _cast_dtypes keeps np.nan/pd.NA when None in Int64 column given
         # This is for consistency of _get_schema
         self.assertTrue(pd.isna(dft["O"][2]))
@@ -108,7 +120,15 @@ class WriterTestCase(unittest.TestCase):
         dtypes = set(self.dft.dtypes)
         self.assertEqual(
             dtypes,
-            set([np.dtype("int64"), np.dtype("float"), np.dtype("O"), pd.Int64Dtype()]),
+            set(
+                [
+                    np.dtype("int64"),
+                    np.dtype("float64"),
+                    np.dtype("O"),
+                    pd.Int64Dtype(),
+                    pd.Float64Dtype(),
+                ]
+            ),
         )
         self.assertEqual(self.dft["F"][0], "false")
 
@@ -117,7 +137,15 @@ class WriterTestCase(unittest.TestCase):
         dtypes = set(self.dft.dtypes)
         self.assertEqual(
             dtypes,
-            set([np.dtype("int64"), np.dtype("float"), np.dtype("O"), pd.Int64Dtype()]),
+            set(
+                [
+                    np.dtype("int64"),
+                    np.dtype("float64"),
+                    np.dtype("O"),
+                    pd.Int64Dtype(),
+                    pd.Float64Dtype(),
+                ]
+            ),
         )
         self.assertTrue(self.dft["H"].apply(_isinstance_or_null, args=(list,)).all())
         self.assertTrue(self.dft["I"].apply(_isinstance_or_null, args=(list,)).all())
@@ -188,11 +216,8 @@ class InsertIntoWriterTestCase(unittest.TestCase):
         q = self.writer._build_query(
             "foo", "bar", list(df.itertuples(index=False, name=None)), df.columns
         )
-        # column 'b' is handled as float64 because of null
-        # With new implementation, np.nan in float columns becomes nan() instead of null
-        q_expected = (
-            "INSERT INTO foo.bar (a, b, c) VALUES (1, nan(), 4), (2, 3.0, null)"
-        )
+        # column 'b' is handled as Float64 because of null, pd.NA becomes null
+        q_expected = "INSERT INTO foo.bar (a, b, c) VALUES (1, null, 4), (2, 3.0, null)"
         self.assertEqual(q, q_expected)
 
     def test_close(self):
@@ -503,8 +528,7 @@ class BulkImportWriterTestCase(unittest.TestCase):
         )
 
     def test_replace_pd_na_with_special_values(self):
-        """Test _replace_pd_na preserves special float values"""
-        from pytd.writer import _replace_pd_na
+        """Test _replace_pd_na converts np.nan and pd.NA to None"""
 
         # Create DataFrame with various special values
         df = pd.DataFrame(
@@ -518,26 +542,56 @@ class BulkImportWriterTestCase(unittest.TestCase):
         # Apply _replace_pd_na
         _replace_pd_na(df)
 
-        # Float column should preserve special values
-        self.assertTrue(np.isnan(df["float_col"].iloc[1]))
+        # np.nan should be converted to None, but inf values are preserved by _replace_pd_na
+        self.assertIsNone(df["float_col"].iloc[1])  # np.nan -> None
         self.assertTrue(
             np.isinf(df["float_col"].iloc[2]) and df["float_col"].iloc[2] > 0
-        )
+        )  # np.inf preserved
         self.assertTrue(
             np.isinf(df["float_col"].iloc[3]) and df["float_col"].iloc[3] < 0
-        )
+        )  # -np.inf preserved
+
+        # Regular float values should be preserved
+        self.assertEqual(df["float_col"].iloc[0], 1.0)
+        self.assertEqual(df["float_col"].iloc[4], 2.5)
 
         # Non-float columns should have pd.NA converted to None
         self.assertIsNone(df["str_col"].iloc[1])
 
-        # Int64 column behavior (pd.NA should remain for Int64 compatibility)
+        # Int64 column behavior (pd.NA should be replaced by None and become NaN)
         self.assertTrue(pd.isna(df["int_col"].iloc[1]))
 
-    def test_msgpack_serialization_with_special_values(self):
-        """Test that msgpack correctly handles special float values"""
-        import msgpack
+    def test_replace_special_float_values_for_bulk_import(self):
+        """Test that BulkImportWriter processes special float values correctly"""
+        # Create DataFrame with various special values
+        df = pd.DataFrame(
+            {
+                "float_col": [1.0, np.nan, np.inf, -np.inf, 2.5],
+                "int_col": [1, 2, 3, 4, 5],
+                "str_col": ["a", "b", "c", "d", "e"],
+            }
+        )
 
-        from pytd.writer import _replace_pd_na
+        # First replace inf/-inf with None
+        _replace_special_float_values(df)
+        # Then replace NaN and pd.NA with None
+        _replace_pd_na(df)
+
+        # All special float values should be converted to None
+        self.assertIsNone(df["float_col"].iloc[1])  # np.nan -> None
+        self.assertIsNone(df["float_col"].iloc[2])  # np.inf -> None
+        self.assertIsNone(df["float_col"].iloc[3])  # -np.inf -> None
+
+        # Regular float values should be preserved
+        self.assertEqual(df["float_col"].iloc[0], 1.0)
+        self.assertEqual(df["float_col"].iloc[4], 2.5)
+
+        # Non-float columns should be unchanged
+        self.assertEqual(df["int_col"].iloc[0], 1)
+        self.assertEqual(df["str_col"].iloc[0], "a")
+
+    def test_msgpack_serialization_with_special_values(self):
+        """Test that msgpack correctly handles values after special float processing"""
 
         # Create DataFrame with special values
         df = pd.DataFrame(
@@ -548,8 +602,9 @@ class BulkImportWriterTestCase(unittest.TestCase):
             }
         )
 
-        # Process with _replace_pd_na
-        _replace_pd_na(df)
+        # Process with the same sequence as BulkImportWriter
+        _replace_special_float_values(df)  # First replace inf/-inf
+        _replace_pd_na(df)  # Then replace NaN and pd.NA
 
         # Convert to records format (as done in BulkImportWriter)
         records = df.to_dict(orient="records")
@@ -561,10 +616,10 @@ class BulkImportWriterTestCase(unittest.TestCase):
                 packed = packer.pack(record)
                 unpacked = msgpack.unpackb(packed, raw=False)
 
-                # Verify special values are preserved
-                if np.isnan(record.get("float_col", 0)):
-                    self.assertTrue(np.isnan(unpacked["float_col"]))
-                elif np.isinf(record.get("float_col", 0)):
+                # Verify that special values have been converted to None
+                if record.get("float_col") is None:
+                    self.assertIsNone(unpacked["float_col"])
+                else:
                     self.assertEqual(record["float_col"], unpacked["float_col"])
 
             except Exception as e:
@@ -600,11 +655,12 @@ class SparkWriterTestCase(unittest.TestCase):
         df = pd.DataFrame(
             data=[{"a": 1, "b": 2}, {"a": 3, "b": 4, "c": 5}], dtype="Int64"
         )
+        # After _replace_pd_na, column "c" will be object dtype with None values
         expected_df = df.replace({np.nan: None})
         for col in ["a", "b"]:
             expected_df[col] = expected_df[col].astype("int64")
-        # Column "c" has null values, so it should remain as "Int64"
-        expected_df["c"] = expected_df["c"].astype("Int64")
+        # Column "c" has null values, so it will become object dtype after _replace_pd_na
+        expected_df["c"] = expected_df["c"].astype("object")
         self.writer.td_spark.spark.createDataFrame.return_value = MagicMock()
         self.writer.write_dataframe(df, self.table, "overwrite")
         pd.testing.assert_frame_equal(
@@ -656,7 +712,7 @@ class SparkWriterTestCase(unittest.TestCase):
             self.writer.write_dataframe(pd.DataFrame([[1, 2], [3, 4]]), "foo", "error")
 
     def test_replace_pd_na_with_special_float_values(self):
-        """Test that SparkWriter preserves special float values when processing DataFrame"""
+        """Test that SparkWriter converts special float values to None when processing DataFrame"""
         from pytd.writer import _cast_dtypes, _replace_pd_na
 
         # Create DataFrame with special float values
@@ -672,34 +728,15 @@ class SparkWriterTestCase(unittest.TestCase):
         _cast_dtypes(df)
         _replace_pd_na(df)
 
-        # Verify special float values are preserved
-        self.assertTrue(np.isnan(df["float_col"].iloc[1]))
-        self.assertTrue(
-            np.isinf(df["float_col"].iloc[2]) and df["float_col"].iloc[2] > 0
-        )
-        self.assertTrue(
-            np.isinf(df["float_col"].iloc[3]) and df["float_col"].iloc[3] < 0
-        )
-
-        # Mock Spark DataFrame creation to verify the processed data
-        self.writer.td_spark.spark.createDataFrame.return_value = MagicMock()
-        self.writer.write_dataframe(df, self.table, "overwrite")
-
-        # Verify that the DataFrame passed to Spark contains special values
-        passed_df = self.writer.td_spark.spark.createDataFrame.call_args[0][0]
-        self.assertTrue(np.isnan(passed_df["float_col"].iloc[1]))
-        self.assertTrue(
-            np.isinf(passed_df["float_col"].iloc[2])
-            and passed_df["float_col"].iloc[2] > 0
-        )
-        self.assertTrue(
-            np.isinf(passed_df["float_col"].iloc[3])
-            and passed_df["float_col"].iloc[3] < 0
-        )
-        self.assertTrue(self.writer.td_spark.spark.createDataFrame.called)
+        # With current implementation, NaN becomes None, but inf/-inf remain
+        self.assertIsNone(df["float_col"].iloc[1])  # np.nan -> None
+        self.assertTrue(np.isinf(df["float_col"].iloc[2]))  # np.inf preserved
+        self.assertTrue(np.isinf(df["float_col"].iloc[3]))  # -np.inf preserved
+        self.assertEqual(df["float_col"].iloc[0], 1.0)
+        self.assertEqual(df["float_col"].iloc[4], 2.5)
 
     def test_write_dataframe_special_values_consistency(self):
-        """Test that SparkWriter handles special values consistently with other writers"""
+        """Test that SparkWriter handles special values consistently"""
         # Create test DataFrame with special values
         df = pd.DataFrame(
             {
@@ -724,13 +761,13 @@ class SparkWriterTestCase(unittest.TestCase):
         self.assertEqual(passed_df.shape, (4, 2))
         self.assertListEqual(list(passed_df.columns), ["float_col", "str_col"])
 
-        # Verify special float values are preserved for Spark to handle
-        self.assertTrue(np.isnan(passed_df["float_col"].iloc[1]))
-        self.assertTrue(np.isinf(passed_df["float_col"].iloc[2]))
+        # Verify special float values are processed according to current implementation
+        self.assertIsNone(passed_df["float_col"].iloc[1])  # NaN -> None
+        self.assertTrue(np.isinf(passed_df["float_col"].iloc[2]))  # inf preserved
         self.assertTrue(
             np.isinf(passed_df["float_col"].iloc[3])
             and passed_df["float_col"].iloc[3] < 0
-        )
+        )  # -inf preserved
 
         # Verify None values are properly handled
         self.assertIsNone(passed_df["str_col"].iloc[1])
