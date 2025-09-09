@@ -15,7 +15,6 @@ from pytd.writer import (
     _get_schema,
     _isinstance_or_null,
     _replace_pd_na,
-    _replace_special_float_values,
     _to_list,
 )
 
@@ -39,6 +38,7 @@ class WriterTestCase(unittest.TestCase):
                 "M": ["foo", None, "bar"],
                 "N": [1, None, 3],
                 "O": pd.Series([1, 2, None], dtype="Int64"),
+                "P": pd.Series([1.0, 2.0, None], dtype="Float64"),
             }
         )
 
@@ -100,6 +100,7 @@ class WriterTestCase(unittest.TestCase):
         # _cast_dtypes keeps np.nan/pd.NA when None in Int64 column given
         # This is for consistency of _get_schema
         self.assertTrue(pd.isna(dft["O"][2]))
+        self.assertTrue(pd.isna(dft["P"][2]))
 
     def test_cast_dtypes_nullable(self):
         dft = pd.DataFrame(
@@ -428,7 +429,8 @@ class BulkImportWriterTestCase(unittest.TestCase):
             self.writer.write_dataframe(pd.DataFrame([[1, 2], [3, 4]]), "foo", "error")
 
     def test_bulk_import_name_default(self):
-        """Test that UUID-based session name is generated when bulk_import_name is not provided"""
+        """Test that UUID-based session name is generated when bulk_import_name
+        is not provided"""
         df = pd.DataFrame([[1, 2], [3, 4]])
         self.writer.write_dataframe(df, self.table, "overwrite")
 
@@ -527,69 +529,6 @@ class BulkImportWriterTestCase(unittest.TestCase):
             wait=True, timeout=timeout_value, wait_callback=None
         )
 
-    def test_replace_pd_na_with_special_values(self):
-        """Test _replace_pd_na converts np.nan and pd.NA to None"""
-
-        # Create DataFrame with various special values
-        df = pd.DataFrame(
-            {
-                "float_col": [1.0, np.nan, np.inf, -np.inf, 2.5],
-                "int_col": pd.array([1, pd.NA, 3, 4, 5], dtype="Int64"),
-                "str_col": ["a", pd.NA, "c", "d", "e"],
-            }
-        )
-
-        # Apply _replace_pd_na
-        _replace_pd_na(df)
-
-        # np.nan should be converted to None, but inf values are preserved by _replace_pd_na
-        self.assertIsNone(df["float_col"].iloc[1])  # np.nan -> None
-        self.assertTrue(
-            np.isinf(df["float_col"].iloc[2]) and df["float_col"].iloc[2] > 0
-        )  # np.inf preserved
-        self.assertTrue(
-            np.isinf(df["float_col"].iloc[3]) and df["float_col"].iloc[3] < 0
-        )  # -np.inf preserved
-
-        # Regular float values should be preserved
-        self.assertEqual(df["float_col"].iloc[0], 1.0)
-        self.assertEqual(df["float_col"].iloc[4], 2.5)
-
-        # Non-float columns should have pd.NA converted to None
-        self.assertIsNone(df["str_col"].iloc[1])
-
-        # Int64 column behavior (pd.NA should be replaced by None and become NaN)
-        self.assertTrue(pd.isna(df["int_col"].iloc[1]))
-
-    def test_replace_special_float_values_for_bulk_import(self):
-        """Test that BulkImportWriter processes special float values correctly"""
-        # Create DataFrame with various special values
-        df = pd.DataFrame(
-            {
-                "float_col": [1.0, np.nan, np.inf, -np.inf, 2.5],
-                "int_col": [1, 2, 3, 4, 5],
-                "str_col": ["a", "b", "c", "d", "e"],
-            }
-        )
-
-        # First replace inf/-inf with None
-        _replace_special_float_values(df)
-        # Then replace NaN and pd.NA with None
-        _replace_pd_na(df)
-
-        # All special float values should be converted to None
-        self.assertIsNone(df["float_col"].iloc[1])  # np.nan -> None
-        self.assertIsNone(df["float_col"].iloc[2])  # np.inf -> None
-        self.assertIsNone(df["float_col"].iloc[3])  # -np.inf -> None
-
-        # Regular float values should be preserved
-        self.assertEqual(df["float_col"].iloc[0], 1.0)
-        self.assertEqual(df["float_col"].iloc[4], 2.5)
-
-        # Non-float columns should be unchanged
-        self.assertEqual(df["int_col"].iloc[0], 1)
-        self.assertEqual(df["str_col"].iloc[0], "a")
-
     def test_msgpack_serialization_with_special_values(self):
         """Test that msgpack correctly handles values after special float processing"""
 
@@ -603,8 +542,7 @@ class BulkImportWriterTestCase(unittest.TestCase):
         )
 
         # Process with the same sequence as BulkImportWriter
-        _replace_special_float_values(df)  # First replace inf/-inf
-        _replace_pd_na(df)  # Then replace NaN and pd.NA
+        _replace_pd_na(df)  # Replace NaN and pd.NA
 
         # Convert to records format (as done in BulkImportWriter)
         records = df.to_dict(orient="records")
@@ -655,12 +593,9 @@ class SparkWriterTestCase(unittest.TestCase):
         df = pd.DataFrame(
             data=[{"a": 1, "b": 2}, {"a": 3, "b": 4, "c": 5}], dtype="Int64"
         )
-        # After _replace_pd_na, column "c" will be object dtype with None values
         expected_df = df.replace({np.nan: None})
         for col in ["a", "b"]:
             expected_df[col] = expected_df[col].astype("int64")
-        # Column "c" has null values, so it will become object dtype after _replace_pd_na
-        expected_df["c"] = expected_df["c"].astype("object")
         self.writer.td_spark.spark.createDataFrame.return_value = MagicMock()
         self.writer.write_dataframe(df, self.table, "overwrite")
         pd.testing.assert_frame_equal(
@@ -712,7 +647,8 @@ class SparkWriterTestCase(unittest.TestCase):
             self.writer.write_dataframe(pd.DataFrame([[1, 2], [3, 4]]), "foo", "error")
 
     def test_replace_pd_na_with_special_float_values(self):
-        """Test that SparkWriter converts special float values to None when processing DataFrame"""
+        """Test that SparkWriter converts special float values to None
+        when processing DataFrame"""
         from pytd.writer import _cast_dtypes, _replace_pd_na
 
         # Create DataFrame with special float values

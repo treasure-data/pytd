@@ -53,20 +53,6 @@ def _replace_pd_na(dataframe):
         dataframe.replace(replace_dict, inplace=True)
 
 
-def _replace_special_float_values(dataframe):
-    """Replace infinity values (inf, -inf) with None for BulkImportWriter compatibility.
-    NaN values will be handled by _replace_pd_na() afterward."""
-    for column in dataframe.columns:
-        if dataframe[column].dtype.kind == "f":  # Float type
-            series = dataframe[column]
-            # Create mask for infinity values only (not NaN)
-            inf_mask = np.isinf(series)
-            if inf_mask.any():
-                # Convert to Float64 dtype to allow None values while preserving numeric type
-                dataframe[column] = dataframe[column].astype("Float64")
-                dataframe.loc[inf_mask, column] = None
-
-
 def _to_list(ary):
     # Return None if None, np.nan, pd.NA, or np.nan in 0-d array given
     if ary is None or _is_np_nan(ary) or _is_0d_nan(ary) or _is_pd_na(ary):
@@ -534,7 +520,7 @@ class BulkImportWriter(Writer):
                 dataframe.to_csv(fp.name)
                 fps.append(fp)
             elif fmt == "msgpack":
-                _replace_special_float_values(dataframe)
+                _replace_pd_na(dataframe)
                 num_rows = len(dataframe)
                 # chunk number of records should not exceed 200 to avoid OSError
                 _chunk_record_size = max(chunk_record_size, num_rows // 200)
