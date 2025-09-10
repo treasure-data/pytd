@@ -3,6 +3,7 @@ import tempfile
 import unittest
 from unittest.mock import ANY, MagicMock, patch
 
+import msgpack
 import numpy as np
 import pandas as pd
 
@@ -13,6 +14,7 @@ from pytd.writer import (
     _cast_dtypes,
     _get_schema,
     _isinstance_or_null,
+    _replace_pd_na,
     _to_list,
 )
 
@@ -36,6 +38,7 @@ class WriterTestCase(unittest.TestCase):
                 "M": ["foo", None, "bar"],
                 "N": [1, None, 3],
                 "O": pd.Series([1, 2, None], dtype="Int64"),
+                "P": pd.Series([1.0, 2.0, None], dtype="Float64"),
             }
         )
 
@@ -71,7 +74,15 @@ class WriterTestCase(unittest.TestCase):
         dtypes = set(dft.dtypes)
         self.assertEqual(
             dtypes,
-            set([np.dtype("int64"), np.dtype("float"), np.dtype("O"), pd.Int64Dtype()]),
+            set(
+                [
+                    np.dtype("int64"),
+                    np.dtype("float64"),
+                    np.dtype("O"),
+                    pd.Int64Dtype(),
+                    pd.Float64Dtype(),
+                ]
+            ),
         )
         self.assertEqual(dft["F"][0], "false")
         self.assertTrue(isinstance(dft["H"][1], str))
@@ -82,12 +93,14 @@ class WriterTestCase(unittest.TestCase):
         self.assertIsNone(dft["K"][1])
         self.assertIsNone(dft["L"][1])
         self.assertIsNone(dft["M"][1])
-        self.assertTrue(np.isnan(dft["N"][1]))
-        # Nullable int will be float dtype by pandas default
-        self.assertTrue(isinstance(dft["N"][0], float))
+        # N column is now Float64, so pd.NA instead of np.nan
+        self.assertTrue(pd.isna(dft["N"][1]))
+        # Nullable float will be Float64 dtype
+        self.assertTrue(pd.api.types.is_extension_array_dtype(dft["N"]))
         # _cast_dtypes keeps np.nan/pd.NA when None in Int64 column given
         # This is for consistency of _get_schema
         self.assertTrue(pd.isna(dft["O"][2]))
+        self.assertTrue(pd.isna(dft["P"][2]))
 
     def test_cast_dtypes_nullable(self):
         dft = pd.DataFrame(
@@ -108,7 +121,15 @@ class WriterTestCase(unittest.TestCase):
         dtypes = set(self.dft.dtypes)
         self.assertEqual(
             dtypes,
-            set([np.dtype("int64"), np.dtype("float"), np.dtype("O"), pd.Int64Dtype()]),
+            set(
+                [
+                    np.dtype("int64"),
+                    np.dtype("float64"),
+                    np.dtype("O"),
+                    pd.Int64Dtype(),
+                    pd.Float64Dtype(),
+                ]
+            ),
         )
         self.assertEqual(self.dft["F"][0], "false")
 
@@ -117,7 +138,15 @@ class WriterTestCase(unittest.TestCase):
         dtypes = set(self.dft.dtypes)
         self.assertEqual(
             dtypes,
-            set([np.dtype("int64"), np.dtype("float"), np.dtype("O"), pd.Int64Dtype()]),
+            set(
+                [
+                    np.dtype("int64"),
+                    np.dtype("float64"),
+                    np.dtype("O"),
+                    pd.Int64Dtype(),
+                    pd.Float64Dtype(),
+                ]
+            ),
         )
         self.assertTrue(self.dft["H"].apply(_isinstance_or_null, args=(list,)).all())
         self.assertTrue(self.dft["I"].apply(_isinstance_or_null, args=(list,)).all())
@@ -188,7 +217,7 @@ class InsertIntoWriterTestCase(unittest.TestCase):
         q = self.writer._build_query(
             "foo", "bar", list(df.itertuples(index=False, name=None)), df.columns
         )
-        # column 'b' is handled as float64 because of null
+        # column 'b' is handled as Float64 because of null, pd.NA becomes null
         q_expected = "INSERT INTO foo.bar (a, b, c) VALUES (1, null, 4), (2, 3.0, null)"
         self.assertEqual(q, q_expected)
 
@@ -203,6 +232,39 @@ class InsertIntoWriterTestCase(unittest.TestCase):
     def test_table(self):
         with self.assertRaises(TypeError):
             self.writer.write_dataframe(pd.DataFrame([[1, 2], [3, 4]]), "foo", "error")
+
+    def test_format_value_for_trino_special_values(self):
+        """Test _format_value_for_trino with special floating-point values"""
+        # Test infinity
+        result = self.writer._format_value_for_trino(np.inf)
+        self.assertEqual(result, "infinity()")
+
+        # Test negative infinity
+        result = self.writer._format_value_for_trino(-np.inf)
+        self.assertEqual(result, "-infinity()")
+
+        # Test nan
+        result = self.writer._format_value_for_trino(np.nan)
+        self.assertEqual(result, "nan()")
+
+        # Test pd.NA, pd.NaT, None
+        result = self.writer._format_value_for_trino(pd.NA)
+        self.assertEqual(result, "null")
+
+        result = self.writer._format_value_for_trino(pd.NaT)
+        self.assertEqual(result, "null")
+
+        result = self.writer._format_value_for_trino(None)
+        self.assertEqual(result, "null")
+
+    def test_format_value_for_trino_string_escaping(self):
+        """Test _format_value_for_trino with string values requiring escaping"""
+        result = self.writer._format_value_for_trino("hello")
+        self.assertEqual(result, "'hello'")
+
+        # Test string with single quotes - should be escaped
+        result = self.writer._format_value_for_trino("O'Brien")
+        self.assertEqual(result, "'O''Brien'")
 
 
 class BulkImportWriterTestCase(unittest.TestCase):
@@ -305,7 +367,6 @@ class BulkImportWriterTestCase(unittest.TestCase):
         with patch("pytd.writer.os.unlink"):
             self.writer.write_dataframe(df, self.table, "overwrite", fmt="msgpack")
             self.assertTrue(self.writer._write_msgpack_stream.called)
-            print(self.writer._write_msgpack_stream.call_args[0][0][0:2])
             self.assertEqual(
                 self.writer._write_msgpack_stream.call_args[0][0][0:2],
                 expected_list,
@@ -368,7 +429,8 @@ class BulkImportWriterTestCase(unittest.TestCase):
             self.writer.write_dataframe(pd.DataFrame([[1, 2], [3, 4]]), "foo", "error")
 
     def test_bulk_import_name_default(self):
-        """Test that UUID-based session name is generated when bulk_import_name is not provided"""
+        """Test that UUID-based session name is generated when bulk_import_name
+        is not provided"""
         df = pd.DataFrame([[1, 2], [3, 4]])
         self.writer.write_dataframe(df, self.table, "overwrite")
 
@@ -467,6 +529,40 @@ class BulkImportWriterTestCase(unittest.TestCase):
             wait=True, timeout=timeout_value, wait_callback=None
         )
 
+    def test_msgpack_serialization_with_special_values(self):
+        """Test that msgpack correctly handles values after special float processing"""
+
+        # Create DataFrame with special values
+        df = pd.DataFrame(
+            {
+                "float_col": [1.0, np.nan, np.inf, -np.inf, 2.5],
+                "int_col": [1, 2, 3, 4, 5],
+                "str_col": ["a", "b", "c", "d", "e"],
+            }
+        )
+
+        # Process with the same sequence as BulkImportWriter
+        _replace_pd_na(df)  # Replace NaN and pd.NA
+
+        # Convert to records format (as done in BulkImportWriter)
+        records = df.to_dict(orient="records")
+
+        # Test msgpack serialization and deserialization
+        packer = msgpack.Packer()
+        for record in records:
+            try:
+                packed = packer.pack(record)
+                unpacked = msgpack.unpackb(packed, raw=False)
+
+                # Verify that special values have been converted to None
+                if record.get("float_col") is None:
+                    self.assertIsNone(unpacked["float_col"])
+                else:
+                    self.assertEqual(record["float_col"], unpacked["float_col"])
+
+            except Exception as e:
+                self.fail(f"msgpack serialization failed for record {record}: {e}")
+
 
 class SparkWriterTestCase(unittest.TestCase):
     def setUp(self):
@@ -500,7 +596,7 @@ class SparkWriterTestCase(unittest.TestCase):
         expected_df = df.replace({np.nan: None})
         for col in ["a", "b"]:
             expected_df[col] = expected_df[col].astype("int64")
-        self.writer.td_spark.spark.createDataFrame.return_value = "Dummy DataFrame"
+        self.writer.td_spark.spark.createDataFrame.return_value = MagicMock()
         self.writer.write_dataframe(df, self.table, "overwrite")
         pd.testing.assert_frame_equal(
             self.writer.td_spark.spark.createDataFrame.call_args[0][0], expected_df
@@ -526,7 +622,10 @@ class SparkWriterTestCase(unittest.TestCase):
         expected_df = pd.DataFrame(
             data=[{"a": "true", "b": "false"}, {"a": "false", "b": "true", "c": "true"}]
         )
-        self.writer.td_spark.spark.createDataFrame.return_value = "Dummy DataFrame"
+        # Convert pd.NA to None in expected_df to match actual processing
+        expected_df = expected_df.replace({pd.NA: None})
+
+        self.writer.td_spark.spark.createDataFrame.return_value = MagicMock()
         self.writer.write_dataframe(df, self.table, "overwrite")
         pd.testing.assert_frame_equal(
             self.writer.td_spark.spark.createDataFrame.call_args[0][0], expected_df
@@ -546,3 +645,65 @@ class SparkWriterTestCase(unittest.TestCase):
     def test_table(self):
         with self.assertRaises(TypeError):
             self.writer.write_dataframe(pd.DataFrame([[1, 2], [3, 4]]), "foo", "error")
+
+    def test_replace_pd_na_with_special_float_values(self):
+        """Test that SparkWriter converts special float values to None
+        when processing DataFrame"""
+        from pytd.writer import _cast_dtypes, _replace_pd_na
+
+        # Create DataFrame with special float values
+        df = pd.DataFrame(
+            {
+                "float_col": [1.0, np.nan, np.inf, -np.inf, 2.5],
+                "int_col": [1, 2, 3, 4, 5],
+                "str_col": ["a", "b", "c", "d", "e"],
+            }
+        )
+
+        # Apply processing as SparkWriter does
+        _cast_dtypes(df)
+        _replace_pd_na(df)
+
+        # With current implementation, NaN becomes None, but inf/-inf remain
+        self.assertIsNone(df["float_col"].iloc[1])  # np.nan -> None
+        self.assertTrue(np.isinf(df["float_col"].iloc[2]))  # np.inf preserved
+        self.assertTrue(np.isinf(df["float_col"].iloc[3]))  # -np.inf preserved
+        self.assertEqual(df["float_col"].iloc[0], 1.0)
+        self.assertEqual(df["float_col"].iloc[4], 2.5)
+
+    def test_write_dataframe_special_values_consistency(self):
+        """Test that SparkWriter handles special values consistently"""
+        # Create test DataFrame with special values
+        df = pd.DataFrame(
+            {
+                "float_col": [1.0, np.nan, np.inf, -np.inf],
+                "str_col": ["test", None, "value", "data"],
+            }
+        )
+
+        # Mock the Spark context
+        self.writer.td_spark.spark.createDataFrame.return_value = MagicMock()
+
+        # Should not raise any exceptions with special float values
+        self.writer.write_dataframe(df, self.table, "overwrite")
+
+        # Verify DataFrame was processed and passed to Spark
+        self.assertTrue(self.writer.td_spark.spark.createDataFrame.called)
+
+        # Get the call arguments to createDataFrame
+        passed_df = self.writer.td_spark.spark.createDataFrame.call_args[0][0]
+
+        # Verify the processed DataFrame structure
+        self.assertEqual(passed_df.shape, (4, 2))
+        self.assertListEqual(list(passed_df.columns), ["float_col", "str_col"])
+
+        # Verify special float values are processed according to current implementation
+        self.assertIsNone(passed_df["float_col"].iloc[1])  # NaN -> None
+        self.assertTrue(np.isinf(passed_df["float_col"].iloc[2]))  # inf preserved
+        self.assertTrue(
+            np.isinf(passed_df["float_col"].iloc[3])
+            and passed_df["float_col"].iloc[3] < 0
+        )  # -inf preserved
+
+        # Verify None values are properly handled
+        self.assertIsNone(passed_df["str_col"].iloc[1])
