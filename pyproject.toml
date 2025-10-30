@@ -53,6 +53,9 @@ doc = [
     "numpydoc",
     "ipython",
 ]
+dev = [
+    "pyright>=1.1.407",
+]
 
 [project.urls]
 Homepage = "https://github.com/treasure-data/pytd"
@@ -102,3 +105,37 @@ known-third-party = [
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+[tool.pyright]
+typeCheckingMode = "basic"
+pythonVersion = "3.9"
+pythonPlatform = "All"
+
+include = ["pytd"]
+exclude = [
+    "**/__pycache__",
+    "**/node_modules",
+    ".venv",
+    "build",
+    "dist",
+    "pytd.egg-info",
+    "pytd/tests/**",  # Exclude tests for now
+    "pytd/pandas_td/ipython.py",
+]
+
+# Permissive settings for baseline - will tighten gradually
+reportMissingImports = true
+reportMissingTypeStubs = false
+reportUnknownMemberType = false
+reportUnknownArgumentType = false
+reportUnknownVariableType = false
+reportGeneralTypeIssues = false
+reportAttributeAccessIssue = false
+reportOptionalIterable = false
+reportArgumentType = false
+reportOptionalMemberAccess = false
+reportOptionalSubscript = false
+
+# Pre-commit venv configuration
+venvPath = "."
+venv = ".venv"

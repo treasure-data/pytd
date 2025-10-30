@@ -10,6 +10,12 @@ def lint(session):
 
 
 @nox.session
+def typecheck(session):
+    session.install(".[dev]")
+    session.run("pyright", "pytd")
+
+
+@nox.session
 @nox.parametrize(
     "python,pandas",
     [
