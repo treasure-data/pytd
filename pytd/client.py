@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 from types import TracebackType
@@ -314,10 +316,10 @@ class Client:
 
     def load_table_from_dataframe(
         self,
-        dataframe: "pd.DataFrame",
+        dataframe: pd.DataFrame,
         destination: str | Table,
         writer: (
-            Literal["bulk_import", "insert_into", "spark"] | "Writer"
+            Literal["bulk_import", "insert_into", "spark"] | Writer
         ) = "bulk_import",
         if_exists: Literal["error", "overwrite", "append", "ignore"] = "error",
         **kwargs: Any,
@@ -358,7 +360,7 @@ class Client:
 
         destination.import_dataframe(dataframe, writer, if_exists, **kwargs)
 
-    def __enter__(self) -> "Client":
+    def __enter__(self) -> Client:
         return self
 
     def __exit__(

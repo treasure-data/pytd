@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import abc
 import gzip
 import logging
@@ -177,7 +179,7 @@ class Writer(metaclass=abc.ABCMeta):
     def write_dataframe(
         self,
         dataframe: pd.DataFrame,
-        table: "Table",
+        table: Table,
         if_exists: Literal["error", "overwrite", "append", "ignore"],
     ) -> None:
         pass
@@ -188,7 +190,7 @@ class Writer(metaclass=abc.ABCMeta):
     @staticmethod
     def from_string(
         writer: Literal["bulk_import", "insert_into", "spark"], **kwargs: Any
-    ) -> "Writer":
+    ) -> Writer:
         writer_lower = writer.lower()
         if writer_lower == "bulk_import":
             return BulkImportWriter()
@@ -247,7 +249,7 @@ class InsertIntoWriter(Writer):
     def write_dataframe(
         self,
         dataframe: pd.DataFrame,
-        table: "Table",
+        table: Table,
         if_exists: Literal["error", "overwrite", "append", "ignore"],
     ) -> None:
         """Write a given DataFrame to a Treasure Data table.
@@ -376,7 +378,7 @@ class BulkImportWriter(Writer):
     def write_dataframe(
         self,
         dataframe: pd.DataFrame,
-        table: "Table",
+        table: Table,
         if_exists: Literal["error", "overwrite", "append", "ignore"],
         fmt: Literal["csv", "msgpack"] = "csv",
         keep_list: bool = False,
@@ -821,7 +823,7 @@ class SparkWriter(Writer):
     def write_dataframe(
         self,
         dataframe: pd.DataFrame,
-        table: "Table",
+        table: Table,
         if_exists: Literal["error", "overwrite", "append", "ignore"],
     ) -> None:
         """Write a given DataFrame to a Treasure Data table.

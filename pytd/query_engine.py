@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import abc
 import importlib.metadata
 import logging
 import os
-from typing import Any, TypedDict
+from typing import Any, Optional, TypedDict
 from urllib.parse import urlparse
 
 import tdclient
@@ -19,7 +21,7 @@ class QueryResult(TypedDict):
     """Query execution result."""
 
     data: list[list[Any]]
-    columns: list[str] | None
+    columns: Optional[list[str]]  # noqa: UP007, UP045  # TypedDict doesn't support | syntax in Python 3.9
 
 
 class CustomTrinoCursor(trino.dbapi.Cursor):
@@ -37,7 +39,7 @@ class CustomTrinoCursor(trino.dbapi.Cursor):
 
     def execute(
         self, operation: str, params: list[Any] | tuple[Any, ...] | None = None
-    ) -> "CustomTrinoCursor":
+    ) -> CustomTrinoCursor:
         # Prepare additional headers with custom user-agent
         additional_headers = {"User-Agent": self._custom_user_agent}
 
@@ -84,7 +86,7 @@ class CustomTrinoCursor(trino.dbapi.Cursor):
 
 
 # Type alias for cursor types returned by query engines
-Cursor: TypeAlias = CustomTrinoCursor | tdclient.cursor.Cursor
+Cursor: TypeAlias = "CustomTrinoCursor | tdclient.cursor.Cursor"
 
 
 class QueryEngine(metaclass=abc.ABCMeta):
@@ -212,7 +214,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
         return header
 
     @abc.abstractmethod
-    def cursor(self, force_tdclient: bool = False, **kwargs: Any) -> "Cursor":
+    def cursor(self, force_tdclient: bool = False, **kwargs: Any) -> Cursor:
         pass
 
     @abc.abstractmethod
@@ -364,7 +366,7 @@ class PrestoQueryEngine(QueryEngine):
             "TD_PRESTO_API", urlparse(self.endpoint).netloc.replace("api", "api-presto")
         )
 
-    def cursor(self, force_tdclient: bool = False, **kwargs: Any) -> "Cursor":
+    def cursor(self, force_tdclient: bool = False, **kwargs: Any) -> Cursor:
         """Get cursor defined by DB-API.
 
         Parameters

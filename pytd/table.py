@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -37,7 +39,7 @@ class Table:
         Table name.
     """
 
-    def __init__(self, client: "Client", database: str, table: str) -> None:
+    def __init__(self, client: Client, database: str, table: str) -> None:
         try:
             client.api_client.database(database)
         except tdclient.errors.NotFoundError as e:
@@ -107,7 +109,7 @@ class Table:
 
     def import_dataframe(
         self,
-        dataframe: "pd.DataFrame",
+        dataframe: pd.DataFrame,
         writer: Literal["bulk_import", "insert_into", "spark"] | Writer,
         if_exists: Literal["error", "overwrite", "append", "ignore"] = "error",
         **kwargs: Any,

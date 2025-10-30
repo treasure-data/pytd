@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from types import TracebackType
 from typing import TYPE_CHECKING
 
@@ -24,7 +26,7 @@ class Connection:
         A client used to connect to Treasure Data.
     """
 
-    def __init__(self, client: "Client") -> None:
+    def __init__(self, client: Client) -> None:
         self.client: Client = client
 
     def close(self) -> None:
@@ -36,10 +38,10 @@ class Connection:
     def rollback(self) -> None:
         raise NotSupportedError
 
-    def cursor(self) -> "Cursor":
+    def cursor(self) -> Cursor:
         return self.client.default_engine.cursor()
 
-    def __enter__(self) -> "Connection":
+    def __enter__(self) -> Connection:
         return self
 
     def __exit__(
