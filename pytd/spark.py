@@ -33,8 +33,10 @@ def download_td_spark(spark_binary_version="3.0.1", version="latest", destinatio
     download_url = urljoin(TD_SPARK_BASE_URL, td_spark_jar_name)
     try:
         response = urlopen(download_url)
-    except HTTPError:
-        raise RuntimeError("failed to access to the download URL: " + download_url)
+    except HTTPError as e:
+        raise RuntimeError(
+            "failed to access to the download URL: " + download_url
+        ) from e
 
     logger.info("Downloading td-spark...")
     try:
@@ -89,8 +91,8 @@ def fetch_td_spark_context(
         from pyspark.conf import SparkConf
         from pyspark.sql import SparkSession
         from td_pyspark import TDSparkContextBuilder
-    except ImportError:
-        raise RuntimeError("td_pyspark is not installed")
+    except ImportError as e:
+        raise RuntimeError("td_pyspark is not installed") from e
 
     apikey = apikey or os.environ.get("TD_API_KEY")
     if apikey is None:
@@ -149,4 +151,4 @@ def fetch_td_spark_context(
     try:
         return builder.build()
     except Exception as e:
-        raise RuntimeError("failed to connect to td-spark: " + str(e))
+        raise RuntimeError("failed to connect to td-spark: " + str(e)) from e

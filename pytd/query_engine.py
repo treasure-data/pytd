@@ -153,7 +153,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
         columns = [desc[0] for desc in cur.description] if cur.description else None
         return {"data": rows, "columns": columns}
 
-    def create_header(self, extra_lines=[]):
+    def create_header(self, extra_lines=None):
         """Build header comments.
 
         Parameters
@@ -167,6 +167,9 @@ class QueryEngine(metaclass=abc.ABCMeta):
         -------
         str
         """
+        if extra_lines is None:
+            extra_lines = []
+
         if self.header is False:
             return ""
 

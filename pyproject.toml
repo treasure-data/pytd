@@ -81,6 +81,7 @@ select = [
     "F",
     "I",
     "UP",
+    "B",
 ]
 
 [tool.ruff.lint.isort]
