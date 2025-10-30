@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pytd"
+version = "2.2.0"
+description = "Treasure Data Driver for Python"
+readme = "README.rst"
+requires-python = ">=3.9"
+license = "Apache-2.0"
+authors = [
+    {name = "Treasure Data", email = "support@treasure-data.com"}
+]
+maintainers = [
+    {name = "Treasure Data", email = "support@treasure-data.com"}
+]
+keywords = ["database", "treasure-data"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Topic :: Database",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "urllib3>=1.21.1",
+    "trino>=0.334.0",
+    "pandas>=2.1.0",
+    "numpy>=1.25.2",
+    "td-client>=1.5.0",
+    "pytz>=2018.5",
+    "tqdm>=4.60.0",
+]
+
+[project.optional-dependencies]
+spark = [
+    "td-pyspark>20.10.0",
+    "pyspark>=3.0.0",
+    "pyarrow>=10.0",
+]
+test = [
+    "pytest",
+]
+doc = [
+    "sphinx>=2.2.0",
+    "sphinx_rtd_theme",
+    "numpydoc",
+    "ipython",
+]
+
+[project.urls]
+Homepage = "https://github.com/treasure-data/pytd"
+Repository = "https://github.com/treasure-data/pytd"
+
+[tool.setuptools.packages.find]
+exclude = ["*tests*"]
