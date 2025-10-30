@@ -25,8 +25,7 @@ class CustomTrinoCursor(trino.dbapi.Cursor):
 
         if params:
             assert isinstance(params, (list, tuple)), (
-                "params must be a list or tuple containing the query "
-                "parameter values"
+                "params must be a list or tuple containing the query parameter values"
             )
 
             if self.connection._use_legacy_prepared_statements():

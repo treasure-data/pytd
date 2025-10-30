@@ -41,9 +41,9 @@ v1.6.0 (2024-08-26)
 v1.5.2 (2024-06-03)
 -------------------
 
-- Handle cases with cur.description is None 
+- Handle cases with cur.description is None
 - Keep single quotes in InsertIntoWriter
-- Use obj.items instead of iteritems() 
+- Use obj.items instead of iteritems()
 
 v1.5.1 (2022-12-08)
 -------------------

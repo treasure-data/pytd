@@ -3,12 +3,10 @@ import nox
 
 @nox.session
 def lint(session):
-    lint_tools = ["black", "isort", "flake8"]
+    session.install("ruff")
     targets = ["pytd", "noxfile.py"]
-    session.install(*lint_tools)
-    session.run("flake8", *targets)
-    session.run("black", "--diff", "--check", *targets)
-    session.run("isort", "--diff", "--check", *targets)
+    session.run("ruff", "check", *targets)
+    session.run("ruff", "format", "--diff", "--check", *targets)
 
 
 @nox.session
