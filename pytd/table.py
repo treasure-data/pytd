@@ -36,7 +36,7 @@ class Table:
             client.api_client.database(database)
         except tdclient.errors.NotFoundError as e:
             raise ValueError(
-                "faild to create pytd.table.Table instance for "
+                "failed to create pytd.table.Table instance for "
                 f"`{database}.{table}`: {e}"
             ) from e
 
