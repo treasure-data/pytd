@@ -36,6 +36,7 @@ dependencies = [
     "td-client>=1.5.0",
     "pytz>=2018.5",
     "tqdm>=4.60.0",
+    "typing-extensions>=4.15.0",
 ]
 
 [project.optional-dependencies]

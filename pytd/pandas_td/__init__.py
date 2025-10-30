@@ -2,16 +2,19 @@ import datetime
 import logging
 import re
 import time
+from typing import Any, Literal
 
 import pandas as pd
 
 from ..client import Client
-from ..query_engine import HiveQueryEngine, PrestoQueryEngine
+from ..query_engine import HiveQueryEngine, PrestoQueryEngine, QueryEngine
 
 logger = logging.getLogger(__name__)
 
 
-def connect(apikey=None, endpoint=None, **kwargs):
+def connect(
+    apikey: str | None = None, endpoint: str | None = None, **kwargs: Any
+) -> Client:
     """Create a connection to Treasure Data
 
     Parameters
@@ -44,7 +47,13 @@ RE_ENGINE_DESC_SHORT = re.compile(
 )
 
 
-def create_engine(url, con=None, header=True, show_progress=5.0, clear_progress=True):
+def create_engine(
+    url: str,
+    con: Client | None = None,
+    header: str | bool = True,
+    show_progress: float | bool = 5.0,
+    clear_progress: bool = True,
+) -> QueryEngine:
     """Create a handler for query engine based on a URL.
 
     The following environment variables are used for default connection:
@@ -118,8 +127,13 @@ def create_engine(url, con=None, header=True, show_progress=5.0, clear_progress=
 
 
 def read_td_query(
-    query, engine, index_col=None, parse_dates=None, distributed_join=False, params=None
-):
+    query: str,
+    engine: QueryEngine,
+    index_col: str | None = None,
+    parse_dates: list[str] | dict[str, str] | None = None,
+    distributed_join: bool = False,
+    params: dict[str, Any] | None = None,
+) -> pd.DataFrame:
     """Read Treasure Data query into a DataFrame.
 
     Returns a DataFrame corresponding to the result set of the query string.
@@ -201,7 +215,12 @@ def read_td_query(
     )
 
 
-def read_td_job(job_id, engine, index_col=None, parse_dates=None):
+def read_td_job(
+    job_id: int,
+    engine: QueryEngine,
+    index_col: str | None = None,
+    parse_dates: list[str] | dict[str, str] | None = None,
+) -> pd.DataFrame:
     """Read Treasure Data job result into a DataFrame.
 
     Returns a DataFrame corresponding to the result set of the job.
@@ -254,14 +273,14 @@ def read_td_job(job_id, engine, index_col=None, parse_dates=None):
 
 
 def read_td_table(
-    table_name,
-    engine,
-    index_col=None,
-    parse_dates=None,
-    columns=None,
-    time_range=None,
-    limit=10000,
-):
+    table_name: str,
+    engine: QueryEngine,
+    index_col: str | None = None,
+    parse_dates: list[str] | dict[str, str] | None = None,
+    columns: list[str] | None = None,
+    time_range: tuple[Any, Any] | None = None,
+    limit: int | None = 10000,
+) -> pd.DataFrame:
     """Read Treasure Data table into a DataFrame.
 
     The number of returned rows is limited by "limit" (default 10,000).
@@ -358,19 +377,21 @@ read_td = read_td_query
 
 
 def to_td(
-    frame,
-    name,
-    con,
-    if_exists="fail",
-    time_col=None,
-    time_index=None,
-    index=True,
-    index_label=None,
-    chunksize=10000,
-    date_format=None,
-    writer="bulk_import",
-    **kwargs,
-):
+    frame: pd.DataFrame,
+    name: str,
+    con: Client,
+    if_exists: Literal[
+        "fail", "error", "replace", "overwrite", "append", "ignore"
+    ] = "fail",
+    time_col: str | None = None,
+    time_index: int | None = None,
+    index: bool = True,
+    index_label: str | list[str] | None = None,
+    chunksize: int = 10000,
+    date_format: str | None = None,
+    writer: Literal["bulk_import", "insert_into", "spark"] = "bulk_import",
+    **kwargs: Any,
+) -> None:
     """Write a DataFrame to a Treasure Data table.
 
     This method converts the dataframe into a series of key-value pairs
@@ -468,7 +489,9 @@ def to_td(
     con.get_table(database, table).import_dataframe(frame, writer, mode, **kwargs)
 
 
-def _convert_time_column(frame, time_col=None, time_index=None):
+def _convert_time_column(
+    frame: pd.DataFrame, time_col: str | None = None, time_index: int | None = None
+) -> pd.DataFrame:
     if time_col is not None and time_index is not None:
         raise ValueError("time_col and time_index cannot be used at the same time")
     if "time" in frame.columns and time_col != "time":
@@ -505,7 +528,11 @@ def _convert_time_column(frame, time_col=None, time_index=None):
     return frame
 
 
-def _convert_index_column(frame, index=None, index_label=None):
+def _convert_index_column(
+    frame: pd.DataFrame,
+    index: bool | None = None,
+    index_label: str | list[str] | None = None,
+) -> pd.DataFrame:
     if index is not None and not isinstance(index, bool):
         raise TypeError("index must be boolean")
     if index:
@@ -518,12 +545,14 @@ def _convert_index_column(frame, index=None, index_label=None):
                 frame[name] = i.astype("object")
         else:
             if index_label is None:
-                index_label = frame.index.name if frame.index.name else "index"
+                index_label = frame.index.name if frame.index.name else "index"  # type: ignore[assignment]
             frame[index_label] = frame.index.astype("object")
     return frame
 
 
-def _convert_date_format(frame, date_format=None):
+def _convert_date_format(
+    frame: pd.DataFrame, date_format: str | None = None
+) -> pd.DataFrame:
     if date_format is not None:
 
         def _convert(col):
@@ -531,5 +560,5 @@ def _convert_date_format(frame, date_format=None):
                 return col.apply(lambda x: x.strftime(date_format))
             return col
 
-        frame = frame.apply(_convert)
+        frame = frame.apply(_convert)  # type: ignore[assignment]
     return frame

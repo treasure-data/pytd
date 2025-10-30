@@ -2,24 +2,42 @@ import abc
 import importlib.metadata
 import logging
 import os
+from typing import Any, TypedDict
 from urllib.parse import urlparse
 
 import tdclient
+import tdclient.cursor
 import trino
+from typing_extensions import TypeAlias
 
 __version__ = importlib.metadata.version("pytd")
 
 logger = logging.getLogger(__name__)
 
 
+class QueryResult(TypedDict):
+    """Query execution result."""
+
+    data: list[list[Any]]
+    columns: list[str] | None
+
+
 class CustomTrinoCursor(trino.dbapi.Cursor):
     """Custom Trino cursor that supports user-agent override."""
 
-    def __init__(self, connection, request, user_agent, legacy_primitive_types=False):
+    def __init__(
+        self,
+        connection: trino.dbapi.Connection,
+        request: trino.client.TrinoRequest,
+        user_agent: str,
+        legacy_primitive_types: bool = False,
+    ) -> None:
         super().__init__(connection, request, legacy_primitive_types)
         self._custom_user_agent = user_agent
 
-    def execute(self, operation, params=None):
+    def execute(
+        self, operation: str, params: list[Any] | tuple[Any, ...] | None = None
+    ) -> "CustomTrinoCursor":
         # Prepare additional headers with custom user-agent
         additional_headers = {"User-Agent": self._custom_user_agent}
 
@@ -65,6 +83,10 @@ class CustomTrinoCursor(trino.dbapi.Cursor):
         return self
 
 
+# Type alias for cursor types returned by query engines
+Cursor: TypeAlias = CustomTrinoCursor | tdclient.cursor.Cursor
+
+
 class QueryEngine(metaclass=abc.ABCMeta):
     """An interface to Treasure Data query engine.
 
@@ -83,21 +105,23 @@ class QueryEngine(metaclass=abc.ABCMeta):
         Prepend comment strings, in the form "-- comment", as a header of queries.
     """
 
-    def __init__(self, apikey, endpoint, database, header):
+    def __init__(
+        self, apikey: str, endpoint: str, database: str, header: str | bool
+    ) -> None:
         if len(urlparse(endpoint).scheme) == 0:
             endpoint = f"https://{endpoint}"
-        self.apikey = apikey
-        self.endpoint = endpoint
-        self.database = database
-        self.header = header
-        self.executed = None
+        self.apikey: str = apikey
+        self.endpoint: str = endpoint
+        self.database: str = database
+        self.header: str | bool = header
+        self.executed: str | trino.client.TrinoResult | None = None
 
     @property
-    def user_agent(self):
+    def user_agent(self) -> str:
         """User agent passed to a query engine connection."""
         return f"pytd/{__version__}"
 
-    def execute(self, query, **kwargs):
+    def execute(self, query: str, **kwargs: Any) -> QueryResult:
         """Execute a given SQL statement and return results.
 
         Executed result returned by Cursor object is stored in
@@ -153,7 +177,9 @@ class QueryEngine(metaclass=abc.ABCMeta):
         columns = [desc[0] for desc in cur.description] if cur.description else None
         return {"data": rows, "columns": columns}
 
-    def create_header(self, extra_lines=None):
+    def create_header(
+        self, extra_lines: str | list[str] | tuple[str, ...] | None = None
+    ) -> str:
         """Build header comments.
 
         Parameters
@@ -186,18 +212,20 @@ class QueryEngine(metaclass=abc.ABCMeta):
         return header
 
     @abc.abstractmethod
-    def cursor(self, force_tdclient=False, **kwargs):
+    def cursor(self, force_tdclient: bool = False, **kwargs: Any) -> "Cursor":
         pass
 
     @abc.abstractmethod
-    def close(self):
+    def close(self) -> None:
         pass
 
     @abc.abstractmethod
-    def _connect(self):
+    def _connect(self) -> Any:
         pass
 
-    def _get_tdclient_cursor(self, con, **kwargs):
+    def _get_tdclient_cursor(
+        self, con: tdclient.api.API, **kwargs: Any
+    ) -> tdclient.cursor.Cursor:
         """Get DB-API cursor from tdclient Connection instance.
 
         ``kwargs`` are for setting specific parameters to Treasure Data REST
@@ -312,12 +340,14 @@ class PrestoQueryEngine(QueryEngine):
         Prepend comment strings, in the form "-- comment", as a header of queries.
     """
 
-    def __init__(self, apikey, endpoint, database, header):
+    def __init__(
+        self, apikey: str, endpoint: str, database: str, header: str | bool
+    ) -> None:
         super().__init__(apikey, endpoint, database, header)
         self.trino_connection, self.tdclient_connection = self._connect()
 
     @property
-    def user_agent(self):
+    def user_agent(self) -> str:
         """User agent passed to a Presto connection."""
         return (
             f"pytd/{__version__} "
@@ -334,7 +364,7 @@ class PrestoQueryEngine(QueryEngine):
             "TD_PRESTO_API", urlparse(self.endpoint).netloc.replace("api", "api-presto")
         )
 
-    def cursor(self, force_tdclient=False, **kwargs):
+    def cursor(self, force_tdclient: bool = False, **kwargs: Any) -> "Cursor":
         """Get cursor defined by DB-API.
 
         Parameters
@@ -378,12 +408,14 @@ class PrestoQueryEngine(QueryEngine):
 
         return self._get_tdclient_cursor(self.tdclient_connection, **kwargs)
 
-    def close(self):
+    def close(self) -> None:
         """Close a connection to Presto."""
         self.trino_connection.close()
         self.tdclient_connection.close()
 
-    def _connect(self):
+    def _connect(
+        self,
+    ) -> tuple[trino.dbapi.Connection, tdclient.api.API]:
         # Create trino connection
         trino_connection = trino.dbapi.connect(
             host=self.presto_api_host,
@@ -424,16 +456,20 @@ class HiveQueryEngine(QueryEngine):
         Prepend comment strings, in the form "-- comment", as a header of queries.
     """
 
-    def __init__(self, apikey, endpoint, database, header):
+    def __init__(
+        self, apikey: str, endpoint: str, database: str, header: str | bool
+    ) -> None:
         super().__init__(apikey, endpoint, database, header)
         self.engine = self._connect()
 
     @property
-    def user_agent(self):
+    def user_agent(self) -> str:
         """User agent passed to a Hive connection."""
         return f"pytd/{__version__} (tdclient/{tdclient.__version__})"
 
-    def cursor(self, force_tdclient=True, **kwargs):
+    def cursor(
+        self, force_tdclient: bool = True, **kwargs: Any
+    ) -> tdclient.cursor.Cursor:
         """Get cursor defined by DB-API.
 
         Parameters
@@ -472,11 +508,11 @@ class HiveQueryEngine(QueryEngine):
         """
         return self._get_tdclient_cursor(self.engine, **kwargs)
 
-    def close(self):
+    def close(self) -> None:
         """Close a connection to Hive."""
         self.engine.close()
 
-    def _connect(self):
+    def _connect(self) -> tdclient.api.API:
         return tdclient.connect(
             apikey=self.apikey,
             endpoint=self.endpoint,
