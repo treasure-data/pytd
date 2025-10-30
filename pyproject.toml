@@ -120,11 +120,12 @@ exclude = [
     "dist",
     "pytd.egg-info",
     "pytd/tests/**",  # Exclude tests for now
-    "pytd/pandas_td/ipython.py",
+    "pytd/pandas_td/ipython.py",  # IPython dependency not in core requirements
+    "pytd/spark.py",  # Spark dependencies are optional
 ]
 
 # Permissive settings for baseline - will tighten gradually
-reportMissingImports = true
+reportMissingImports = "warning"  # Downgrade to warning for optional dependencies
 reportMissingTypeStubs = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
