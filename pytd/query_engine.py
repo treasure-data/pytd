@@ -310,7 +310,7 @@ class PrestoQueryEngine(QueryEngine):
     """
 
     def __init__(self, apikey, endpoint, database, header):
-        super(PrestoQueryEngine, self).__init__(apikey, endpoint, database, header)
+        super().__init__(apikey, endpoint, database, header)
         self.trino_connection, self.tdclient_connection = self._connect()
 
     @property
@@ -422,7 +422,7 @@ class HiveQueryEngine(QueryEngine):
     """
 
     def __init__(self, apikey, endpoint, database, header):
-        super(HiveQueryEngine, self).__init__(apikey, endpoint, database, header)
+        super().__init__(apikey, endpoint, database, header)
         self.engine = self._connect()
 
     @property

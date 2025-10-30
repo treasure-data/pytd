@@ -124,7 +124,7 @@ def fetch_td_spark_context(
     if not available and download_if_missing:
         download_td_spark(version=td_pyspark.__version__, destination=td_spark_path)
     elif not available:
-        raise IOError("td-spark is not found and `download_if_missing` is False")
+        raise OSError("td-spark is not found and `download_if_missing` is False")
 
     builder.jars(td_spark_path)
 

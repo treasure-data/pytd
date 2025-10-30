@@ -5,7 +5,7 @@ import tdclient
 from .writer import Writer
 
 
-class Table(object):
+class Table:
     """A table controller module.
 
     Parameters

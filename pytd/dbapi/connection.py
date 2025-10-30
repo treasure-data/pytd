@@ -1,7 +1,7 @@
 from .error import NotSupportedError
 
 
-class Connection(object):
+class Connection:
     """The DBAPI interface to Treasure Data.
 
     https://www.python.org/dev/peps/pep-0249/
