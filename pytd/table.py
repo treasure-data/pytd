@@ -1,15 +1,12 @@
-from __future__ import annotations
-
 import re
 from typing import TYPE_CHECKING, Any, Literal
 
+import pandas as pd
 import tdclient
 
 from .writer import Writer
 
 if TYPE_CHECKING:
-    import pandas as pd
-
     from .client import Client
 
 
@@ -39,7 +36,7 @@ class Table:
         Table name.
     """
 
-    def __init__(self, client: Client, database: str, table: str) -> None:
+    def __init__(self, client: "Client", database: str, table: str) -> None:
         try:
             client.api_client.database(database)
         except tdclient.errors.NotFoundError as e:
@@ -95,7 +92,7 @@ class Table:
             schema = ", ".join(
                 map(
                     lambda t: f"{t[0]} {t[1]}",
-                    zip(column_names, column_types),
+                    zip(column_names, column_types, strict=False),
                 )
             )
             q_create = f"CREATE TABLE {self.database}.{self.table} ({schema})"

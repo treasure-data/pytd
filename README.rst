@@ -24,8 +24,8 @@ Installation
 Requirements
 ~~~~~~~~~~~~
 
-* Python 3.9 or later
-* pandas 2.0 or later
+* Python 3.10 or later
+* pandas 2.1 or later
 
 
 Usage
