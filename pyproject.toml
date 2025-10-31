@@ -36,6 +36,7 @@ dependencies = [
     "td-client>=1.5.0",
     "pytz>=2018.5",
     "tqdm>=4.60.0",
+    "typing-extensions>=4.15.0",
 ]
 
 [project.optional-dependencies]
@@ -52,6 +53,9 @@ doc = [
     "sphinx_rtd_theme",
     "numpydoc",
     "ipython",
+]
+dev = [
+    "pyright>=1.1.407",
 ]
 
 [project.urls]
@@ -102,3 +106,38 @@ known-third-party = [
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+[tool.pyright]
+typeCheckingMode = "basic"
+pythonVersion = "3.9"
+pythonPlatform = "All"
+
+include = ["pytd"]
+exclude = [
+    "**/__pycache__",
+    "**/node_modules",
+    ".venv",
+    "build",
+    "dist",
+    "pytd.egg-info",
+    "pytd/tests/**",  # Exclude tests for now
+    "pytd/pandas_td/ipython.py",  # IPython dependency not in core requirements
+    "pytd/spark.py",  # Spark dependencies are optional
+]
+
+# Permissive settings for baseline - will tighten gradually
+reportMissingImports = "warning"  # Downgrade to warning for optional dependencies
+reportMissingTypeStubs = false
+reportUnknownMemberType = false
+reportUnknownArgumentType = false
+reportUnknownVariableType = false
+reportGeneralTypeIssues = false
+reportAttributeAccessIssue = false
+reportOptionalIterable = false
+reportArgumentType = false
+reportOptionalMemberAccess = false
+reportOptionalSubscript = false
+
+# Pre-commit venv configuration
+venvPath = "."
+venv = ".venv"
