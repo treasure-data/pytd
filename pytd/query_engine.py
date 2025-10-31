@@ -1,10 +1,8 @@
-from __future__ import annotations
-
 import abc
 import importlib.metadata
 import logging
 import os
-from typing import Any, Optional, TypeAlias, TypedDict
+from typing import Any, TypeAlias, TypedDict
 from urllib.parse import urlparse
 
 import tdclient
@@ -20,7 +18,7 @@ class QueryResult(TypedDict):
     """Query execution result."""
 
     data: list[list[Any]]
-    columns: Optional[list[str]]  # noqa: UP007, UP045  # TypedDict doesn't support | syntax in Python 3.9
+    columns: list[str] | None
 
 
 class CustomTrinoCursor(trino.dbapi.Cursor):
@@ -38,7 +36,7 @@ class CustomTrinoCursor(trino.dbapi.Cursor):
 
     def execute(
         self, operation: str, params: list[Any] | tuple[Any, ...] | None = None
-    ) -> CustomTrinoCursor:
+    ) -> "CustomTrinoCursor":
         # Prepare additional headers with custom user-agent
         additional_headers = {"User-Agent": self._custom_user_agent}
 
@@ -85,7 +83,7 @@ class CustomTrinoCursor(trino.dbapi.Cursor):
 
 
 # Type alias for cursor types returned by query engines
-Cursor: TypeAlias = "CustomTrinoCursor | tdclient.cursor.Cursor"
+Cursor: TypeAlias = CustomTrinoCursor | tdclient.cursor.Cursor
 
 
 class QueryEngine(metaclass=abc.ABCMeta):
