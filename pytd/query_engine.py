@@ -25,8 +25,7 @@ class CustomTrinoCursor(trino.dbapi.Cursor):
 
         if params:
             assert isinstance(params, (list, tuple)), (
-                "params must be a list or tuple containing the query "
-                "parameter values"
+                "params must be a list or tuple containing the query parameter values"
             )
 
             if self.connection._use_legacy_prepared_statements():
@@ -154,7 +153,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
         columns = [desc[0] for desc in cur.description] if cur.description else None
         return {"data": rows, "columns": columns}
 
-    def create_header(self, extra_lines=[]):
+    def create_header(self, extra_lines=None):
         """Build header comments.
 
         Parameters
@@ -168,6 +167,9 @@ class QueryEngine(metaclass=abc.ABCMeta):
         -------
         str
         """
+        if extra_lines is None:
+            extra_lines = []
+
         if self.header is False:
             return ""
 
@@ -311,7 +313,7 @@ class PrestoQueryEngine(QueryEngine):
     """
 
     def __init__(self, apikey, endpoint, database, header):
-        super(PrestoQueryEngine, self).__init__(apikey, endpoint, database, header)
+        super().__init__(apikey, endpoint, database, header)
         self.trino_connection, self.tdclient_connection = self._connect()
 
     @property
@@ -423,7 +425,7 @@ class HiveQueryEngine(QueryEngine):
     """
 
     def __init__(self, apikey, endpoint, database, header):
-        super(HiveQueryEngine, self).__init__(apikey, endpoint, database, header)
+        super().__init__(apikey, endpoint, database, header)
         self.engine = self._connect()
 
     @property

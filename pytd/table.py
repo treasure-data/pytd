@@ -5,7 +5,7 @@ import tdclient
 from .writer import Writer
 
 
-class Table(object):
+class Table:
     """A table controller module.
 
     Parameters
@@ -36,9 +36,9 @@ class Table(object):
             client.api_client.database(database)
         except tdclient.errors.NotFoundError as e:
             raise ValueError(
-                "faild to create pytd.table.Table instance for "
+                "failed to create pytd.table.Table instance for "
                 f"`{database}.{table}`: {e}"
-            )
+            ) from e
 
         self.database = database
         self.table = table
@@ -58,7 +58,7 @@ class Table(object):
             return False
         return True
 
-    def create(self, column_names=[], column_types=[]):
+    def create(self, column_names=None, column_types=None):
         """Create a table named as configured.
 
         When ``column_names`` and ``column_types`` are given, table is created
@@ -74,6 +74,11 @@ class Table(object):
             supports limited amount of types as documented in:
             https://docs.treasuredata.com/display/public/PD/Schema+Management
         """
+        if column_names is None:
+            column_names = []
+        if column_types is None:
+            column_types = []
+
         if len(column_names) > 0:
             schema = ", ".join(
                 map(

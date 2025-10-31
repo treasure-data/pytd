@@ -309,8 +309,7 @@ def read_td_table(
     if time_range is not None:
         start, end = time_range
         query += (
-            "WHERE td_time_range("
-            f"time, {_convert_time(start)}, {_convert_time(end)})\n"
+            f"WHERE td_time_range(time, {_convert_time(start)}, {_convert_time(end)})\n"
         )
     # LIMIT
     if limit is not None:

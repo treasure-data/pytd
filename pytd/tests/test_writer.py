@@ -326,8 +326,8 @@ class BulkImportWriterTestCase(unittest.TestCase):
         self.assertFalse(os.path.isfile(fp[0].name))
 
         # Case #2: bulk import failed
-        self.writer._bulk_import = MagicMock(side_effect=Exception())
-        with self.assertRaises(Exception):
+        self.writer._bulk_import = MagicMock(side_effect=RuntimeError())
+        with self.assertRaises(RuntimeError):
             self.writer.write_dataframe(
                 pd.DataFrame([[1, 2], [3, 4]]), self.table, "overwrite"
             )

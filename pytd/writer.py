@@ -557,7 +557,7 @@ class BulkImportWriter(Writer):
                             if show_progress
                             else sorted(futures)
                         )
-                        for start, future in resolve_range:
+                        for _start, future in resolve_range:
                             fps.append(future.result())
                 except OSError as e:
                     raise RuntimeError(
@@ -699,7 +699,7 @@ class BulkImportWriter(Writer):
             bulk_import.freeze()
         except Exception as e:
             bulk_import.delete()
-            raise RuntimeError(f"failed to upload file: {e}")
+            raise RuntimeError(f"failed to upload file: {e}") from e
 
         logger.debug(f"uploaded data in {time.time() - s_time:.2f} sec")
 
@@ -867,10 +867,10 @@ class SparkWriter(Writer):
                 raise PermissionError(
                     "failed to access to Treasure Data Plazma API."
                     "Contact customer support to enable access rights."
-                )
+                ) from e
             raise RuntimeError(
                 "failed to load table via td-spark: " + str(e.java_exception)
-            )
+            ) from e
 
     def close(self):
         """Close a PySpark session connected to Treasure Data."""
