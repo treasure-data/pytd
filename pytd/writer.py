@@ -8,9 +8,10 @@ import os
 import tempfile
 import time
 import uuid
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
-from typing import TYPE_CHECKING, Any, Callable, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import msgpack
 import numpy as np
@@ -138,7 +139,7 @@ def _cast_dtypes(dataframe, inplace=True, keep_list=False):
 
 def _get_schema(dataframe):
     column_names, column_types = [], []
-    for c, t in zip(dataframe.columns, dataframe.dtypes):
+    for c, t in zip(dataframe.columns, dataframe.dtypes, strict=False):
         # Compare nullable integer type by using pandas function because `t ==
         # "Int64"` causes a following warning for some reasons:
         #     DeprecationWarning: Numeric-style type codes are deprecated and
@@ -226,7 +227,7 @@ class InsertIntoWriter(Writer):
 
         # Detect infinity (excluding nan)
         if (
-            isinstance(value, (int, float, np.number))
+            isinstance(value, int | float | np.number)
             and not pd.isnull(value)
             and math.isinf(value)
         ):
@@ -236,7 +237,7 @@ class InsertIntoWriter(Writer):
                 return "-infinity()"
 
         # Detect nan specifically
-        if isinstance(value, (int, float, np.number)) and math.isnan(value):
+        if isinstance(value, int | float | np.number) and math.isnan(value):
             return "nan()"
 
         # Handle other null values (pd.NA, pd.NaT, None)

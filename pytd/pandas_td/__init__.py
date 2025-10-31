@@ -346,7 +346,7 @@ def _convert_time(time):
         t = pd.to_datetime(time, unit="s")
     elif isinstance(time, str):
         t = pd.to_datetime(time)
-    elif isinstance(time, (datetime.date, datetime.datetime)):
+    elif isinstance(time, datetime.date | datetime.datetime):
         t = pd.to_datetime(time)
     else:
         raise ValueError(f"invalid time value: {time}")
@@ -543,7 +543,7 @@ def _convert_index_column(
                 index_label = [
                     v if v else f"level_{i}" for i, v in enumerate(frame.index.names)
                 ]
-            for i, name in zip(frame.index.levels, index_label):
+            for i, name in zip(frame.index.levels, index_label, strict=False):
                 frame[name] = i.astype("object")
         else:
             if index_label is None:

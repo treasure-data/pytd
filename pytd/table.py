@@ -95,7 +95,7 @@ class Table:
             schema = ", ".join(
                 map(
                     lambda t: f"{t[0]} {t[1]}",
-                    zip(column_names, column_types),
+                    zip(column_names, column_types, strict=False),
                 )
             )
             q_create = f"CREATE TABLE {self.database}.{self.table} ({schema})"

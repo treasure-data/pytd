@@ -4,13 +4,12 @@ import abc
 import importlib.metadata
 import logging
 import os
-from typing import Any, Optional, TypedDict
+from typing import Any, Optional, TypeAlias, TypedDict
 from urllib.parse import urlparse
 
 import tdclient
 import tdclient.cursor
 import trino
-from typing_extensions import TypeAlias
 
 __version__ = importlib.metadata.version("pytd")
 
@@ -44,7 +43,7 @@ class CustomTrinoCursor(trino.dbapi.Cursor):
         additional_headers = {"User-Agent": self._custom_user_agent}
 
         if params:
-            assert isinstance(params, (list, tuple)), (
+            assert isinstance(params, list | tuple), (
                 "params must be a list or tuple containing the query parameter values"
             )
 
@@ -208,7 +207,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
 
         if isinstance(extra_lines, str):
             header += f"-- {extra_lines}\n"
-        elif isinstance(extra_lines, (list, tuple)):
+        elif isinstance(extra_lines, list | tuple):
             header += "".join([f"-- {line}\n" for line in extra_lines])
 
         return header
