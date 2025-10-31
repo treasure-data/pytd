@@ -16,7 +16,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.11"
+        python-version: "3.13"
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -31,7 +31,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.11"
+        python-version: "3.13"
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -48,19 +48,19 @@ jobs:
         include:
           # Core combinations - test key Python versions with supported pandas
           - os: ubuntu-latest
-            python-version: "3.9"
-            pandas-version: "2.1.4"
-          - os: ubuntu-latest
             python-version: "3.11"
-            pandas-version: "2.2.3"
+            pandas-version: "2.3.3"
           - os: ubuntu-latest
             python-version: "3.13"
-            pandas-version: "2.2.3"
+            pandas-version: "2.3.3"
+          - os: ubuntu-latest
+            python-version: "3.14"
+            pandas-version: "2.3.3"
 
           # Windows compatibility check - minimal but important
           - os: windows-latest
             python-version: "3.11"
-            pandas-version: "2.2.3"
+            pandas-version: "2.3.3"
 
 
     steps:
