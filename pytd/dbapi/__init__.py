@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from ..client import Client
 from .connection import Connection
 from .error import (

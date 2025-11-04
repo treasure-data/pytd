@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import abc
 import gzip
 import logging
@@ -8,9 +6,10 @@ import os
 import tempfile
 import time
 import uuid
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
-from typing import TYPE_CHECKING, Any, Callable, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import msgpack
 import numpy as np
@@ -138,7 +137,7 @@ def _cast_dtypes(dataframe, inplace=True, keep_list=False):
 
 def _get_schema(dataframe):
     column_names, column_types = [], []
-    for c, t in zip(dataframe.columns, dataframe.dtypes):
+    for c, t in zip(dataframe.columns, dataframe.dtypes, strict=False):
         # Compare nullable integer type by using pandas function because `t ==
         # "Int64"` causes a following warning for some reasons:
         #     DeprecationWarning: Numeric-style type codes are deprecated and
@@ -179,7 +178,7 @@ class Writer(metaclass=abc.ABCMeta):
     def write_dataframe(
         self,
         dataframe: pd.DataFrame,
-        table: Table,
+        table: "Table",
         if_exists: Literal["error", "overwrite", "append", "ignore"],
     ) -> None:
         pass
@@ -190,7 +189,7 @@ class Writer(metaclass=abc.ABCMeta):
     @staticmethod
     def from_string(
         writer: Literal["bulk_import", "insert_into", "spark"], **kwargs: Any
-    ) -> Writer:
+    ) -> "Writer":
         writer_lower = writer.lower()
         if writer_lower == "bulk_import":
             return BulkImportWriter()
@@ -226,7 +225,7 @@ class InsertIntoWriter(Writer):
 
         # Detect infinity (excluding nan)
         if (
-            isinstance(value, (int, float, np.number))
+            isinstance(value, int | float | np.number)
             and not pd.isnull(value)
             and math.isinf(value)
         ):
@@ -236,7 +235,7 @@ class InsertIntoWriter(Writer):
                 return "-infinity()"
 
         # Detect nan specifically
-        if isinstance(value, (int, float, np.number)) and math.isnan(value):
+        if isinstance(value, int | float | np.number) and math.isnan(value):
             return "nan()"
 
         # Handle other null values (pd.NA, pd.NaT, None)
@@ -249,7 +248,7 @@ class InsertIntoWriter(Writer):
     def write_dataframe(
         self,
         dataframe: pd.DataFrame,
-        table: Table,
+        table: "Table",
         if_exists: Literal["error", "overwrite", "append", "ignore"],
     ) -> None:
         """Write a given DataFrame to a Treasure Data table.
@@ -378,7 +377,7 @@ class BulkImportWriter(Writer):
     def write_dataframe(
         self,
         dataframe: pd.DataFrame,
-        table: Table,
+        table: "Table",
         if_exists: Literal["error", "overwrite", "append", "ignore"],
         fmt: Literal["csv", "msgpack"] = "csv",
         keep_list: bool = False,
@@ -823,7 +822,7 @@ class SparkWriter(Writer):
     def write_dataframe(
         self,
         dataframe: pd.DataFrame,
-        table: Table,
+        table: "Table",
         if_exists: Literal["error", "overwrite", "append", "ignore"],
     ) -> None:
         """Write a given DataFrame to a Treasure Data table.

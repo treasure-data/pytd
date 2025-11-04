@@ -1,17 +1,15 @@
-from __future__ import annotations
-
 import logging
 import os
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Literal
 
+import pandas as pd
 import tdclient
 
 from .query_engine import HiveQueryEngine, PrestoQueryEngine, QueryEngine, QueryResult
 from .table import Table
 
 if TYPE_CHECKING:
-    import pandas as pd
     import trino.client
 
     from .writer import Writer
@@ -319,7 +317,7 @@ class Client:
         dataframe: pd.DataFrame,
         destination: str | Table,
         writer: (
-            Literal["bulk_import", "insert_into", "spark"] | Writer
+            Literal["bulk_import", "insert_into", "spark"] | "Writer"
         ) = "bulk_import",
         if_exists: Literal["error", "overwrite", "append", "ignore"] = "error",
         **kwargs: Any,
@@ -360,7 +358,7 @@ class Client:
 
         destination.import_dataframe(dataframe, writer, if_exists, **kwargs)
 
-    def __enter__(self) -> Client:
+    def __enter__(self) -> "Client":
         return self
 
     def __exit__(

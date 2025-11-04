@@ -20,10 +20,8 @@ def typecheck(session):
     "python,pandas",
     [
         (python, pandas)
-        for python in ("3.9", "3.10", "3.11", "3.12", "3.13")
-        for pandas in ("2.1.4", "2.2.3")
-        # Skip combinations that don't support each other
-        if not (python in ("3.9",) and pandas in ("2.2.3",))
+        for python in ("3.10", "3.11", "3.12", "3.13", "3.14")
+        for pandas in ("2.3.3",)
     ],
 )
 def tests(session, python, pandas):

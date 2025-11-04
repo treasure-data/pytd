@@ -7,7 +7,7 @@ name = "pytd"
 version = "2.2.0"
 description = "Treasure Data Driver for Python"
 readme = "README.rst"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = "Apache-2.0"
 authors = [
     {name = "Treasure Data", email = "support@treasure-data.com"}
@@ -22,11 +22,11 @@ classifiers = [
     "Topic :: Database",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
     "urllib3>=1.21.1",
@@ -36,7 +36,6 @@ dependencies = [
     "td-client>=1.5.0",
     "pytz>=2018.5",
     "tqdm>=4.60.0",
-    "typing-extensions>=4.15.0",
 ]
 
 [project.optional-dependencies]
@@ -67,7 +66,7 @@ exclude = ["*tests*"]
 
 [tool.ruff]
 line-length = 88
-target-version = "py39"
+target-version = "py310"
 extend-exclude = [
     ".git",
     "__pycache__",
@@ -109,7 +108,7 @@ indent-style = "space"
 
 [tool.pyright]
 typeCheckingMode = "basic"
-pythonVersion = "3.9"
+pythonVersion = "3.10"
 pythonPlatform = "All"
 
 include = ["pytd"]
