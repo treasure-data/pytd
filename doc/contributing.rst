@@ -1,77 +1,52 @@
 Contributing to pytd
 ====================
 
-Development Setup
------------------
-
-This project uses `uv <https://docs.astral.sh/uv/>`__ for fast and reliable Python package management.
-
-Installing uv
-~~~~~~~~~~~~~
-
-.. code:: sh
-
-   # On macOS and Linux:
-   curl -LsSf https://astral.sh/uv/install.sh | sh
-
-   # On Windows:
-   powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
-
-   # Or via pip:
-   pip install uv
-
-Setting Up Development Environment
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code:: sh
-
-   # Clone the repository
-   git clone https://github.com/treasure-data/pytd.git
-   cd pytd
-
-   # Sync dependencies (installs everything from uv.lock)
-   uv sync
-
-   # Run commands in the uv-managed environment
-   uv run python --version
-   uv run pytest
-
 Code Formatting and Testing
-----------------------------
+---------------------------
 
-We use `ruff <https://docs.astral.sh/ruff/>`__ for linting and formatting,
-and `pyright <https://github.com/microsoft/pyright>`__ for type checking.
+We use `black <https://black.readthedocs.io/en/stable/>`__ and
+`isort <https://github.com/timothycrosley/isort>`__ as a formatter, and
+`flake8 <http://flake8.pycqa.org/en/latest/>`__ as a linter. Our CI
+checks format with them.
 
-We use `nox <https://nox.thea.codes/>`__ to run tests and checks. Nox is configured
-to use uv as the backend for fast virtual environment creation and package installation.
-
-You can run formatter, linter, and tests by using nox:
-
-.. code:: sh
-
-   # Run all sessions
-   uvx nox
-
-   # Run specific sessions
-   uvx nox --session lint
-   uvx nox --session typecheck
-   uvx nox --session tests
-
-Pre-commit Hooks
-~~~~~~~~~~~~~~~~
+Note that black requires Python 3.6+ while pytd supports 3.5+, so you
+must need to have Python 3.6+ for development.
 
 We highly recommend you to introduce
 `pre-commit <https://pre-commit.com/>`__ to ensure your commit follows
 required format.
 
-You can install and set up pre-commit as follows:
+You can install pre-commit as follows:
 
 .. code:: sh
 
-   uvx pre-commit install
+   pip install pre-commit
+   pre-commit install
 
-Now, ruff and other checks will run each time you commit changes.
-You can skip these checks with ``git commit --no-verify``.
+Now, black, isort, and flake8 will check each time you commit changes.
+You can skip these check with ``git commit --no-verify``.
+
+If you want to check code format manually, you can install them as
+follows:
+
+.. code:: sh
+
+   pip install black isort flake8
+
+Then, you can run those tool manually;
+
+.. code:: sh
+
+   black pytd
+   flake8 pytd
+   isort
+
+You can run formatter, linter, and test by using nox as the following:
+
+.. code:: sh
+
+   pip install nox # You should install at the first time
+   nox
 
 Documenting
 -----------
@@ -97,13 +72,13 @@ The ``doc/`` folder is monitored and automatically published by `Read the Docs <
 Releasing
 ---------
 
-Update version in ``pyproject.toml``. Set it to ``1.0.0``, for example:
+Update version in ``setup.cfg``. Set it to ``1.0.0``, for example:
 
-.. code:: toml
+.. code:: ini
 
-   [project]
-   name = "pytd"
-   version = "1.0.0"
+   [metadata]
+   name = pytd
+   version = 1.0.0
 
 Commit and push the latest code, and tag the version:
 

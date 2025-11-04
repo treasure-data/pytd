@@ -1,7 +1,5 @@
 import nox
 
-nox.options.default_venv_backend = "uv"
-
 
 @nox.session
 def lint(session):
