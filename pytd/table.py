@@ -2,7 +2,7 @@ import re
 from typing import TYPE_CHECKING, Any, Literal
 
 import pandas as pd
-import tdclient
+from tdclient.errors import NotFoundError
 
 from .writer import Writer
 
@@ -39,7 +39,7 @@ class Table:
     def __init__(self, client: "Client", database: str, table: str) -> None:
         try:
             client.api_client.database(database)
-        except tdclient.errors.NotFoundError as e:
+        except NotFoundError as e:
             raise ValueError(
                 "failed to create pytd.table.Table instance for "
                 f"`{database}.{table}`: {e}"
@@ -59,7 +59,7 @@ class Table:
         """
         try:
             self.client.api_client.table(self.database, self.table)
-        except tdclient.errors.NotFoundError:
+        except NotFoundError:
             return False
         return True
 

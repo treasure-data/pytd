@@ -9,7 +9,11 @@ TD_SPARK_BASE_URL = "https://s3.amazonaws.com/td-spark/"
 logger = logging.getLogger(__name__)
 
 
-def download_td_spark(spark_binary_version="3.0.1", version="latest", destination=None):
+def download_td_spark(
+    spark_binary_version: str = "3.0.1",
+    version: str = "latest",
+    destination: str | None = None,
+) -> None:
     """Download a td-spark jar file from S3.
 
     Parameters
@@ -51,12 +55,12 @@ def download_td_spark(spark_binary_version="3.0.1", version="latest", destinatio
 
 
 def fetch_td_spark_context(
-    apikey=None,
-    endpoint=None,
-    td_spark_path=None,
-    download_if_missing=True,
-    spark_configs=None,
-):
+    apikey: str | None = None,
+    endpoint: str | None = None,
+    td_spark_path: str | None = None,
+    download_if_missing: bool = True,
+    spark_configs: dict[str, str] | None = None,
+) -> "TDSparkContext":  # type: ignore[name-defined]  # noqa: F821
     """Build TDSparkContext via td-pyspark.
 
     Parameters

@@ -107,7 +107,7 @@ quote-style = "double"
 indent-style = "space"
 
 [tool.pyright]
-typeCheckingMode = "basic"
+typeCheckingMode = "strict"
 pythonVersion = "3.10"
 pythonPlatform = "All"
 

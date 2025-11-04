@@ -199,7 +199,7 @@ def read_td_query(
         params = {}
     params["force_tdclient"] = True
 
-    if isinstance(engine, PrestoQueryEngine) and distributed_join is not None:
+    if isinstance(engine, PrestoQueryEngine):
         header = engine.create_header(
             [
                 "read_td_query",
@@ -337,7 +337,7 @@ def read_td_table(
     return _to_dataframe(engine.execute(query), index_col, parse_dates)
 
 
-def _convert_time(time):
+def _convert_time(time: Any) -> str:
     if time is None:
         return "NULL"
     elif isinstance(time, int):
@@ -351,7 +351,7 @@ def _convert_time(time):
     return f"'{t.replace(microsecond=0)}'"
 
 
-def _to_dataframe(dic, index_col, parse_dates):
+def _to_dataframe(dic: Any, index_col: Any, parse_dates: Any) -> pd.DataFrame:
     frame = pd.DataFrame(**dic)
     if parse_dates is not None:
         frame = _parse_dates(frame, parse_dates)
@@ -360,7 +360,7 @@ def _to_dataframe(dic, index_col, parse_dates):
     return frame
 
 
-def _parse_dates(frame, parse_dates):
+def _parse_dates(frame: pd.DataFrame, parse_dates: Any) -> pd.DataFrame:
     for name in parse_dates:
         if type(parse_dates) is list:
             frame[name] = pd.to_datetime(frame[name])
@@ -509,8 +509,6 @@ def _convert_time_column(
             frame["time"] = col.astype("int64") // (10**9)
     elif time_index is not None:
         # Use 'time_index' as time column
-        if type(time_index) is bool or not isinstance(time_index, int):
-            raise TypeError("invalid type for time_index")
         if isinstance(frame.index, pd.MultiIndex):
             idx = frame.index.levels[time_index]
         else:
@@ -533,8 +531,6 @@ def _convert_index_column(
     index: bool | None = None,
     index_label: str | list[str] | None = None,
 ) -> pd.DataFrame:
-    if index is not None and not isinstance(index, bool):
-        raise TypeError("index must be boolean")
     if index:
         if isinstance(frame.index, pd.MultiIndex):
             if index_label is None:
@@ -555,9 +551,9 @@ def _convert_date_format(
 ) -> pd.DataFrame:
     if date_format is not None:
 
-        def _convert(col):
+        def _convert(col: pd.Series) -> pd.Series:
             if col.dtype.name == "datetime64[ns]":
-                return col.apply(lambda x: x.strftime(date_format))
+                return col.apply(lambda x: x.strftime(date_format))  # type: ignore[return-value, misc]
             return col
 
         frame = frame.apply(_convert)  # type: ignore[assignment]

@@ -9,7 +9,7 @@ import uuid
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, BinaryIO, Literal
 
 import msgpack
 import numpy as np
@@ -25,32 +25,32 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _is_pd_na(x):
+def _is_pd_na(x: Any) -> bool:
     is_na = pd.isna(x)
     return isinstance(is_na, bool) and is_na
 
 
-def _is_np_nan(x):
+def _is_np_nan(x: Any) -> bool:
     return isinstance(x, float) and np.isnan(x)
 
 
-def _is_0d_ary(x):
+def _is_0d_ary(x: Any) -> bool:
     return isinstance(x, np.ndarray) and len(x.shape) == 0
 
 
-def _is_0d_nan(x):
+def _is_0d_nan(x: Any) -> bool:
     return _is_0d_ary(x) and x.dtype.kind == "f" and np.isnan(x)
 
 
-def _isnull(x):
+def _isnull(x: Any) -> bool:
     return x is None or _is_np_nan(x) or _is_pd_na(x)
 
 
-def _isinstance_or_null(x, t):
+def _isinstance_or_null(x: Any, t: type | tuple[type, ...]) -> bool:
     return _isnull(x) or isinstance(x, t)
 
 
-def _replace_pd_na(dataframe):
+def _replace_pd_na(dataframe: pd.DataFrame) -> None:
     """Replace np.nan and pd.NA to None to avoid Int64 conversion issue"""
     if dataframe.isnull().any().any():
         # Replace both np.nan and pd.NA with None
@@ -58,7 +58,7 @@ def _replace_pd_na(dataframe):
         dataframe.replace(replace_dict, inplace=True)
 
 
-def _to_list(ary):
+def _to_list(ary: Any) -> list[Any] | None:
     # Return None if None, np.nan, pd.NA, or np.nan in 0-d array given
     if ary is None or _is_np_nan(ary) or _is_0d_nan(ary) or _is_pd_na(ary):
         return None
@@ -79,15 +79,17 @@ def _to_list(ary):
     return _ary.tolist()
 
 
-def _convert_nullable_str(x, t, lower=False):
+def _convert_nullable_str(x: Any, t: type, lower: bool = False) -> str | None:
     v = str(x).lower() if lower else str(x)
     return v if isinstance(x, t) else None
 
 
-def _cast_dtypes(dataframe, inplace=True, keep_list=False):
+def _cast_dtypes(
+    dataframe: pd.DataFrame, inplace: bool = True, keep_list: bool = False
+) -> pd.DataFrame | None:
     """Convert dtypes into one of {int, float, str, list} type.
 
-    A character code (one of ‘biufcmMOSUV’) identifying the general kind of data.
+    A character code (one of 'biufcmMOSUV') identifying the general kind of data.
 
     b  boolean
     i  signed integer
@@ -103,7 +105,7 @@ def _cast_dtypes(dataframe, inplace=True, keep_list=False):
     """
     df = dataframe if inplace else dataframe.copy()
 
-    for column, kind in dataframe.dtypes.apply(lambda dtype: dtype.kind).items():
+    for column, kind in dataframe.dtypes.apply(lambda dtype: dtype.kind).items():  # type: ignore[misc]
         t = str
         if kind in ("i", "u"):
             t = "Int64" if df[column].isnull().any() else "int64"
@@ -133,9 +135,10 @@ def _cast_dtypes(dataframe, inplace=True, keep_list=False):
 
     if not inplace:
         return df
+    return None
 
 
-def _get_schema(dataframe):
+def _get_schema(dataframe: pd.DataFrame) -> tuple[list[str], list[str]]:
     column_names, column_types = [], []
     for c, t in zip(dataframe.columns, dataframe.dtypes, strict=False):
         # Compare nullable integer type by using pandas function because `t ==
@@ -172,7 +175,11 @@ def _get_schema(dataframe):
 
 class Writer(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
-        self.closed: bool = False
+        self._closed: bool = False
+
+    @property
+    def closed(self) -> bool:
+        return self._closed
 
     @abc.abstractmethod
     def write_dataframe(
@@ -184,7 +191,7 @@ class Writer(metaclass=abc.ABCMeta):
         pass
 
     def close(self) -> None:
-        self.closed = True
+        self._closed = True
 
     @staticmethod
     def from_string(
@@ -206,7 +213,7 @@ class InsertIntoWriter(Writer):
     INSERT INTO query in Presto.
     """
 
-    def _format_value_for_trino(self, value):
+    def _format_value_for_trino(self, value: Any) -> str:
         """Convert a value to appropriate string format for use in Presto queries.
 
         Parameters
@@ -287,7 +294,14 @@ class InsertIntoWriter(Writer):
             if_exists,
         )
 
-    def _insert_into(self, table, list_of_tuple, column_names, column_types, if_exists):
+    def _insert_into(
+        self,
+        table: "Table",
+        list_of_tuple: list[tuple[Any, ...]],
+        column_names: list[str],
+        column_types: list[str],
+        if_exists: Literal["error", "overwrite", "append", "ignore"],
+    ) -> None:
         """Write a given lists to a Treasure Data table.
 
         Parameters
@@ -338,7 +352,13 @@ class InsertIntoWriter(Writer):
         )
         table.client.query(q_insert, engine="presto")
 
-    def _build_query(self, database, table, list_of_tuple, column_names):
+    def _build_query(
+        self,
+        database: str,
+        table: str,
+        list_of_tuple: list[tuple[Any, ...]],
+        column_names: list[str],
+    ) -> str:
         """Translates the given data into an ``INSERT INTO ...  VALUES ...``
         Presto query.
 
@@ -602,17 +622,17 @@ class BulkImportWriter(Writer):
 
     def _bulk_import(
         self,
-        table,
-        file_likes,
-        if_exists,
-        fmt="csv",
-        max_workers=5,
-        show_progress=False,
-        bulk_import_name=None,
-        commit_timeout=None,
-        perform_timeout=None,
-        perform_wait_callback=None,
-    ):
+        table: "Table",
+        file_likes: list[BinaryIO],
+        if_exists: Literal["error", "overwrite", "append", "ignore"],
+        fmt: Literal["csv", "msgpack"] = "csv",
+        max_workers: int = 5,
+        show_progress: bool = False,
+        bulk_import_name: str | None = None,
+        commit_timeout: int | None = None,
+        perform_timeout: int | None = None,
+        perform_wait_callback: Callable[..., Any] | None = None,
+    ) -> None:
         """Write a specified CSV file to a Treasure Data table.
 
         This method uploads the file to Treasure Data via bulk import API.
@@ -725,12 +745,12 @@ class BulkImportWriter(Writer):
             wait=True, timeout=perform_timeout, wait_callback=perform_wait_callback
         )
 
-        if 0 < bulk_import.error_records:
+        if bulk_import.error_records and bulk_import.error_records > 0:
             logger.warning(
                 f"[job id {job.id}] detected {bulk_import.error_records} error records."
             )
 
-        if 0 < bulk_import.valid_records:
+        if bulk_import.valid_records and bulk_import.valid_records > 0:
             logger.info(
                 f"[job id {job.id}] imported {bulk_import.valid_records} records."
             )
@@ -741,7 +761,9 @@ class BulkImportWriter(Writer):
         bulk_import.commit(wait=True, timeout=commit_timeout)
         bulk_import.delete()
 
-    def _write_msgpack_stream(self, items, stream):
+    def _write_msgpack_stream(
+        self, items: list[dict[str, Any]], stream: BinaryIO
+    ) -> BinaryIO:
         """Write MessagePack stream
 
         Parameters
@@ -878,7 +900,7 @@ class SparkWriter(Writer):
                 "and/or endpoint. Create and use a new SparkWriter instance."
             )
 
-        from py4j.protocol import Py4JJavaError
+        from py4j.protocol import Py4JJavaError  # type: ignore[import]
 
         _cast_dtypes(dataframe)
         _replace_pd_na(dataframe)
