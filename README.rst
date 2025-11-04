@@ -24,8 +24,8 @@ Installation
 Requirements
 ~~~~~~~~~~~~
 
-* Python 3.9 or later
-* pandas 2.0 or later
+* Python 3.10 or later
+* pandas 2.1 or later
 
 
 Usage
@@ -245,6 +245,24 @@ Consequently, all ``pandas_td`` code should keep running correctly with
 ``pytd``. Report an issue from
 `here <https://github.com/treasure-data/pytd/issues/new>`__ if you
 noticed any incompatible behaviors.
+
+Development
+-----------
+
+For contributors, please see `Contributing Guide <https://pytd-doc.readthedocs.io/en/latest/contributing.html>`__.
+
+This project uses `uv <https://docs.astral.sh/uv/>`__ for fast Python package management:
+
+.. code:: sh
+
+   # Install uv
+   pip install uv
+
+   # Sync dependencies
+   uv sync
+
+   # Run tests with nox
+   uvx nox
 
 .. |Build status| image:: https://github.com/treasure-data/pytd/workflows/Build/badge.svg
    :target: https://github.com/treasure-data/pytd/actions/
