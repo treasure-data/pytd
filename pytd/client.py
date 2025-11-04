@@ -370,7 +370,12 @@ class Client:
         self.close()
 
     def _fetch_query_engine(
-        self, engine: str, apikey: str, endpoint: str, database: str, header: str | bool
+        self,
+        engine: Literal["presto", "hive"],
+        apikey: str,
+        endpoint: str,
+        database: str,
+        header: str | bool,
     ) -> QueryEngine:
         if engine == "presto":
             return PrestoQueryEngine(apikey, endpoint, database, header)

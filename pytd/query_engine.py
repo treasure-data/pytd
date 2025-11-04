@@ -355,7 +355,7 @@ class PrestoQueryEngine(QueryEngine):
         )
 
     @property
-    def presto_api_host(self):
+    def presto_api_host(self) -> str:
         """Presto API host obtained from ``TD_PRESTO_API`` env variable or
         inferred from Treasure Data REST API endpoint.
         """
