@@ -9,7 +9,7 @@ from .table import Table
 logger = logging.getLogger(__name__)
 
 
-class Client(object):
+class Client:
     """Treasure Data client interface.
 
     A client instance establishes a connection to Treasure Data. This interface
