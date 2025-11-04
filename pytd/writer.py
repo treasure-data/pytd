@@ -105,7 +105,7 @@ def _cast_dtypes(
     """
     df = dataframe if inplace else dataframe.copy()
 
-    for column, kind in dataframe.dtypes.apply(lambda dtype: dtype.kind).items():
+    for column, kind in dataframe.dtypes.apply(lambda dtype: dtype.kind).items():  # type: ignore[misc]
         t = str
         if kind in ("i", "u"):
             t = "Int64" if df[column].isnull().any() else "int64"
@@ -175,7 +175,11 @@ def _get_schema(dataframe: pd.DataFrame) -> tuple[list[str], list[str]]:
 
 class Writer(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
-        self.closed: bool = False
+        self._closed: bool = False
+
+    @property
+    def closed(self) -> bool:
+        return self._closed
 
     @abc.abstractmethod
     def write_dataframe(
@@ -187,7 +191,7 @@ class Writer(metaclass=abc.ABCMeta):
         pass
 
     def close(self) -> None:
-        self.closed = True
+        self._closed = True
 
     @staticmethod
     def from_string(

@@ -5,6 +5,9 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import pandas as pd
 import tdclient
+from tdclient.models import Database as TDClientDatabase
+from tdclient.models import Job as TDClientJob
+from tdclient.models import Table as TDClientTable
 
 from .query_engine import HiveQueryEngine, PrestoQueryEngine, QueryEngine, QueryResult
 from .table import Table
@@ -119,7 +122,7 @@ class Client:
             **kwargs,
         )
 
-    def list_databases(self) -> list[tdclient.models.Database]:
+    def list_databases(self) -> list[TDClientDatabase]:
         """Get a list of td-client-python Database objects.
 
         Returns
@@ -128,7 +131,7 @@ class Client:
         """
         return self.api_client.databases()
 
-    def list_tables(self, database: str | None = None) -> list[tdclient.models.Table]:
+    def list_tables(self, database: str | None = None) -> list[TDClientTable]:
         """Get a list of td-client-python Table objects.
 
         Parameters
@@ -145,7 +148,7 @@ class Client:
             database = self.database
         return self.api_client.tables(database)
 
-    def list_jobs(self) -> list[tdclient.models.Job]:
+    def list_jobs(self) -> list[TDClientJob]:
         """Get a list of td-client-python Job objects.
 
         Returns
@@ -154,7 +157,7 @@ class Client:
         """
         return self.api_client.jobs()
 
-    def get_job(self, job_id: int) -> tdclient.models.Job:
+    def get_job(self, job_id: int) -> TDClientJob:
         """Get a td-client-python Job object from ``job_id``.
 
         Parameters

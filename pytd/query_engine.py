@@ -6,8 +6,9 @@ from typing import Any, TypeAlias, TypedDict
 from urllib.parse import urlparse
 
 import tdclient
-import tdclient.cursor
 import trino
+from tdclient.connection import Connection as TDClientConnection
+from tdclient.cursor import Cursor as TDClientCursor
 
 __version__ = importlib.metadata.version("pytd")
 
@@ -45,7 +46,7 @@ class CustomTrinoCursor(trino.dbapi.Cursor):
                 "params must be a list or tuple containing the query parameter values"
             )
 
-            if self.connection._use_legacy_prepared_statements():
+            if self.connection._use_legacy_prepared_statements():  # type: ignore[attr-defined]
                 statement_name = self._generate_unique_statement_name()
                 self._prepare_statement(operation, statement_name)
 
@@ -83,7 +84,7 @@ class CustomTrinoCursor(trino.dbapi.Cursor):
 
 
 # Type alias for cursor types returned by query engines
-Cursor: TypeAlias = CustomTrinoCursor | tdclient.cursor.Cursor
+Cursor: TypeAlias = CustomTrinoCursor | TDClientCursor
 
 
 class QueryEngine(metaclass=abc.ABCMeta):
@@ -205,7 +206,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
 
         if isinstance(extra_lines, str):
             header += f"-- {extra_lines}\n"
-        elif isinstance(extra_lines, list | tuple):
+        elif extra_lines:  # list or tuple
             header += "".join([f"-- {line}\n" for line in extra_lines])
 
         return header
@@ -223,8 +224,8 @@ class QueryEngine(metaclass=abc.ABCMeta):
         pass
 
     def _get_tdclient_cursor(
-        self, con: tdclient.api.API, **kwargs: Any
-    ) -> tdclient.cursor.Cursor:
+        self, con: TDClientConnection, **kwargs: Any
+    ) -> TDClientCursor:
         """Get DB-API cursor from tdclient Connection instance.
 
         ``kwargs`` are for setting specific parameters to Treasure Data REST
@@ -290,7 +291,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
             )
 
         # update a clone of the original params
-        cursor_kwargs = con._cursor_kwargs.copy()
+        cursor_kwargs = con._cursor_kwargs.copy()  # type: ignore[attr-defined]
         for k, v in kwargs.items():
             if k not in api_param_names:
                 raise RuntimeError(
@@ -300,17 +301,17 @@ class QueryEngine(metaclass=abc.ABCMeta):
             cursor_kwargs[k] = v
 
         # keep the original `_cursor_kwargs`
-        original_cursor_kwargs = con._cursor_kwargs.copy()
+        original_cursor_kwargs = con._cursor_kwargs.copy()  # type: ignore[attr-defined]
 
         # overwrite the original params
-        con._cursor_kwargs = cursor_kwargs
+        con._cursor_kwargs = cursor_kwargs  # type: ignore[attr-defined]
 
         # `Connection#cursor` internally refers the customized
         # ``_cursor_kwargs``
         cursor = con.cursor()
 
         # write the original params back to `_cursor_kwargs`
-        con._cursor_kwargs = original_cursor_kwargs
+        con._cursor_kwargs = original_cursor_kwargs  # type: ignore[attr-defined]
 
         logger.warning(
             "returning `tdclient.cursor.Cursor`. This cursor, `Cursor#fetchone` "
@@ -402,7 +403,9 @@ class PrestoQueryEngine(QueryEngine):
 
             # In production, return our custom cursor with the same request object
             return CustomTrinoCursor(
-                self.trino_connection, regular_cursor._request, self.user_agent
+                self.trino_connection,
+                regular_cursor._request,  # type: ignore[attr-defined]
+                self.user_agent,  # type: ignore[attr-defined]
             )
 
         return self._get_tdclient_cursor(self.tdclient_connection, **kwargs)
@@ -414,7 +417,7 @@ class PrestoQueryEngine(QueryEngine):
 
     def _connect(
         self,
-    ) -> tuple[trino.dbapi.Connection, tdclient.api.API]:
+    ) -> tuple[trino.dbapi.Connection, TDClientConnection]:
         # Create trino connection
         trino_connection = trino.dbapi.connect(
             host=self.presto_api_host,
@@ -466,9 +469,7 @@ class HiveQueryEngine(QueryEngine):
         """User agent passed to a Hive connection."""
         return f"pytd/{__version__} (tdclient/{tdclient.__version__})"
 
-    def cursor(
-        self, force_tdclient: bool = True, **kwargs: Any
-    ) -> tdclient.cursor.Cursor:
+    def cursor(self, force_tdclient: bool = True, **kwargs: Any) -> TDClientCursor:
         """Get cursor defined by DB-API.
 
         Parameters
@@ -511,7 +512,7 @@ class HiveQueryEngine(QueryEngine):
         """Close a connection to Hive."""
         self.engine.close()
 
-    def _connect(self) -> tdclient.api.API:
+    def _connect(self) -> TDClientConnection:
         return tdclient.connect(
             apikey=self.apikey,
             endpoint=self.endpoint,
