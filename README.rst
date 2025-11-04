@@ -246,24 +246,6 @@ Consequently, all ``pandas_td`` code should keep running correctly with
 `here <https://github.com/treasure-data/pytd/issues/new>`__ if you
 noticed any incompatible behaviors.
 
-Development
------------
-
-For contributors, please see `Contributing Guide <https://pytd-doc.readthedocs.io/en/latest/contributing.html>`__.
-
-This project uses `uv <https://docs.astral.sh/uv/>`__ for fast Python package management:
-
-.. code:: sh
-
-   # Install uv
-   pip install uv
-
-   # Sync dependencies
-   uv sync
-
-   # Run tests with nox
-   uvx nox
-
 .. |Build status| image:: https://github.com/treasure-data/pytd/workflows/Build/badge.svg
    :target: https://github.com/treasure-data/pytd/actions/
 .. |PyPI version| image:: https://badge.fury.io/py/pytd.svg
