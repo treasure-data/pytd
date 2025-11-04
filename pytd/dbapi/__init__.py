@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from ..client import Client
 from .connection import Connection
 from .error import (
@@ -18,7 +20,7 @@ threadsafety = 3
 paramstyle = "pyformat"
 
 
-def connect(client=None):
+def connect(client: Client | None = None) -> Connection:
     """Establish a DB-API connection to Treasure Data.
 
     Parameters

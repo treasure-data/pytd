@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import abc
 import gzip
 import logging
@@ -8,6 +10,7 @@ import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
+from typing import TYPE_CHECKING, Any, Callable, Literal
 
 import msgpack
 import numpy as np
@@ -16,6 +19,9 @@ from tdclient.util import normalized_msgpack
 from tqdm import tqdm
 
 from .spark import fetch_td_spark_context
+
+if TYPE_CHECKING:
+    from .table import Table
 
 logger = logging.getLogger(__name__)
 
@@ -166,24 +172,31 @@ def _get_schema(dataframe):
 
 
 class Writer(metaclass=abc.ABCMeta):
-    def __init__(self):
-        self.closed = False
+    def __init__(self) -> None:
+        self.closed: bool = False
 
     @abc.abstractmethod
-    def write_dataframe(self, dataframe, table, if_exists):
+    def write_dataframe(
+        self,
+        dataframe: pd.DataFrame,
+        table: Table,
+        if_exists: Literal["error", "overwrite", "append", "ignore"],
+    ) -> None:
         pass
 
-    def close(self):
+    def close(self) -> None:
         self.closed = True
 
     @staticmethod
-    def from_string(writer, **kwargs):
-        writer = writer.lower()
-        if writer == "bulk_import":
+    def from_string(
+        writer: Literal["bulk_import", "insert_into", "spark"], **kwargs: Any
+    ) -> Writer:
+        writer_lower = writer.lower()
+        if writer_lower == "bulk_import":
             return BulkImportWriter()
-        elif writer == "insert_into":
+        elif writer_lower == "insert_into":
             return InsertIntoWriter()
-        elif writer == "spark":
+        elif writer_lower == "spark":
             return SparkWriter(**kwargs)
         else:
             raise ValueError("unknown way to upload data to TD is specified")
@@ -233,7 +246,12 @@ class InsertIntoWriter(Writer):
         # Handle other numeric values
         return str(value)
 
-    def write_dataframe(self, dataframe, table, if_exists):
+    def write_dataframe(
+        self,
+        dataframe: pd.DataFrame,
+        table: Table,
+        if_exists: Literal["error", "overwrite", "append", "ignore"],
+    ) -> None:
         """Write a given DataFrame to a Treasure Data table.
 
         Parameters
@@ -359,19 +377,19 @@ class BulkImportWriter(Writer):
 
     def write_dataframe(
         self,
-        dataframe,
-        table,
-        if_exists,
-        fmt="csv",
-        keep_list=False,
-        max_workers=5,
-        chunk_record_size=10_000,
-        show_progress=False,
-        bulk_import_name=None,
-        commit_timeout=None,
-        perform_timeout=None,
-        perform_wait_callback=None,
-    ):
+        dataframe: pd.DataFrame,
+        table: Table,
+        if_exists: Literal["error", "overwrite", "append", "ignore"],
+        fmt: Literal["csv", "msgpack"] = "csv",
+        keep_list: bool = False,
+        max_workers: int = 5,
+        chunk_record_size: int = 10_000,
+        show_progress: bool = False,
+        bulk_import_name: str | None = None,
+        commit_timeout: int | None = None,
+        perform_timeout: int | None = None,
+        perform_wait_callback: Callable[..., Any] | None = None,
+    ) -> None:
         """Write a given DataFrame to a Treasure Data table.
 
         This method internally converts a given :class:`pandas.DataFrame` into a
@@ -786,8 +804,11 @@ class SparkWriter(Writer):
     """
 
     def __init__(
-        self, td_spark_path=None, download_if_missing=True, spark_configs=None
-    ):
+        self,
+        td_spark_path: str | None = None,
+        download_if_missing: bool = True,
+        spark_configs: dict[str, Any] | None = None,
+    ) -> None:
         self.td_spark_path = td_spark_path
         self.download_if_missing = download_if_missing
         self.spark_configs = spark_configs
@@ -796,10 +817,15 @@ class SparkWriter(Writer):
         self.fetched_apikey, self.fetched_endpoint = "", ""
 
     @property
-    def closed(self):
+    def closed(self) -> bool:
         return self.td_spark is not None and self.td_spark.spark._jsc.sc().isStopped()
 
-    def write_dataframe(self, dataframe, table, if_exists):
+    def write_dataframe(
+        self,
+        dataframe: pd.DataFrame,
+        table: Table,
+        if_exists: Literal["error", "overwrite", "append", "ignore"],
+    ) -> None:
         """Write a given DataFrame to a Treasure Data table.
 
         This method internally converts a given :class:`pandas.DataFrame` into Spark
@@ -872,7 +898,7 @@ class SparkWriter(Writer):
                 "failed to load table via td-spark: " + str(e.java_exception)
             ) from e
 
-    def close(self):
+    def close(self) -> None:
         """Close a PySpark session connected to Treasure Data."""
         if self.td_spark is not None:
             self.td_spark.spark.stop()
