@@ -53,6 +53,9 @@ jobs:
           - os: windows-latest
             python-version: "3.11"
             pandas-version: "2.3.3"
+          - os: windows-latest
+            python-version: "3.14"
+            pandas-version: "2.3.3"
 
 
     steps:
