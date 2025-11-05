@@ -13,7 +13,7 @@ def lint(session):
 
 @nox.session
 def typecheck(session):
-    session.install(".[dev]")
+    session.install(".", "--group", "dev")
     session.run("pyright", "pytd")
 
 

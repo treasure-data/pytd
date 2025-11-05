@@ -266,7 +266,7 @@ def read_td_job(
     if not job.finished():
         job.wait()
 
-    columns = [c[0] for c in job.result_schema]
+    columns = [c[0] for c in job.result_schema]  # type: ignore[misc]
     rows = job.result()
 
     return _to_dataframe({"data": rows, "columns": columns}, index_col, parse_dates)
@@ -341,11 +341,11 @@ def _convert_time(time: Any) -> str:
     if time is None:
         return "NULL"
     elif isinstance(time, int):
-        t = pd.to_datetime(time, unit="s")
+        t = pd.to_datetime(time, unit="s")  # type: ignore[misc]
     elif isinstance(time, str):
-        t = pd.to_datetime(time)
+        t = pd.to_datetime(time)  # type: ignore[misc]
     elif isinstance(time, datetime.date | datetime.datetime):
-        t = pd.to_datetime(time)
+        t = pd.to_datetime(time)  # type: ignore[misc]
     else:
         raise ValueError(f"invalid time value: {time}")
     return f"'{t.replace(microsecond=0)}'"
@@ -356,19 +356,19 @@ def _to_dataframe(dic: Any, index_col: Any, parse_dates: Any) -> pd.DataFrame:
     if parse_dates is not None:
         frame = _parse_dates(frame, parse_dates)
     if index_col is not None:
-        frame.set_index(index_col, inplace=True)
+        frame.set_index(index_col, inplace=True)  # type: ignore[misc]
     return frame
 
 
 def _parse_dates(frame: pd.DataFrame, parse_dates: Any) -> pd.DataFrame:
-    for name in parse_dates:
-        if type(parse_dates) is list:
-            frame[name] = pd.to_datetime(frame[name])
+    for name in parse_dates:  # type: ignore[misc]
+        if type(parse_dates) is list:  # type: ignore[misc]
+            frame[name] = pd.to_datetime(frame[name])  # type: ignore[misc]
         else:
-            if frame[name].dtype.kind == "O":
-                frame[name] = pd.to_datetime(frame[name], format=parse_dates[name])
+            if frame[name].dtype.kind == "O":  # type: ignore[misc]
+                frame[name] = pd.to_datetime(frame[name], format=parse_dates[name])  # type: ignore[misc]
             else:
-                frame[name] = pd.to_datetime(frame[name], unit=parse_dates[name])
+                frame[name] = pd.to_datetime(frame[name], unit=parse_dates[name])  # type: ignore[misc]
     return frame
 
 
@@ -500,26 +500,26 @@ def _convert_time_column(
         # Use 'time_col' as time column
         if time_col != "time":
             frame.rename(columns={time_col: "time"}, inplace=True)
-        col = frame["time"]
+        col = frame["time"]  # type: ignore[misc]
         # convert python string to pandas datetime
-        if col.dtype.name == "object" and len(col) > 0 and isinstance(col[0], str):
-            col = pd.to_datetime(col)
+        if col.dtype.name == "object" and len(col) > 0 and isinstance(col[0], str):  # type: ignore[misc]
+            col = pd.to_datetime(col)  # type: ignore[misc]
         # convert pandas datetime to unixtime
-        if col.dtype.name == "datetime64[ns]":
-            frame["time"] = col.astype("int64") // (10**9)
+        if col.dtype.name == "datetime64[ns]":  # type: ignore[misc]
+            frame["time"] = col.astype("int64") // (10**9)  # type: ignore[misc]
     elif time_index is not None:
         # Use 'time_index' as time column
         if isinstance(frame.index, pd.MultiIndex):
-            idx = frame.index.levels[time_index]
+            idx = frame.index.levels[time_index]  # type: ignore[misc]
         else:
             if time_index == 0:
                 idx = frame.index
             else:
                 raise IndexError("list index out of range")
-        if idx.dtype.name != "datetime64[ns]":
+        if idx.dtype.name != "datetime64[ns]":  # type: ignore[misc]
             raise TypeError("index type must be datetime64[ns]")
         # convert pandas datetime to unixtime
-        frame["time"] = idx.astype("int64") // (10**9)
+        frame["time"] = idx.astype("int64") // (10**9)  # type: ignore[misc]
     else:
         # Use current time as time column
         frame["time"] = int(time.time())
@@ -537,12 +537,12 @@ def _convert_index_column(
                 index_label = [
                     v if v else f"level_{i}" for i, v in enumerate(frame.index.names)
                 ]
-            for i, name in zip(frame.index.levels, index_label, strict=False):
-                frame[name] = i.astype("object")
+            for i, name in zip(frame.index.levels, index_label, strict=False):  # type: ignore[misc]
+                frame[name] = i.astype("object")  # type: ignore[misc]
         else:
             if index_label is None:
                 index_label = frame.index.name if frame.index.name else "index"  # type: ignore[assignment]
-            frame[index_label] = frame.index.astype("object")
+            frame[index_label] = frame.index.astype("object")  # type: ignore[misc]
     return frame
 
 
@@ -552,7 +552,7 @@ def _convert_date_format(
     if date_format is not None:
 
         def _convert(col: pd.Series) -> pd.Series:
-            if col.dtype.name == "datetime64[ns]":
+            if col.dtype.name == "datetime64[ns]":  # type: ignore[misc]
                 return col.apply(lambda x: x.strftime(date_format))  # type: ignore[return-value, misc]
             return col
 

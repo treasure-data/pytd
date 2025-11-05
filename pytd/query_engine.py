@@ -32,7 +32,7 @@ class CustomTrinoCursor(trino.dbapi.Cursor):
         user_agent: str,
         legacy_primitive_types: bool = False,
     ) -> None:
-        super().__init__(connection, request, legacy_primitive_types)
+        super().__init__(connection, request, legacy_primitive_types)  # type: ignore[misc]
         self._custom_user_agent = user_agent
 
     def execute(
@@ -53,11 +53,11 @@ class CustomTrinoCursor(trino.dbapi.Cursor):
                 try:
                     # Send execute statement and assign the return value to `results`
                     # as it will be returned by the function
-                    self._query = self._execute_prepared_statement(
+                    self._query = self._execute_prepared_statement(  # type: ignore[misc]
                         statement_name, params
                     )
-                    self._iterator = iter(
-                        self._query.execute(additional_http_headers=additional_headers)
+                    self._iterator = iter(  # type: ignore[misc]
+                        self._query.execute(additional_http_headers=additional_headers)  # type: ignore[misc]
                     )
                 finally:
                     # Send deallocate statement
@@ -66,19 +66,19 @@ class CustomTrinoCursor(trino.dbapi.Cursor):
                     # TODO: Consider caching prepared statements if requested by caller
                     self._deallocate_prepared_statement(statement_name)
             else:
-                self._query = self._execute_immediate_statement(operation, params)
-                self._iterator = iter(
-                    self._query.execute(additional_http_headers=additional_headers)
+                self._query = self._execute_immediate_statement(operation, params)  # type: ignore[misc]
+                self._iterator = iter(  # type: ignore[misc]
+                    self._query.execute(additional_http_headers=additional_headers)  # type: ignore[misc]
                 )
 
         else:
             self._query = trino.client.TrinoQuery(
-                self._request,
+                self._request,  # type: ignore[misc]
                 query=operation,
                 legacy_primitive_types=self._legacy_primitive_types,
             )
-            self._iterator = iter(
-                self._query.execute(additional_http_headers=additional_headers)
+            self._iterator = iter(  # type: ignore[misc]
+                self._query.execute(additional_http_headers=additional_headers)  # type: ignore[misc]
             )
         return self
 
@@ -170,7 +170,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
                 List of column names.
         """
         cur = self.cursor(**kwargs)
-        self.executed = cur.execute(query)
+        self.executed = cur.execute(query)  # type: ignore[assignment]
         rows = cur.fetchall()
         # cur.description is None for CREATE and DROP statements in recent version of
         # Trino
@@ -419,7 +419,7 @@ class PrestoQueryEngine(QueryEngine):
         self,
     ) -> tuple[trino.dbapi.Connection, TDClientConnection]:
         # Create trino connection
-        trino_connection = trino.dbapi.connect(
+        trino_connection = trino.dbapi.connect(  # type: ignore[misc]
             host=self.presto_api_host,
             port=443,
             http_scheme="https",
