@@ -151,7 +151,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
             - ``wait_callback`` (function): called every interval against job itself
             - ``engine_version`` (str): run query with Hive 2 if this parameter
               is set to ``"stable"`` in ``HiveQueryEngine``.
-              https://docs.treasuredata.com/display/public/PD/Writing+Hive+Queries
+              https://api-docs.treasuredata.com/en/tools/hive/writing_hive_queries
 
             Meanwhile, when a following argument is set to ``True``, query is
             deterministically issued via ``tdclient``.
@@ -264,7 +264,7 @@ class QueryEngine(metaclass=abc.ABCMeta):
             - ``wait_callback`` (function): called every interval against job itself
             - ``engine_version`` (str): run query with Hive 2 if this parameter
               is set to ``"stable"`` in ``HiveQueryEngine``.
-              https://docs.treasuredata.com/display/public/PD/Writing+Hive+Queries
+              https://api-docs.treasuredata.com/en/tools/hive/writing_hive_queries
 
         Returns
         -------
@@ -499,7 +499,7 @@ class HiveQueryEngine(QueryEngine):
             - ``wait_callback`` (function): called every interval against job itself
             - ``engine_version`` (str): run query with Hive 2 if this parameter
               is set to ``"stable"``.
-              https://docs.treasuredata.com/display/public/PD/Writing+Hive+Queries
+              https://api-docs.treasuredata.com/en/tools/hive/writing_hive_queries
 
         Returns
         -------

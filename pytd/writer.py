@@ -305,7 +305,7 @@ class InsertIntoWriter(Writer):
         column_types : list of str
             Column types corresponding to the names. Note that Treasure Data
             supports limited amount of types as documented in:
-            https://docs.treasuredata.com/display/public/PD/Schema+Management
+            https://api-docs.treasuredata.com/en/tools/presto/sql_tips_for_hive_and_presto#treasure-data-native-data-types
 
         if_exists : {'error', 'overwrite', 'append', 'ignore'}
             What happens when a target table already exists.
