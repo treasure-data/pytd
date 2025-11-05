@@ -6,7 +6,7 @@ pytd
 **pytd** provides user-friendly interfaces to Treasure Data’s `REST
 APIs <https://github.com/treasure-data/td-client-python>`__, `Presto
 query
-engine <https://docs.treasuredata.com/display/public/PD/About+Presto+Distributed+Query+Engine>`__,
+engine <https://api-docs.treasuredata.com/en/tools/presto/quickstart>`__,
 and `Plazma primary
 storage <https://www.slideshare.net/treasure-data/td-techplazma>`__.
 
@@ -36,9 +36,9 @@ Usage
    Colaboratory <https://colab.research.google.com/drive/1ps_ChU-H2FvkeNlj1e1fcOebCt4ryN11>`__
 
 Set your `API
-key <https://docs.treasuredata.com/display/public/PD/Getting+Your+API+Keys>`__
+key <https://docs.treasuredata.com/products/my-settings/getting-your-api-keys>`__
 and
-`endpoint <https://docs.treasuredata.com/display/public/PD/Sites+and+Endpoints>`__
+`endpoint <https://api-docs.treasuredata.com/en/overview/aboutendpoints#treasure-data-api-baseurls>`__
 to the environment variables, ``TD_API_KEY`` and ``TD_API_SERVER``,
 respectively, and create a client instance:
 
@@ -184,7 +184,7 @@ Treasure Data offers three different Python clients on GitHub, and the following
 
    - Basic REST API wrapper.
    - Similar functionalities to td-client-{`ruby <https://github.com/treasure-data/td-client-ruby>`__, `java <https://github.com/treasure-data/td-client-java>`__, `node <https://github.com/treasure-data/td-client-node>`__, `go <https://github.com/treasure-data/td-client-go>`__}.
-   - The capability is limited by `what Treasure Data REST API can do <https://docs.treasuredata.com/display/public/PD/REST+APIs+in+Treasure+Data>`__.
+   - The capability is limited by `what Treasure Data REST API can do <https://docs.treasuredata.com/products/control-panel/security/accessing-rest-apis>`__.
 
 2. **pytd**
 

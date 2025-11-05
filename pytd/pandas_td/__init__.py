@@ -26,7 +26,7 @@ def connect(
     endpoint : str, optional
         Treasure Data API server. If not given, ``https://api.treasuredata.com`` is
         used by default. List of available endpoints is:
-        https://docs.treasuredata.com/display/public/PD/Sites+and+Endpoints
+        https://api-docs.treasuredata.com/en/overview/aboutendpoints#treasure-data-api-baseurls
 
     kwargs : dict, optional
         Optional arguments
@@ -188,7 +188,7 @@ def read_td_query(
         - ``wait_callback`` (function): called every interval against job itself
         - ``engine_version`` (str): run query with Hive 2 if this parameter is
           set to ``"stable"`` in ``HiveQueryEngine``.
-          https://docs.treasuredata.com/display/public/PD/Writing+Hive+Queries
+          https://api-docs.treasuredata.com/en/tools/hive/writing_hive_queries
 
     Returns
     -------
