@@ -1,6 +1,13 @@
 Changelog
 =========
 
+v2.3.0 (2025-11-14)
+-------------------
+
+- Require td-client version 1.6.0
+- Support type hinting
+- Support infinity/nan for InsertIntoWriter
+
 v2.2.0 (2025-08-15)
 -------------------
 
