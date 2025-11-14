@@ -33,7 +33,7 @@ dependencies = [
     "trino>=0.334.0",
     "pandas>=2.1.0",
     "numpy>=1.25.2",
-    "td-client @ git+https://github.com/treasure-data/td-client-python.git@master",
+    "td-client>=1.6.0",
     "pytz>=2018.5",
     "tqdm>=4.60.0",
 ]
