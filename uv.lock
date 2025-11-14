@@ -509,6 +509,19 @@ wheels = [
 ]
 
 [[package]]
+name = "msgpack-types"
+version = "0.5.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "msgpack" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7f/26/a15707f2af5681333cd598724bedd1948844ac2af45eafc4175af0671a8d/msgpack_types-0.5.0.tar.gz", hash = "sha256:aebd1b8da23f8f9966d66ebb1a43bd261b95751c6a267bd21a124d2ccac84201", size = 6702, upload-time = "2024-09-21T13:55:05.587Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/19/dd/cd9d2b0ef506f6164cd81d4e92e408095041f28523d751b9f7dabdc244eb/msgpack_types-0.5.0-py3-none-any.whl", hash = "sha256:8b633ed75e495a555fa0615843de559a74b1d176828d59bb393d266e51f6bda7", size = 8182, upload-time = "2024-09-21T13:55:04.232Z" },
+]
+
+[[package]]
 name = "nodeenv"
 version = "1.9.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1006,9 +1019,6 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-dev = [
-    { name = "pyright" },
-]
 doc = [
     { name = "ipython", version = "8.37.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "ipython", version = "9.6.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
@@ -1026,6 +1036,12 @@ test = [
     { name = "pytest" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "msgpack-types" },
+    { name = "pyright" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "ipython", marker = "extra == 'doc'" },
@@ -1033,19 +1049,24 @@ requires-dist = [
     { name = "numpydoc", marker = "extra == 'doc'" },
     { name = "pandas", specifier = ">=2.1.0" },
     { name = "pyarrow", marker = "extra == 'spark'", specifier = ">=10.0" },
-    { name = "pyright", marker = "extra == 'dev'", specifier = ">=1.1.407" },
     { name = "pyspark", marker = "extra == 'spark'", specifier = ">=3.0.0" },
     { name = "pytest", marker = "extra == 'test'" },
     { name = "pytz", specifier = ">=2018.5" },
     { name = "sphinx", marker = "extra == 'doc'", specifier = ">=2.2.0" },
     { name = "sphinx-rtd-theme", marker = "extra == 'doc'" },
-    { name = "td-client", specifier = ">=1.5.0" },
+    { name = "td-client", specifier = ">=1.6.0" },
     { name = "td-pyspark", marker = "extra == 'spark'", specifier = ">20.10.0" },
     { name = "tqdm", specifier = ">=4.60.0" },
     { name = "trino", specifier = ">=0.334.0" },
     { name = "urllib3", specifier = ">=1.21.1" },
 ]
-provides-extras = ["spark", "test", "doc", "dev"]
+provides-extras = ["spark", "test", "doc"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "msgpack-types", specifier = ">=0.5.0" },
+    { name = "pyright", specifier = ">=1.1.407" },
+]
 
 [[package]]
 name = "pytest"
@@ -1289,16 +1310,16 @@ wheels = [
 
 [[package]]
 name = "td-client"
-version = "1.5.0"
+version = "1.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "msgpack" },
     { name = "python-dateutil" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fc/aa/9ef3cd3074a4f64dd8e8e436e0723b57db7865b700c568a392e47192a907/td_client-1.5.0.tar.gz", hash = "sha256:9c2180b7815e6db245932df24c0afb30f76950f3d31bb48f44ef3e669bfa559d", size = 44457, upload-time = "2025-08-14T05:49:17.782Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ac/28/c24e9f16584d756f5ae60dde7670c2920f42672ab06850e629d49d725486/td_client-1.6.0.tar.gz", hash = "sha256:9048113589301e3cfc81023576bf9f9645e7c48caf4cb0cc9f423695ed28d539", size = 50793, upload-time = "2025-11-14T03:51:18.132Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f7/55/95f28865fb75ae1eec3e672a950a2f1d89e96a1bde9ea97fd3f1cde709cd/td_client-1.5.0-py3-none-any.whl", hash = "sha256:1f09f607d2a030f41b301921c09cf1876d02d64c20a0ad371453ff9daed51e64", size = 56275, upload-time = "2025-08-14T05:49:16.356Z" },
+    { url = "https://files.pythonhosted.org/packages/ff/0b/0f602d48f130a5ab35df297d673885200ca04a0a5812839ddf2194661026/td_client-1.6.0-py3-none-any.whl", hash = "sha256:0245d4604db0d0f15a0d641332752c9460173cb9a8dc3cfc886ae80d6dd3eaff", size = 65292, upload-time = "2025-11-14T03:51:16.687Z" },
 ]
 
 [[package]]

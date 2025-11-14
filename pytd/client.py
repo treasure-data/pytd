@@ -293,12 +293,16 @@ class Client:
         -------
         bool
         """
+        if table is None:
+            try:
+                self.api_client.database(database)
+                return True
+            except Exception:
+                return False
         try:
             tbl = self.get_table(database, table)
         except ValueError:
             return False
-        if table is None:
-            return True
         return tbl.exists
 
     def create_database_if_not_exists(self, database: str) -> None:

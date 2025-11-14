@@ -33,7 +33,7 @@ dependencies = [
     "trino>=0.334.0",
     "pandas>=2.1.0",
     "numpy>=1.25.2",
-    "td-client>=1.5.0",
+    "td-client>=1.6.0",
     "pytz>=2018.5",
     "tqdm>=4.60.0",
 ]
@@ -52,9 +52,6 @@ doc = [
     "sphinx_rtd_theme",
     "numpydoc",
     "ipython",
-]
-dev = [
-    "pyright>=1.1.407",
 ]
 
 [project.urls]
@@ -122,21 +119,19 @@ exclude = [
     "pytd/tests/**",  # Exclude tests for now
     "pytd/pandas_td/ipython.py",  # IPython dependency not in core requirements
     "pytd/spark.py",  # Spark dependencies are optional
+    "noxfile.py",  # Noxfile is for dev only
 ]
 
-# Permissive settings for baseline - will tighten gradually
+# Strict type checking enabled
 reportMissingImports = "warning"  # Downgrade to warning for optional dependencies
-reportMissingTypeStubs = false
-reportUnknownMemberType = false
-reportUnknownArgumentType = false
-reportUnknownVariableType = false
-reportGeneralTypeIssues = false
-reportAttributeAccessIssue = false
-reportOptionalIterable = false
-reportArgumentType = false
-reportOptionalMemberAccess = false
-reportOptionalSubscript = false
+reportMissingTypeStubs = false  # Keep disabled for external libraries without stubs
 
 # Pre-commit venv configuration
 venvPath = "."
 venv = ".venv"
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.407",
+    "msgpack-types>=0.5.0",
+]
