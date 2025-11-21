@@ -36,13 +36,13 @@ dependencies = [
     "td-client>=1.6.0",
     "pytz>=2018.5",
     "tqdm>=4.60.0",
+    "pyarrow>=14.0.1",  # Enforce compatibility with NumPy 2.x
 ]
 
 [project.optional-dependencies]
 spark = [
     "td-pyspark>20.10.0",
     "pyspark>=3.0.0",
-    "pyarrow>=14.0.1",  # Enforce rebuild with NumPy 2.x
 ]
 test = [
     "pytest",
