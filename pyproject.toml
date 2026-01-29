@@ -29,14 +29,14 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
-    "urllib3>=2.0.0",  # Make aligned with td-client
+    "urllib3>=2.0.0", # Make aligned with td-client
     "trino>=0.334.0",
     "pandas>=2.1.0",
     "numpy>=1.25.2",
-    "td-client>=1.6.0",
+    "td-client>=1.7.0",
     "pytz>=2018.5",
     "tqdm>=4.60.0",
-    "pyarrow>=14.0.1",  # Enforce compatibility with NumPy 2.x
+    "pyarrow>=14.0.1", # Enforce compatibility with NumPy 2.x
 ]
 
 [project.optional-dependencies]
