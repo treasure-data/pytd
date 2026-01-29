@@ -348,7 +348,7 @@ def _convert_time(time: Any) -> str:
         t = pd.to_datetime(time)  # type: ignore[misc]
     else:
         raise ValueError(f"invalid time value: {time}")
-    return f"'{t.replace(microsecond=0)}'"
+    return f"'{t.replace(microsecond=0)}'"  # type: ignore[union-attr]
 
 
 def _to_dataframe(dic: Any, index_col: Any, parse_dates: Any) -> pd.DataFrame:
