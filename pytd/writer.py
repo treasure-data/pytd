@@ -55,7 +55,7 @@ def _replace_pd_na(dataframe: pd.DataFrame) -> None:
     if dataframe.isnull().any().any():  # type: ignore[misc]
         # Replace both np.nan and pd.NA with None
         replace_dict = {np.nan: None, pd.NA: None}
-        dataframe.replace(replace_dict, inplace=True)
+        dataframe.replace(replace_dict, inplace=True)  # type: ignore[misc]
 
 
 def _to_list(ary: Any) -> list[Any] | None:
@@ -76,7 +76,7 @@ def _to_list(ary: Any) -> list[Any] | None:
         _ary = np.where(_ary == "nan", None, _ary)  # type: ignore[arg-type]
     elif kind == "O":
         _ary = np.array([None if _is_np_nan(x) or _is_pd_na(x) else x for x in _ary])
-    return _ary.tolist()
+    return _ary.tolist()  # type: ignore[misc]
 
 
 def _convert_nullable_str(x: Any, t: type, lower: bool = False) -> str | None:
@@ -103,7 +103,7 @@ def _cast_dtypes(
     U  Unicode
     V  void
     """
-    df = dataframe if inplace else dataframe.copy()
+    df = dataframe if inplace else dataframe.copy()  # type: ignore[misc]
 
     for column, kind in dataframe.dtypes.apply(lambda dtype: dtype.kind).items():  # type: ignore[misc]
         t = str
@@ -134,7 +134,7 @@ def _cast_dtypes(
         df[column] = df[column].astype(t)  # type: ignore[misc]
 
     if not inplace:
-        return df
+        return df  # type: ignore[return-value]
     return None
 
 

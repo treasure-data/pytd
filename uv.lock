@@ -1005,12 +1005,13 @@ sdist = { url = "https://files.pythonhosted.org/packages/ae/40/1414582f16c1d7b05
 
 [[package]]
 name = "pytd"
-version = "2.2.0"
+version = "2.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.3.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pandas" },
+    { name = "pyarrow" },
     { name = "pytz" },
     { name = "td-client" },
     { name = "tqdm" },
@@ -1028,7 +1029,6 @@ doc = [
     { name = "sphinx-rtd-theme" },
 ]
 spark = [
-    { name = "pyarrow" },
     { name = "pyspark" },
     { name = "td-pyspark" },
 ]
@@ -1048,17 +1048,17 @@ requires-dist = [
     { name = "numpy", specifier = ">=1.25.2" },
     { name = "numpydoc", marker = "extra == 'doc'" },
     { name = "pandas", specifier = ">=2.1.0" },
-    { name = "pyarrow", marker = "extra == 'spark'", specifier = ">=10.0" },
+    { name = "pyarrow", specifier = ">=14.0.1" },
     { name = "pyspark", marker = "extra == 'spark'", specifier = ">=3.0.0" },
     { name = "pytest", marker = "extra == 'test'" },
     { name = "pytz", specifier = ">=2018.5" },
     { name = "sphinx", marker = "extra == 'doc'", specifier = ">=2.2.0" },
     { name = "sphinx-rtd-theme", marker = "extra == 'doc'" },
-    { name = "td-client", specifier = ">=1.6.0" },
+    { name = "td-client", specifier = ">=1.7.0" },
     { name = "td-pyspark", marker = "extra == 'spark'", specifier = ">20.10.0" },
     { name = "tqdm", specifier = ">=4.60.0" },
     { name = "trino", specifier = ">=0.334.0" },
-    { name = "urllib3", specifier = ">=1.21.1" },
+    { name = "urllib3", specifier = ">=2.0.0" },
 ]
 provides-extras = ["spark", "test", "doc"]
 
@@ -1310,16 +1310,16 @@ wheels = [
 
 [[package]]
 name = "td-client"
-version = "1.6.0"
+version = "1.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "msgpack" },
     { name = "python-dateutil" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ac/28/c24e9f16584d756f5ae60dde7670c2920f42672ab06850e629d49d725486/td_client-1.6.0.tar.gz", hash = "sha256:9048113589301e3cfc81023576bf9f9645e7c48caf4cb0cc9f423695ed28d539", size = 50793, upload-time = "2025-11-14T03:51:18.132Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c4/24/eff41d9889b5e0e0fbb7d278b549603c45f57954aefb9e2dcf6ad23b2418/td_client-1.7.0.tar.gz", hash = "sha256:bbf80beaf0253816751d5bb945448d2581314d0a651a8a630d5164f2dcaf8150", size = 50850, upload-time = "2026-01-29T04:44:05.464Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ff/0b/0f602d48f130a5ab35df297d673885200ca04a0a5812839ddf2194661026/td_client-1.6.0-py3-none-any.whl", hash = "sha256:0245d4604db0d0f15a0d641332752c9460173cb9a8dc3cfc886ae80d6dd3eaff", size = 65292, upload-time = "2025-11-14T03:51:16.687Z" },
+    { url = "https://files.pythonhosted.org/packages/de/2d/9e3f24ef9fe13446fd7bd17433db17ec64feb1f971d21f3ff773f8f6eda7/td_client-1.7.0-py3-none-any.whl", hash = "sha256:4de7c7c46fb91471b36f13feec416e87a82973135415be8e7f2e288cb7f0c37a", size = 65307, upload-time = "2026-01-29T04:44:06.525Z" },
 ]
 
 [[package]]
