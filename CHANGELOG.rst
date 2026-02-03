@@ -1,6 +1,13 @@
 Changelog
 =========
 
+v2.4.0 (2026-02-03)
+-------------------
+
+- Require td-client minimum version of 1.7.0
+- Require urllib3 minimum version of 2.0.0
+- Require pyarrow minimum version of 14.0.1
+
 v2.3.0 (2025-11-14)
 -------------------
 
